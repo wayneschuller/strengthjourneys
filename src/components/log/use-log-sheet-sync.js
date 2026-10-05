@@ -134,6 +134,7 @@ export function useLogSheetSync({
   canWrite,
   parsedData,
   parsedDataReadAt,
+  sheetColumns,
   sessionDate,
   isMetric,
   sex,
@@ -165,8 +166,20 @@ export function useLogSheetSync({
     installPageListeners();
     store.configure(ssid);
     if (!isLive) return;
-    store.snapshot({ rows: parsedData, readAt: parsedDataReadAt }, sessionDate);
-  }, [ssid, isLive, parsedData, parsedDataReadAt, sessionDate, mutate, toast]);
+    store.snapshot(
+      { rows: parsedData, readAt: parsedDataReadAt, columns: sheetColumns },
+      sessionDate,
+    );
+  }, [
+    ssid,
+    isLive,
+    parsedData,
+    parsedDataReadAt,
+    sheetColumns,
+    sessionDate,
+    mutate,
+    toast,
+  ]);
 
   useEffect(() => store.attach(), []);
 
@@ -174,7 +187,11 @@ export function useLogSheetSync({
   // first paint after a snapshot arrives already shows it, and the server
   // render of the demo log needs no store at all.
   const viewState = useMemo(() => {
-    const snapshot = { rows: parsedData ?? null, readAt: parsedDataReadAt };
+    const snapshot = {
+      rows: parsedData ?? null,
+      readAt: parsedDataReadAt,
+      columns: sheetColumns,
+    };
     if (!isLive || storeState.ssid !== ssid) {
       return applySnapshot(
         EMPTY_STATE,
@@ -183,7 +200,15 @@ export function useLogSheetSync({
       );
     }
     return applySnapshot(storeState, snapshot, sessionDate);
-  }, [isLive, storeState, ssid, parsedData, parsedDataReadAt, sessionDate]);
+  }, [
+    isLive,
+    storeState,
+    ssid,
+    parsedData,
+    parsedDataReadAt,
+    sheetColumns,
+    sessionDate,
+  ]);
 
   const sessionLifts = useMemo(
     () => projectSession(viewState, sessionDate),
@@ -271,6 +296,12 @@ export function useLogSheetSync({
   const deleteCooldownTimerRef = useRef(null);
   useEffect(() => () => clearTimeout(deleteCooldownTimerRef.current), []);
 
+  // A sheet need not have a Notes or a URL column. Then there is nowhere to
+  // keep either, so neither is queued: a timestamp or a link that could not
+  // be written would show until the next read and then vanish.
+  const hasNotesColumn = sheetColumns?.notes != null;
+  const hasUrlColumn = sheetColumns?.url != null;
+
   const addSet = useCallback(
     (liftType, prevSet) => {
       if (!isLive) return;
@@ -288,12 +319,12 @@ export function useLogSheetSync({
           reps: prevSet?.reps ?? 5,
           weight: prevSet?.weight ?? defaultBarWeight,
           unitType: prevSet?.unitType ?? (isMetric ? "kg" : "lb"),
-          notes,
+          notes: hasNotesColumn ? notes : "",
           url: "",
         },
       });
     },
-    [isLive, sessionDate, defaultBarWeight, isMetric],
+    [isLive, sessionDate, defaultBarWeight, isMetric, hasNotesColumn],
   );
 
   // Add a lift to the session: another set if the lift is already there,
@@ -329,7 +360,7 @@ export function useLogSheetSync({
           reps: openingSet?.reps ?? 5,
           weight: openingSet?.weight ?? defaultBarWeight,
           unitType: openingSet?.unitType ?? (isMetric ? "kg" : "lb"),
-          notes: getAutoTimestampNotes(),
+          notes: hasNotesColumn ? getAutoTimestampNotes() : "",
           url: "",
         },
       });
@@ -342,6 +373,7 @@ export function useLogSheetSync({
       sessionDate,
       isMetric,
       defaultBarWeight,
+      hasNotesColumn,
     ],
   );
 
@@ -349,9 +381,13 @@ export function useLogSheetSync({
   const updateSet = useCallback(
     (key, patch) => {
       if (!isLive) return;
-      store.editSet({ date: sessionDate, key, patch });
+      const writable = { ...patch };
+      if (!hasNotesColumn) delete writable.notes;
+      if (!hasUrlColumn) delete writable.url;
+      if (!Object.keys(writable).length) return;
+      store.editSet({ date: sessionDate, key, patch: writable });
     },
-    [isLive, sessionDate],
+    [isLive, sessionDate, hasNotesColumn, hasUrlColumn],
   );
 
   const deleteSet = useCallback(

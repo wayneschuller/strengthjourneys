@@ -17,7 +17,7 @@ import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
-import { isStandardHeaderRow } from "@/lib/sheet/sheet-row-ops";
+import { placeRowValues, resolveWriteColumns } from "@/lib/sheet/sheet-row-ops";
 import {
   buildVisibleImportProvenance,
   hasVisibleImportProvenance,
@@ -346,7 +346,7 @@ export default async function handler(req, res) {
 
     // Step 2: Read existing sheet data to find date positions
     const dataRes = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:F?majorDimension=ROWS`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A:Z?majorDimension=ROWS`,
       { headers },
     );
     if (!dataRes.ok) {
@@ -360,17 +360,19 @@ export default async function handler(req, res) {
     }
     const { values: sheetRows = [] } = await dataRes.json();
 
-    // Everything below places rows by position: dates are looked up in column
-    // A, row 1 is skipped as the header, and new rows are written A to F. On a
-    // sheet laid out any other way that would split a session from its date
-    // or put values under the wrong headings, so stop before writing.
-    if (!isStandardHeaderRow(sheetRows[0])) {
+    // The import is written in our own shape (date and lift on anchor rows,
+    // one set per row) but into the lifter's sheet, so each value goes to
+    // that sheet's own column for it, wherever its header row puts it. A
+    // sheet whose first row does not name the required columns gives us
+    // nowhere to put them.
+    const layout = resolveWriteColumns(req.body?.columns ?? null, sheetRows[0]);
+    if (!layout.ok) {
       return res.status(409).json({
-        error:
-          "Your sheet's first row needs the headers Date, Lift Type, Reps, Weight, Notes and URL in columns A to F before an import can be merged into it.",
+        error: `This import could not be merged because ${layout.message}. Label the first row of your sheet with Date, Lift Type, Reps and Weight over their columns, then try again.`,
         errorCode: "SHEET_LAYOUT_UNSUPPORTED",
       });
     }
+    const { columns } = layout;
 
     // Build a map of date → highest row index (1-based, skipping header at index 0)
     // Sheet is newest-first: row index 1 = header, row 2+ = data
@@ -379,7 +381,7 @@ export default async function handler(req, res) {
     let currentDate = null;
     for (let i = 1; i < sheetRows.length; i++) {
       const row = sheetRows[i];
-      if (row?.[0]) currentDate = row[0]; // col A has a date
+      if (row?.[columns.date]) currentDate = row[columns.date];
       if (currentDate) {
         dateRowMap.push({ date: currentDate, rowIndex: i + 1 }); // 1-based
       }
@@ -478,6 +480,10 @@ export default async function handler(req, res) {
 
     let effectiveGridRowCount = targetGridRowCount;
     const batchRequests = [];
+    // Each row was built as six logical values; lay them out in the sheet's
+    // own columns. Borders span at least the standard six.
+    const placeRow = (row) => placeRowValues(row, columns);
+    const width = Math.max(6, placeRow(["", "", "", "", "", ""]).length);
 
     for (const job of importJobs) {
       const isAppendingAtBottom = job.startIndex0 >= effectiveGridRowCount;
@@ -501,12 +507,14 @@ export default async function handler(req, res) {
             startRowIndex: job.startIndex0,
             endRowIndex: job.startIndex0 + job.rows.length,
             startColumnIndex: 0,
-            endColumnIndex: 6,
+            endColumnIndex: width,
           },
           rows: job.rows.map((row) => ({
-            values: row.map((value) => ({
-              userEnteredValue: { stringValue: String(value ?? "") },
-            })),
+            values: placeRow(row).map((value) =>
+              value === null
+                ? {}
+                : { userEnteredValue: { stringValue: String(value ?? "") } },
+            ),
           })),
           fields: "userEnteredValue",
         },
@@ -519,31 +527,33 @@ export default async function handler(req, res) {
             startRowIndex: job.startIndex0,
             endRowIndex: job.startIndex0 + job.rows.length,
             startColumnIndex: 0,
-            endColumnIndex: 6,
+            endColumnIndex: width,
           },
           top: { style: "NONE" },
         },
       });
 
-      batchRequests.push({
-        repeatCell: {
-          range: {
-            sheetId: targetSheetId,
-            startRowIndex: job.startIndex0,
-            endRowIndex: job.startIndex0 + job.rows.length,
-            startColumnIndex: 4,
-            endColumnIndex: 5,
-          },
-          cell: {
-            userEnteredFormat: {
-              numberFormat: { type: "TEXT" },
-              horizontalAlignment: "LEFT",
+      if (columns.notes !== null) {
+        batchRequests.push({
+          repeatCell: {
+            range: {
+              sheetId: targetSheetId,
+              startRowIndex: job.startIndex0,
+              endRowIndex: job.startIndex0 + job.rows.length,
+              startColumnIndex: columns.notes,
+              endColumnIndex: columns.notes + 1,
             },
+            cell: {
+              userEnteredFormat: {
+                numberFormat: { type: "TEXT" },
+                horizontalAlignment: "LEFT",
+              },
+            },
+            fields:
+              "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
           },
-          fields:
-            "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
-        },
-      });
+        });
+      }
 
       batchRequests.push({
         updateBorders: {
@@ -552,7 +562,7 @@ export default async function handler(req, res) {
             startRowIndex: job.startIndex0,
             endRowIndex: job.startIndex0 + 1,
             startColumnIndex: 0,
-            endColumnIndex: 6,
+            endColumnIndex: width,
           },
           top: {
             style: "SOLID",

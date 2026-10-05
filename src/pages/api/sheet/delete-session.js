@@ -10,7 +10,10 @@ import { getServerSession } from "next-auth/next";
 
 import {
   diffEditableSnapshot,
+  readSheetRows,
+  resolveWriteColumns,
   startFirstSheetIdLookup,
+  toLogicalRows,
 } from "@/lib/sheet/sheet-row-ops";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
@@ -49,6 +52,7 @@ export default async function handler(req, res) {
     expectedDate,
     firstBefore,
     lastBefore,
+    columns: requestedColumns,
   } = req.body;
 
   if (
@@ -83,15 +87,30 @@ export default async function handler(req, res) {
     // inherited from the session above does the read reach back to row 2.
     const readEndRow = endRowIndex + 1;
     let windowStartRow = startRowIndex;
-    let rows = await readRowWindow({
-      ssid,
-      headers,
-      fromRow: windowStartRow,
-      toRow: readEndRow,
-    });
-    if (!rows[0]?.[1] && startRowIndex > 2) {
+    // Row 1 settles which columns hold the date and the lift, and is read
+    // alongside the session's own rows.
+    const [[headerRow], sessionRows] = await Promise.all([
+      readSheetRows({ ssid, headers, fromRow: 1, toRow: 1 }),
+      readSheetRows({
+        ssid,
+        headers,
+        fromRow: windowStartRow,
+        toRow: readEndRow,
+      }),
+    ]);
+    const layout = resolveWriteColumns(requestedColumns, headerRow);
+    if (!layout.ok) {
+      return res.status(409).json({
+        error: `Sheet layout check failed: ${layout.message}`,
+        code: "PRECONDITION_FAILED",
+      });
+    }
+    const { columns } = layout;
+
+    let rows = sessionRows;
+    if (!rows[0]?.[columns.liftType] && startRowIndex > 2) {
       windowStartRow = 2;
-      rows = await readRowWindow({
+      rows = await readSheetRows({
         ssid,
         headers,
         fromRow: windowStartRow,
@@ -99,7 +118,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const logicalRows = buildLogicalRows(rows);
+    const logicalRows = toLogicalRows(rows, columns, windowStartRow);
     const rowAt = (rowIndex) => logicalRows[rowIndex - windowStartRow];
     const firstActual = rowAt(startRowIndex) ?? emptyLogicalRow();
     const lastActual = rowAt(lastDataRowIndex) ?? emptyLogicalRow();
@@ -184,44 +203,6 @@ export default async function handler(req, res) {
       .status(err.status || 500)
       .json({ error: err.message || "Internal server error" });
   }
-}
-
-async function readRowWindow({ ssid, headers, fromRow, toRow }) {
-  const range = `A${fromRow}:F${toRow}`;
-  const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?majorDimension=ROWS`,
-    { headers },
-  );
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    const error = new Error(
-      body?.error?.message || "Failed to verify session rows",
-    );
-    error.status = response.status;
-    throw error;
-  }
-  const payload = await response.json();
-  return payload.values ?? [];
-}
-
-function buildLogicalRows(rows) {
-  let inheritedDate = "";
-  let inheritedLiftType = "";
-
-  return rows.map((row = []) => {
-    if (row[0]) inheritedDate = row[0];
-    if (row[1]) inheritedLiftType = row[1];
-    return {
-      rawDate: row[0] ?? "",
-      rawLiftType: row[1] ?? "",
-      date: inheritedDate,
-      liftType: inheritedLiftType,
-      reps: row[2] ?? "",
-      weight: row[3] ?? "",
-      notes: row[4] ?? "",
-      url: row[5] ?? "",
-    };
-  });
 }
 
 function emptyLogicalRow() {

@@ -41,7 +41,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rowIndex, before } = req.body;
+  const { ssid, rowIndex, before, columns: requestedColumns } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !before) {
     return res
@@ -62,6 +62,7 @@ export default async function handler(req, res) {
       rowIndex,
       before,
       headers,
+      columns: requestedColumns,
     });
 
     if (!verification.ok) {
@@ -84,9 +85,11 @@ export default async function handler(req, res) {
     // from them, so an anchor promoted onto one would leave the sets below it
     // belonging to the session above.
     let promoteTo = null;
+    const { columns } = verification;
     const promotion = planAnchorPromotion(
       verification.actual,
       await readRowsBelow({ ssid, rowIndex, headers }),
+      columns,
     );
     if (promotion) {
       promoteTo = {
@@ -104,8 +107,8 @@ export default async function handler(req, res) {
     if (promoteTo) {
       const heirRowIndex0 = promoteTo.rowIndex - 1;
       for (const [columnIndex, value] of [
-        [0, promoteTo.date],
-        [1, promoteTo.liftType],
+        [columns.date, promoteTo.date],
+        [columns.liftType, promoteTo.liftType],
       ]) {
         if (value === null) continue;
         requests.push({

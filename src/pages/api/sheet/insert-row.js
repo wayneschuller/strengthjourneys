@@ -20,13 +20,20 @@
  *
  * A request flagged `retry` is checked against the slot first, so resending
  * an insert whose response was lost cannot add the set twice.
+ *
+ * Each row arrives as six logical values and is written into the sheet's own
+ * columns for them, checked against row 1 (see resolveWriteColumns), so a
+ * sheet laid out the lifter's own way gets its sets in the right places.
  */
 
 import { getServerSession } from "next-auth/next";
 
 import {
   isInsertedRowPresent,
+  placeRowValues,
   readRawRow,
+  readSheetRows,
+  resolveWriteColumns,
   startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet/sheet-row-ops";
@@ -97,8 +104,15 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rows, insertAfterRowIndex, newSession, before, retry } =
-    req.body;
+  const {
+    ssid,
+    rows,
+    insertAfterRowIndex,
+    newSession,
+    before,
+    retry,
+    columns: requestedColumns,
+  } = req.body;
 
   if (!ssid || !Array.isArray(rows) || rows.length === 0) {
     return res
@@ -118,6 +132,31 @@ export default async function handler(req, res) {
   };
 
   try {
+    // Unqualified A1 reads target the first visible tab, so every grid
+    // mutation must resolve that same tab's current ID rather than assuming
+    // it is still 0. The lookup runs alongside verification.
+    const sheetIdLookup = startFirstSheetIdLookup({ ssid, headers });
+
+    // `rows` arrive as six logical values each (date, lift, reps, weight,
+    // notes, url) and are laid out in the sheet's own columns below. Verifying
+    // a row settles that column map from row 1 in the same read. The two cases
+    // that look at a row before any verification, the top of the sheet and a
+    // retry, read rows 1 and 2 for it here.
+    let columns = null;
+    let firstDataRow = null;
+    if (insertAfter === 1 || retry === true) {
+      const top = await readSheetRows({ ssid, headers, fromRow: 1, toRow: 2 });
+      const layout = resolveWriteColumns(requestedColumns, top[0]);
+      if (!layout.ok) {
+        return res.status(409).json({
+          error: `Sheet layout check failed: ${layout.message}`,
+          code: "PRECONDITION_FAILED",
+        });
+      }
+      columns = layout.columns;
+      firstDataRow = top[1]?.length ? top[1] : null;
+    }
+
     // A retry follows a send the client never heard back from. If the row is
     // already sitting in its slot, that send landed: answer as inserted
     // instead of adding it a second time.
@@ -126,8 +165,9 @@ export default async function handler(req, res) {
         ssid,
         rowIndex: insertAfter + 1,
         headers,
+        columns,
       });
-      if (isInsertedRowPresent(existing, rows[0])) {
+      if (isInsertedRowPresent(existing, rows[0], columns)) {
         return res.status(200).json({
           insertedRows: 0,
           firstRowIndex: insertAfter + 1,
@@ -136,13 +176,8 @@ export default async function handler(req, res) {
       }
     }
 
-    // Unqualified A1 reads target the first visible tab, so every grid
-    // mutation must resolve that same tab's current ID rather than assuming
-    // it is still 0. The lookup runs alongside verification.
-    const sheetIdLookup = startFirstSheetIdLookup({ ssid, headers });
-    let verification = { ok: true, actual: null };
+    let verification = { ok: true, actual: null, columns };
     if (insertAfter === 1) {
-      const firstDataRow = await readRawRow({ ssid, rowIndex: 2, headers });
       if (firstDataRow) {
         if (!before) {
           return res.status(400).json({
@@ -154,6 +189,7 @@ export default async function handler(req, res) {
           rowIndex: 2,
           before,
           headers,
+          columns: requestedColumns,
         });
       }
     } else {
@@ -167,6 +203,7 @@ export default async function handler(req, res) {
         rowIndex: insertAfter,
         before,
         headers,
+        columns: requestedColumns,
       });
     }
 
@@ -194,6 +231,11 @@ export default async function handler(req, res) {
     // We prefer false, then explicitly clear the top border on all inserted
     // rows, and stamp a new session border back onto the first inserted row
     // only when `newSession` is true.
+    columns = verification.columns;
+    const placedRows = rows.map((row) => placeRowValues(row, columns));
+    // Borders span at least the standard six columns, and further when the
+    // lifter's own layout reaches further.
+    const width = Math.max(6, ...placedRows.map((row) => row.length));
     const targetSheetId = await sheetIdLookup;
     const batchRequests = [
       {
@@ -214,19 +256,22 @@ export default async function handler(req, res) {
             startRowIndex: startIndex0,
             endRowIndex: startIndex0 + rows.length,
             startColumnIndex: 0,
-            endColumnIndex: 6,
+            endColumnIndex: width,
           },
           top: { style: "NONE" },
         },
       },
-      {
+    ];
+
+    if (columns.notes !== null) {
+      batchRequests.push({
         repeatCell: {
           range: {
             sheetId: targetSheetId,
             startRowIndex: startIndex0,
             endRowIndex: startIndex0 + rows.length,
-            startColumnIndex: 4,
-            endColumnIndex: 5,
+            startColumnIndex: columns.notes,
+            endColumnIndex: columns.notes + 1,
           },
           cell: {
             userEnteredFormat: {
@@ -237,8 +282,8 @@ export default async function handler(req, res) {
           fields:
             "userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment",
         },
-      },
-    ];
+      });
+    }
 
     if (newSession) {
       batchRequests.push({
@@ -248,7 +293,7 @@ export default async function handler(req, res) {
             startRowIndex: startIndex0,
             endRowIndex: startIndex0 + 1,
             startColumnIndex: 0,
-            endColumnIndex: 6,
+            endColumnIndex: width,
           },
           top: {
             style: "SOLID",
@@ -265,9 +310,9 @@ export default async function handler(req, res) {
           rowIndex: startIndex0,
           columnIndex: 0,
         },
-        rows: rows.map((row) => ({
+        rows: placedRows.map((row) => ({
           values: row.map((value, columnIndex) =>
-            buildInsertedCell(value, columnIndex),
+            buildInsertedCell(value, columnIndex === columns.reps),
           ),
         })),
         fields: "userEnteredValue",
@@ -307,8 +352,11 @@ export default async function handler(req, res) {
 // USER_ENTERED). Reps remain numeric for the sheet, while dates, weights with
 // units, notes, and URLs remain literal strings. Literal strings also ensure a
 // note beginning with "=" cannot be interpreted as a formula.
-function buildInsertedCell(value, columnIndex) {
-  if (columnIndex === 2) {
+function buildInsertedCell(value, isReps) {
+  // A column the app does not write, sitting between two it does. The row is
+  // new, so there is nothing in the cell to preserve.
+  if (value === null) return {};
+  if (isReps) {
     const numericValue = Number(value);
     if (Number.isFinite(numericValue)) {
       return { userEnteredValue: { numberValue: numericValue } };

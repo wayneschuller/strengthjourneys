@@ -49,7 +49,7 @@ import {
   AppBannerContent,
   AppBannerMessage,
 } from "@/components/ui/app-banner";
-import { isStandardSheetLayout } from "@/lib/import/parsers/strength-journeys-parser";
+import { getSheetWriteColumns } from "@/lib/import/parsers/strength-journeys-parser";
 import { LogDateNav } from "@/components/log/log-date-nav";
 import { MeetDayBanner } from "@/components/log/meet-day-banner";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
@@ -243,6 +243,12 @@ export default function LogSessionPage({
       ? latestSessionDate
       : todayIso);
 
+  // Where this sheet keeps each column, sent with every write.
+  const sheetColumns = useMemo(
+    () => getSheetWriteColumns(sheetLayout),
+    [sheetLayout],
+  );
+
   // Which sheet the sync queue belongs to: undefined until we know, null once
   // we know there is none. A queue is never carried from one sheet to another.
   const syncSsid =
@@ -271,6 +277,7 @@ export default function LogSessionPage({
     canWrite: hasLinkedSheet,
     parsedData,
     parsedDataReadAt,
+    sheetColumns,
     sessionDate,
     isMetric,
     sex,
@@ -396,14 +403,13 @@ export default function LogSessionPage({
   // taken while the sheet cannot be reached would sit in this tab's memory
   // and be lost with it. Changes accepted earlier keep retrying.
   //
-  // Nor is anything written to a sheet whose columns are not where the write
-  // routes put them. The parser reads such a sheet happily, by header name or
-  // by inference, so the session still shows; a set written to it by
-  // position would land under the wrong heading.
+  // Nor is anything written to a sheet with no header row to go by. Sets are
+  // written into the lifter's own columns, in whatever order the sheet keeps
+  // them, and row 1 is what each write is checked against. A sheet read
+  // purely by inference still shows its sessions, but gives a write nothing
+  // firm to stand on.
   const hasUnsupportedLayout =
-    hasLinkedSheet &&
-    sheetLayout !== null &&
-    !isStandardSheetLayout(sheetLayout);
+    hasLinkedSheet && sheetLayout !== null && sheetColumns === null;
   const isWriteBlocked =
     showSessionBootstrap ||
     isDeletingSession ||
@@ -739,9 +745,9 @@ export default function LogSessionPage({
                   <AppBannerContent density="compact">
                     <AppBannerMessage>
                       <strong>Logging is paused for this sheet.</strong> Sets
-                      are written to columns A to F in the order Date, Lift
-                      Type, Reps, Weight, Notes, URL, under a header in row 1.
-                      Put your sheet&apos;s first row back in that order and
+                      are written under your column headings, and this
+                      sheet&apos;s first row has none to go by. Label row 1 with
+                      Date, Lift Type, Reps and Weight over their columns and
                       logging picks up again. Everything else keeps working.
                     </AppBannerMessage>
                   </AppBannerContent>

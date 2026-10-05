@@ -276,7 +276,7 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context sheetParsedData {Array|null} - The linked sheet's rows, kept loaded under an import.
  * @context sheetLayout {{hasHeaderRow: boolean, columns: Object, inferred: string[]}|null} - Where
  *   the linked sheet keeps its columns and which headers had to be inferred from their contents.
- *   See getSheetLayout and isStandardSheetLayout in the Strength Journeys parser.
+ *   See getSheetLayout and getSheetWriteColumns in the Strength Journeys parser.
  * @context parsedDataReadAt {number|null} - performance.now() when the sheet read behind
  *   `sheetParsedData` began; the log's sync uses it to tell which of its writes a snapshot includes.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.

@@ -53,7 +53,9 @@ const MAX_TRACKED_DATES = 30;
 export function createEngineState(ssid = null) {
   return {
     ssid,
-    base: { rows: null, readAt: null },
+    // `columns` is where this sheet keeps each value (see getSheetWriteColumns);
+    // every request carries it so the write lands in the lifter's own layout.
+    base: { rows: null, readAt: null, columns: null },
     ops: [],
     // Sheet rowIndex -> local key, held only for rows whose position has moved
     // since they were first drawn. Every other row's key is its rowIndex.
@@ -372,6 +374,7 @@ export function planRequest(state, op) {
       url: "/api/sheet/insert-row",
       method: "POST",
       body: {
+        ...columnsOf(state),
         rows: [[dateCell, liftCell, String(reps), weightText, notes, url]],
         insertAfterRowIndex,
         newSession,
@@ -404,7 +407,12 @@ export function planRequest(state, op) {
       kind: "request",
       url: "/api/sheet/edit-row",
       method: "POST",
-      body: { rowIndex: entry.sheetIndex, before: current, after: next },
+      body: {
+        ...columnsOf(state),
+        rowIndex: entry.sheetIndex,
+        before: current,
+        after: next,
+      },
       meta,
       expect: { before, after: expectAfter(meta) },
     };
@@ -419,7 +427,11 @@ export function planRequest(state, op) {
       kind: "request",
       url: "/api/sheet/delete-row",
       method: "POST",
-      body: { rowIndex: entry.sheetIndex, before: sheetText(entry) },
+      body: {
+        ...columnsOf(state),
+        rowIndex: entry.sheetIndex,
+        before: sheetText(entry),
+      },
       meta,
       expect: { before, after: expectAfter(meta) },
     };
@@ -448,6 +460,7 @@ export function planRequest(state, op) {
       url: "/api/sheet/delete-session",
       method: "POST",
       body: {
+        ...columnsOf(state),
         startRowIndex: first.sheetIndex,
         endRowIndex: end,
         lastDataRowIndex: last.sheetIndex,
@@ -694,7 +707,7 @@ export function applySnapshot(state, snapshot, viewDate) {
   // drops it quietly.
   let next = {
     ...state,
-    base: { rows, readAt },
+    base: { rows, readAt, columns: snapshot?.columns ?? null },
     keys,
     keyDates: dates,
     ops: kept,
@@ -835,6 +848,12 @@ function applyOp(entries, op, date, drawPending) {
   }
 
   return entries;
+}
+
+// The sheet's column map, when the page supplied one. A request without it is
+// placed by the header names the server finds.
+function columnsOf(state) {
+  return state.base.columns ? { columns: state.base.columns } : {};
 }
 
 function confirmOp(op, meta = {}) {

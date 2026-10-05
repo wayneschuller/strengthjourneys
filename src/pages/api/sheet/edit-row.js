@@ -5,8 +5,11 @@
  * is not "RESTful update by resource"; it is a verified sheet-row operation.
  *
  * Safety strategy:
- * - Client sends rowIndex + before snapshot + after snapshot.
- * - Server verifies the current logical row still matches `before`.
+ * - Client sends rowIndex + before snapshot + after snapshot, and the column
+ *   map its parse found, so a sheet laid out the lifter's own way is edited in
+ *   its own columns.
+ * - Server checks that map against row 1, then verifies the current logical
+ *   row still matches `before`.
  * - Server writes only the cells that differ between the two, in one request,
  *   so cells the lifter did not touch keep their own text.
  *
@@ -18,7 +21,7 @@
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import {
-  EDITABLE_COLUMN_CONFIG,
+  columnLetter,
   diffEditableSnapshot,
   forceNotesPlainText,
   getChangedEditableFields,
@@ -37,7 +40,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, rowIndex, before, after } = req.body;
+  const { ssid, rowIndex, before, after, columns: requestedColumns } = req.body;
 
   if (!ssid || !rowIndex || typeof rowIndex !== "number" || !before || !after) {
     return res.status(400).json({
@@ -67,12 +70,16 @@ export default async function handler(req, res) {
       rowIndex,
       before,
       headers,
+      columns: requestedColumns,
     });
 
     if (!verification.ok) {
       // The row already holds this edit: an earlier send landed and only its
       // response was lost.
-      if (!diffEditableSnapshot(verification.actual, after).length) {
+      if (
+        verification.actual &&
+        !diffEditableSnapshot(verification.actual, after).length
+      ) {
         return res
           .status(200)
           .json({ updated: true, rowIndex, alreadyApplied: true });
@@ -88,6 +95,15 @@ export default async function handler(req, res) {
       });
     }
 
+    // Each changed field goes to the sheet's own column for it. A field the
+    // sheet has no column for has nowhere to be written.
+    const { columns } = verification;
+    const writableFields = changedFields.filter(
+      (field) => columns[field] !== null,
+    );
+    if (!writableFields.length) {
+      return res.status(200).json({ updated: false, rowIndex });
+    }
     const writeResponse = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values:batchUpdate`,
       {
@@ -95,8 +111,8 @@ export default async function handler(req, res) {
         headers,
         body: JSON.stringify({
           valueInputOption: "USER_ENTERED",
-          data: changedFields.map((field) => ({
-            range: `${EDITABLE_COLUMN_CONFIG[field].letter}${rowIndex}`,
+          data: writableFields.map((field) => ({
+            range: `${columnLetter(columns[field])}${rowIndex}`,
             majorDimension: "ROWS",
             values: [[after[field] ?? ""]],
           })),
@@ -109,13 +125,19 @@ export default async function handler(req, res) {
       const message = body?.error?.message || "Failed to update row";
       console.error("[sheet/edit-row] values.batchUpdate failed:", message, {
         rowIndex,
-        changedFields,
+        writableFields,
       });
       return res.status(writeResponse.status).json({ error: message });
     }
 
-    if (needsNotesFormat) {
-      await forceNotesPlainText({ ssid, rowIndex, headers, sheetIdLookup });
+    if (needsNotesFormat && columns.notes !== null) {
+      await forceNotesPlainText({
+        ssid,
+        rowIndex,
+        headers,
+        sheetIdLookup,
+        notesColumn: columns.notes,
+      });
     }
 
     return res.status(200).json({ updated: true, rowIndex });

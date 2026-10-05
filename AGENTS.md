@@ -121,7 +121,12 @@ authenticated users.
   edit and delete goes into one outbox (`src/lib/sheet/log-sync-engine.js`,
   pure) that `log-sync-store.js` sends strictly one request at a time; what
   the lifter sees is the last snapshot with the outbox drawn over it. Rows are
-  identified by a local `_key`, never by `rowIndex`, which moves. Do not add
+  identified by a local `_key`, never by `rowIndex`, which moves. Writes
+  follow the sheet's own columns: each request carries the column map the
+  parser found (`getSheetWriteColumns`), and every write route checks it
+  against row 1 before writing (`resolveWriteColumns` in
+  `src/lib/sheet/sheet-row-ops.js`). Never address a cell by a fixed column
+  letter. Do not add
   optimistic state to a component, send a sheet write from anywhere else, or
   gate the UI on `isValidating`. Read the engine's header comment first, and
   prove a change with `scripts/validate-log-sync.mjs`, which drives the real

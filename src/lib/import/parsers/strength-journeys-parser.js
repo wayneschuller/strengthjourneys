@@ -69,40 +69,46 @@ const KNOWN_HEADERS = [
   "URL",
 ];
 
-const STANDARD_COLUMN_ORDER = [
-  "Date",
-  "Lift Type",
-  "Reps",
-  "Weight",
-  "Notes",
-  "URL",
-];
+const REQUIRED_HEADERS = ["Date", "Lift Type", "Reps", "Weight"];
 
 /**
- * Can the log page write to a sheet laid out like this? Its write routes
- * address cells by position: a header in row 1, then Date, Lift Type, Reps,
- * Weight, Notes and URL in columns A to F. Reading copes with any order, and
- * with no header at all; a write to such a sheet would land under the wrong
- * heading.
+ * The column map a write to this sheet should carry, or null when the sheet
+ * cannot be written to.
  *
- * A required column still counts when its header cell is blank and its
- * contents put it in the right place (a header deleted by accident). Notes
- * and URL may be unlabelled, as on older sheets; they may not be labelled as
- * something else.
+ * Writes follow the lifter's own layout: each value goes to the column the
+ * parser found for it, in whatever order the sheet keeps them. What a write
+ * does need is a header row to check that map against, with at least one of
+ * the required headings still in it. A sheet that starts straight in with
+ * data, or whose first row names nothing, can be read by inference but gives
+ * a write nothing firm to stand on. The write routes apply the same rule to
+ * the sheet as it stands (resolveWriteColumns in sheet-row-ops.js).
+ *
+ * @param {ReturnType<typeof getSheetLayout>} layout
+ * @returns {{date: number, liftType: number, reps: number, weight: number,
+ *   notes: number|null, url: number|null} | null} 0-based columns.
  */
-export function isStandardSheetLayout(layout) {
-  if (!layout?.hasHeaderRow) return false;
-  // A first row with nothing recognisable in it is not a header to trust.
-  if (!STANDARD_COLUMN_ORDER.some((name, i) => layout.header[i] === name)) {
-    return false;
+export function getSheetWriteColumns(layout) {
+  if (!layout?.hasHeaderRow) return null;
+  const { columns, header } = layout;
+  if (!REQUIRED_HEADERS.some((name) => header[columns[name]] === name)) {
+    return null;
   }
-  return STANDARD_COLUMN_ORDER.every((name, column) => {
-    const header = layout.header[column] ?? "";
-    if (column >= 4) return header === name || header === "";
-    return (
-      layout.columns[name] === column && (header === name || header === "")
-    );
-  });
+  const at = (name) => (columns[name] >= 0 ? columns[name] : null);
+  const writeColumns = {
+    date: at("Date"),
+    liftType: at("Lift Type"),
+    reps: at("Reps"),
+    weight: at("Weight"),
+    notes: at("Notes"),
+    url: at("URL"),
+  };
+  const required = [
+    writeColumns.date,
+    writeColumns.liftType,
+    writeColumns.reps,
+    writeColumns.weight,
+  ];
+  return required.includes(null) ? null : writeColumns;
 }
 
 /**

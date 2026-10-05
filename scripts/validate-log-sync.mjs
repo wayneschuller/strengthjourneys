@@ -64,9 +64,13 @@ const {
   diffEditableSnapshot,
   getChangedEditableFields,
   isInsertedRowPresent,
+  placeRowValues,
   planAnchorPromotion,
+  resolveWriteColumns,
+  toLogicalRows,
+  toRawRow,
 } = await import("../src/lib/sheet/sheet-row-ops.js");
-const { parseStrengthJourneysData } =
+const { parseStrengthJourneysData, getSheetLayout, getSheetWriteColumns } =
   await import("../src/lib/import/parsers/strength-journeys-parser.js");
 
 // The parser reports its repairs on the console; keep the run quiet.
@@ -79,7 +83,6 @@ const trace = (...parts) => {
 };
 
 const HEADER = ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"];
-const COLUMN = { reps: 2, weight: 3, notes: 4, url: 5 };
 
 // --- Virtual time --------------------------------------------------------------
 
@@ -143,10 +146,25 @@ function createRandom(seed) {
 
 // --- The simulated sheet, with the write routes' rules ---------------------------
 
+// Fixtures give each row as six logical values (date, lift, reps, weight,
+// notes, url). The sheet lays them out under whatever header it was built
+// with, so the same scenarios run on a lifter's own column order.
 class FakeSheet {
-  constructor(rows) {
-    this.values = [HEADER.slice(), ...rows.map(padRow)];
+  constructor(rows, header = HEADER) {
+    this.values = [header.slice()];
+    this.values.push(...rows.map((row) => this.physical(row)));
     this.requests = [];
+  }
+
+  /** The column map as the header row states it. */
+  get columns() {
+    return resolveWriteColumns(null, this.values[0]).columns;
+  }
+
+  /** Six logical values as one full-width physical row. */
+  physical(row, columns = this.columns) {
+    const placed = placeRowValues(row, columns);
+    return this.values[0].map((_, column) => String(placed[column] ?? ""));
   }
 
   snapshot() {
@@ -157,54 +175,21 @@ class FakeSheet {
     return this.values[rowIndex - 1] ?? null;
   }
 
-  rawRow(rowIndex) {
+  rawRow(rowIndex, columns) {
     const cells = this.cells(rowIndex);
     if (!cells || cells.every((cell) => cell === "")) return null;
-    return {
-      rowIndex,
-      rawDate: cells[0],
-      rawLiftType: cells[1],
-      reps: cells[2],
-      weight: cells[3],
-      notes: cells[4],
-      url: cells[5],
-    };
+    return toRawRow(cells, columns, rowIndex);
   }
 
-  logicalRow(rowIndex) {
-    let date = "";
-    let liftType = "";
-    for (let i = 2; i <= rowIndex; i += 1) {
-      const cells = this.cells(i) ?? [];
-      if (cells[0]) date = cells[0];
-      if (cells[1]) liftType = cells[1];
-    }
-    const target = this.cells(rowIndex) ?? [];
-    return {
-      rowIndex,
-      rawDate: target[0] ?? "",
-      rawLiftType: target[1] ?? "",
-      date,
-      liftType,
-      reps: target[2] ?? "",
-      weight: target[3] ?? "",
-      notes: target[4] ?? "",
-      url: target[5] ?? "",
-    };
+  logicalRow(rowIndex, columns) {
+    return toLogicalRows(this.values.slice(1, rowIndex), columns, 2)[
+      rowIndex - 2
+    ];
   }
 
-  verify(rowIndex, before) {
-    const actual = this.logicalRow(rowIndex);
+  verify(rowIndex, before, columns) {
+    const actual = this.logicalRow(rowIndex, columns);
     return { ok: !diffEditableSnapshot(actual, before).length, actual };
-  }
-
-  // Sheets skips a null and clears a cell given "".
-  put(rowIndex, column, values) {
-    const cells = this.cells(rowIndex);
-    values.forEach((value, offset) => {
-      if (value === null || value === undefined) return;
-      cells[column + offset] = String(value);
-    });
   }
 
   handle({ url, body }) {
@@ -216,6 +201,11 @@ class FakeSheet {
     });
     const bad = { status: 400, data: { error: "Bad request" } };
 
+    // Every route checks the write's column map against row 1 first.
+    const layout = resolveWriteColumns(body.columns ?? null, this.values[0]);
+    if (!layout.ok) return conflict(null);
+    const { columns } = layout;
+
     if (url === "/api/sheet/insert-row") {
       const { rows, insertAfterRowIndex, before, retry } = body;
       const insertAfter =
@@ -223,22 +213,30 @@ class FakeSheet {
       if (
         retry === true &&
         rows.length === 1 &&
-        isInsertedRowPresent(this.rawRow(insertAfter + 1), rows[0])
+        isInsertedRowPresent(
+          this.rawRow(insertAfter + 1, columns),
+          rows[0],
+          columns,
+        )
       ) {
         return ok({ firstRowIndex: insertAfter + 1, alreadyApplied: true });
       }
       let verification = { ok: true };
       if (insertAfter === 1) {
-        if (this.rawRow(2)) {
+        if (this.rawRow(2, columns)) {
           if (!before) return bad;
-          verification = this.verify(2, before);
+          verification = this.verify(2, before, columns);
         }
       } else {
         if (!before) return bad;
-        verification = this.verify(insertAfter, before);
+        verification = this.verify(insertAfter, before, columns);
       }
       if (!verification.ok) return conflict(verification);
-      this.values.splice(insertAfter, 0, ...rows.map(padRow));
+      this.values.splice(
+        insertAfter,
+        0,
+        ...rows.map((row) => this.physical(row, columns)),
+      );
       return ok({ firstRowIndex: insertAfter + 1 });
     }
 
@@ -246,7 +244,7 @@ class FakeSheet {
       const { rowIndex, before, after } = body;
       const changed = getChangedEditableFields(before, after);
       if (!changed.length) return ok({ updated: false });
-      const verification = this.verify(rowIndex, before);
+      const verification = this.verify(rowIndex, before, columns);
       if (!verification.ok) {
         if (!diffEditableSnapshot(verification.actual, after).length) {
           return ok({ alreadyApplied: true });
@@ -254,24 +252,29 @@ class FakeSheet {
         return conflict(verification);
       }
       for (const field of changed) {
-        this.put(rowIndex, COLUMN[field], [after[field] ?? ""]);
+        if (columns[field] === null) continue;
+        this.cells(rowIndex)[columns[field]] = String(after[field] ?? "");
       }
       return ok({ updated: true });
     }
 
     if (url === "/api/sheet/delete-row") {
       const { rowIndex, before } = body;
-      const verification = this.verify(rowIndex, before);
+      const verification = this.verify(rowIndex, before, columns);
       if (!verification.ok) return conflict(verification);
       const promotion = planAnchorPromotion(
         verification.actual,
         this.values.slice(rowIndex),
+        columns,
       );
       if (promotion) {
-        this.put(rowIndex + 1 + promotion.offset, 0, [
-          promotion.date,
-          promotion.liftType,
-        ]);
+        // The route copies the deleted row's own cells onto the heir.
+        const heir = this.cells(rowIndex + 1 + promotion.offset);
+        const source = this.cells(rowIndex);
+        if (promotion.date !== null) heir[columns.date] = source[columns.date];
+        if (promotion.liftType !== null) {
+          heir[columns.liftType] = source[columns.liftType];
+        }
       }
       this.values.splice(rowIndex - 1, 1);
       return ok({ deleted: true });
@@ -286,15 +289,16 @@ class FakeSheet {
         firstBefore,
         lastBefore,
       } = body;
-      const first = this.logicalRow(startRowIndex);
-      const last = this.logicalRow(lastDataRowIndex);
+      if (startRowIndex < 2) return bad;
+      const first = this.logicalRow(startRowIndex, columns);
+      const last = this.logicalRow(lastDataRowIndex, columns);
       const explicitDates = [];
       for (let i = startRowIndex; i <= endRowIndex; i += 1) {
-        const rawDate = this.cells(i)?.[0];
+        const rawDate = this.cells(i)?.[columns.date];
         if (rawDate) explicitDates.push(rawDate);
       }
       const next = this.cells(endRowIndex + 1)
-        ? this.logicalRow(endRowIndex + 1)
+        ? this.logicalRow(endRowIndex + 1, columns)
         : null;
       if (
         first.rawDate !== expectedDate ||
@@ -313,16 +317,12 @@ class FakeSheet {
   }
 }
 
-function padRow(row) {
-  return HEADER.map((_, column) => String(row[column] ?? ""));
-}
-
 // --- A world: sheet + network + SWR + the real store -----------------------------
 
-function createWorld({ rows, seed = 1, faults = {} }) {
+function createWorld({ rows, header = HEADER, seed = 1, faults = {} }) {
   const clock = createClock();
   const random = createRandom(seed);
-  const sheet = new FakeSheet(rows);
+  const sheet = new FakeSheet(rows, header);
   const failures = [];
   const scripted = [];
   const world = {
@@ -405,7 +405,9 @@ function createWorld({ rows, seed = 1, faults = {} }) {
         ? swr.cache.rows
         : parseStrengthJourneysData(values);
     swr.fingerprint = fingerprint;
-    const data = { rows, readAt };
+    // The page works the write columns out from the parse, as log.js does.
+    const columns = getSheetWriteColumns(getSheetLayout(rows));
+    const data = { rows, readAt, columns };
     swr.cache = data;
     trace(clock.now(), "read delivered, started", readAt);
     // The page hands the snapshot on a moment later, as an effect would.
@@ -644,6 +646,18 @@ const baseRows = () => [
   ["", "", "", "", "session note only", ""],
   ["", "Deadlift", "1", "180kg", "09:15 ", ""],
   ["2026-03-01", "Back Squat", "5", "95kg", "", ""],
+];
+
+// A layout of the lifter's own: columns in another order, with one of theirs
+// (RPE) in among ours.
+const OWN_ORDER = [
+  "Lift Type",
+  "Notes",
+  "Date",
+  "RPE",
+  "Weight",
+  "Reps",
+  "URL",
 ];
 
 const keyAt = (world, date, liftType, position) =>
@@ -924,8 +938,8 @@ const scenarios = {
     world.sheet.values.splice(
       1,
       0,
-      padRow(["2026-03-11", "Deadlift", "5", "150kg", "", ""]),
-      padRow(["", "", "5", "150kg", "", ""]),
+      world.sheet.physical(["2026-03-11", "Deadlift", "5", "150kg", "", ""]),
+      world.sheet.physical(["", "", "5", "150kg", "", ""]),
     );
     lifter.edit(TODAY, keyAt(world, TODAY, "Bench Press", 1), { reps: 1 });
     lifter.add(TODAY, "Back Squat");
@@ -952,6 +966,79 @@ const scenarios = {
       "no other row took the edit",
     );
     assert.equal(world.view(TODAY)["Bench Press"].length, 1);
+  },
+
+  async "a sheet in the lifter's own column order is written in that order"() {
+    const world = createWorld({ rows: baseRows(), header: OWN_ORDER });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(YESTERDAY);
+    lifter.add(TODAY, "Back Squat", { reps: 5, weight: 100 });
+    lifter.add(TODAY, "Deadlift");
+    lifter.add("2026-03-12", "Bench Press");
+    lifter.edit(TODAY, keyAt(world, TODAY, "Bench Press", 1), {
+      reps: 4,
+      weight: 82.5,
+      notes: "paused",
+    });
+    // The session's first row: its date and lift pass to the row below, in
+    // the columns this sheet keeps them in.
+    lifter.remove(TODAY, keyAt(world, TODAY, "Back Squat", 0));
+    lifter.edit(YESTERDAY, keyAt(world, YESTERDAY, "Deadlift", 0), {
+      url: "https://youtu.be/xyz",
+    });
+    await settle(world, lifter, "own column order");
+    lifter.checkSheet("own column order");
+    assert.deepEqual(world.sheet.values[0], OWN_ORDER);
+    const rpe = OWN_ORDER.indexOf("RPE");
+    assert.ok(
+      world.sheet.values.slice(1).every((row) => row[rpe] === ""),
+      "a column the app does not own is never written to",
+    );
+    assert.equal(world.failures.length, 0);
+
+    const deleted = world.store.deleteSession({ date: YESTERDAY });
+    await settle(world, null, "own column order, session delete");
+    assert.equal(await deleted, true);
+    assert.equal(world.sheetSession(YESTERDAY).length, 0);
+    lifter.expected.delete(YESTERDAY);
+    lifter.checkSheet("own column order, session delete");
+  },
+
+  async "columns moved in the sheet are picked up, not written through"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    // The lifter swaps the Reps and Weight columns in Google Sheets while the
+    // log still holds the old layout.
+    for (const row of world.sheet.values) {
+      [row[2], row[3]] = [row[3], row[2]];
+    }
+    lifter.edit(TODAY, keyAt(world, TODAY, "Bench Press", 0), { reps: 8 });
+    lifter.add(TODAY, "Back Squat", { reps: 3, weight: 110 });
+    await settle(world, lifter, "columns moved");
+    lifter.checkSheet("columns moved");
+    assert.deepEqual(world.sheet.values[0].slice(2, 4), ["Weight", "Reps"]);
+    assert.equal(world.failures.length, 0);
+  },
+
+  async "a sheet with no header row is never written to"() {
+    const world = createWorld({ rows: baseRows() });
+    world.sheet.values.shift();
+    const before = JSON.stringify(world.sheet.values);
+    await world.start(TODAY);
+    // The page would not offer the controls; the routes refuse regardless.
+    world.store.addSet({
+      date: TODAY,
+      liftType: "Back Squat",
+      fields: { reps: 5, weight: 100, unitType: "kg", notes: "", url: "" },
+    });
+    await world.clock.run();
+    void world.revalidate();
+    await world.clock.run();
+    assert.equal(JSON.stringify(world.sheet.values), before);
+    assert.equal(getSyncSummary(world.store.getState()).pending, 0);
+    assert.equal(world.failures.length, 1);
   },
 
   async "changes made offline are sent when the connection returns"() {
@@ -1002,6 +1089,8 @@ function dumpState(world) {
 async function fuzz(seed) {
   const world = createWorld({
     rows: baseRows(),
+    // Every other run is on a sheet laid out the lifter's own way.
+    header: seed % 2 ? HEADER : OWN_ORDER,
     seed,
     faults: {
       rates: {

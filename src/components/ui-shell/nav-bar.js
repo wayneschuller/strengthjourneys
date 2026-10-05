@@ -32,7 +32,10 @@ import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useTheme } from "next-themes";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
-import { getRepeatImportHref } from "@/lib/import/import-sources";
+import {
+  getLastImportSourcePhrase,
+  getRepeatImportHref,
+} from "@/lib/import/import-sources";
 
 import {
   Tooltip,
@@ -178,7 +181,7 @@ export function NavBar() {
               </TooltipTrigger>
               <TooltipContent>
                 {hasImportRitual
-                  ? `Last used ${importProfile.lastSourceName}. Update from there, switch to any supported format, or export your SJ data.`
+                  ? `Your last import came from ${getLastImportSourcePhrase(importProfile)}. Update from there, switch to any supported format, or export your SJ data.`
                   : "Import from any supported app or spreadsheet, or export your Strength Journeys data."}
               </TooltipContent>
             </Tooltip>
@@ -204,8 +207,9 @@ export function NavBar() {
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Last used {importProfile.lastSourceName}. Upload that or any
-                  other supported export.
+                  Your last import came from{" "}
+                  {getLastImportSourcePhrase(importProfile)}. Upload a newer
+                  file from there or any other supported export.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

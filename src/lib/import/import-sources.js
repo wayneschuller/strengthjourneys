@@ -95,6 +95,16 @@ export function getRepeatImportHref(profile, surface = "repeat-import") {
   return `/import?${params.toString()}`;
 }
 
+// How to name the last import's source in a sentence. A lifter who uploaded
+// their own Strength Journeys export is already in Strength Journeys, so the
+// bare name reads as the app rather than as a file they brought in.
+export function getLastImportSourcePhrase(profile) {
+  if (profile?.lastSourceId === "strength-journeys") {
+    return "a Strength Journeys export";
+  }
+  return profile?.lastSourceName || "another app";
+}
+
 export function formatWorkoutFreshnessDate(date, locale = undefined) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return null;
   const [year, month, day] = date.split("-").map(Number);

@@ -23,6 +23,8 @@ import { gaTrackHomeImportNudge } from "@/lib/analytics/analytics";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
   formatWorkoutFreshnessDate,
+  getLastImportSourcePhrase,
+  getLatestImportedWorkoutDate,
   getRepeatImportHref,
 } from "@/lib/import/import-sources";
 import {
@@ -100,10 +102,14 @@ export function HomeImportMergeNudge() {
   ]);
 
   if (shouldShowFreshness) {
+    // The date is the newest session in the sheet itself. The profile only
+    // knows the newest date in an uploaded file, which falls behind as soon as
+    // the lifter logs a session here.
     const freshnessDate = formatWorkoutFreshnessDate(
-      importProfile.latestImportedWorkoutDate,
+      getLatestImportedWorkoutDate(parsedData) ||
+        importProfile.latestImportedWorkoutDate,
     );
-    const sourceName = importProfile.lastSourceName || "your last source";
+    const sourcePhrase = getLastImportSourcePhrase(importProfile);
 
     return (
       <AppBanner tint="blue">
@@ -112,12 +118,12 @@ export function HomeImportMergeNudge() {
             <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
             <span className="font-semibold">
               {freshnessDate
-                ? `Training data through ${freshnessDate}.`
+                ? `Your log runs through ${freshnessDate}.`
                 : "Keep your training timeline current."}
             </span>{" "}
             <span>
-              Last used {sourceName}; upload that again or switch to any
-              supported app or spreadsheet whenever you like.
+              Your last import came from {sourcePhrase}. Upload a newer file
+              from there, or bring in any supported app or spreadsheet.
             </span>
           </AppBannerMessage>
           <AppBannerActions className="flex-row flex-wrap">

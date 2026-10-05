@@ -3,10 +3,16 @@
 // StrongLifts changed from workout-wide rows to one exercise per row, so both
 // layouts remain supported to avoid stranding older training histories.
 // Follows the parser contract in import-dispatcher.js.
+//
+// One row holds several sets in both layouts, so what is counted as left out
+// is a set, not a row: each cell where reps were written down that could not
+// become an entry. A set column left blank was never a set.
 
 import { requireImportSource } from "@/lib/import/import-sources";
 import {
+  countSkip,
   findColumn,
+  getSetSkipReason,
   isValidLiftWeight,
   normalizeExportLiftType,
   normalizeHeaderCell,
@@ -191,7 +197,34 @@ function isStrongliftsExport(headers) {
   return hasLegacyLayout || hasCurrentLayout;
 }
 
-function parseCurrentStrongliftsData(data, headers) {
+// Each exercise carries its load twice, in kilograms and in pounds, with only
+// the lifter's own unit filled in. Take the one that holds a usable load.
+// When neither does, hand back whatever was written so the skip reason can
+// tell an empty cell from a zero.
+function pickWeight(row, block, liftType) {
+  const weightKg =
+    block.weightKgIndex >= 0
+      ? parseLeadingNumber(row[block.weightKgIndex])
+      : null;
+  const weightLb =
+    block.weightLbIndex >= 0
+      ? parseLeadingNumber(row[block.weightLbIndex])
+      : null;
+
+  if (isValidLiftWeight(liftType, weightKg)) {
+    return { weight: weightKg, unitType: "kg" };
+  }
+  if (isValidLiftWeight(liftType, weightLb)) {
+    return { weight: weightLb, unitType: "lb" };
+  }
+  return { weight: weightKg ?? weightLb, unitType: null };
+}
+
+function isBlankCell(value) {
+  return String(value ?? "").trim() === "";
+}
+
+function parseCurrentStrongliftsData(data, headers, skippedByReason) {
   const dateColumnIndex = headers.findIndex((header) => {
     const normalized = normalizeHeaderCell(header);
     return normalized === "date" || normalized.startsWith("date (");
@@ -209,7 +242,6 @@ function parseCurrentStrongliftsData(data, headers) {
     const date = normalizeStrongliftsDate(row[dateColumnIndex], dayFirst);
     const rawExerciseName = String(row[exerciseColumnIndex] || "").trim();
     const liftType = normalizeExportLiftType(rawExerciseName);
-    if (!date || !liftType) continue;
 
     const notes =
       notesColumnIndex >= 0
@@ -217,27 +249,16 @@ function parseCurrentStrongliftsData(data, headers) {
         : undefined;
 
     for (const block of setBlocks) {
+      if (isBlankCell(row[block.repsIndex])) continue;
+
       const reps = parseLeadingInteger(row[block.repsIndex]);
-      const weightKg =
-        block.weightKgIndex >= 0
-          ? parseLeadingNumber(row[block.weightKgIndex])
-          : null;
-      const weightLb =
-        block.weightLbIndex >= 0
-          ? parseLeadingNumber(row[block.weightLbIndex])
-          : null;
+      const { weight, unitType } = pickWeight(row, block, liftType);
 
-      let weight = null;
-      let unitType = null;
-      if (isValidLiftWeight(liftType, weightKg)) {
-        weight = weightKg;
-        unitType = "kg";
-      } else if (isValidLiftWeight(liftType, weightLb)) {
-        weight = weightLb;
-        unitType = "lb";
+      const skipReason = getSetSkipReason({ date, liftType, reps, weight });
+      if (skipReason) {
+        countSkip(skippedByReason, skipReason);
+        continue;
       }
-
-      if (!reps || reps <= 0 || !isValidLiftWeight(liftType, weight)) continue;
 
       parsedData.push({
         date,
@@ -254,7 +275,7 @@ function parseCurrentStrongliftsData(data, headers) {
   return parsedData;
 }
 
-function parseLegacyStrongliftsData(data, headers) {
+function parseLegacyStrongliftsData(data, headers, skippedByReason) {
   const dateColumnIndex = findColumn(headers, "Date");
   const noteColumnIndex = findColumn(headers, "Note", "Notes");
   const blocks = buildExerciseBlocks(headers);
@@ -266,7 +287,6 @@ function parseLegacyStrongliftsData(data, headers) {
     if (!row || row.length === 0) continue;
 
     const date = normalizeStrongliftsDate(row[dateColumnIndex], dayFirst);
-    if (!date) continue;
 
     const workoutNote =
       noteColumnIndex >= 0
@@ -274,36 +294,22 @@ function parseLegacyStrongliftsData(data, headers) {
         : undefined;
 
     for (const block of blocks) {
+      // A workout with fewer exercises leaves its later blocks empty.
       const rawExerciseName = String(row[block.exerciseIndex] || "").trim();
       if (!rawExerciseName) continue;
 
       const liftType = normalizeExportLiftType(rawExerciseName);
-      if (!liftType) continue;
-
-      const weightKg =
-        block.weightKgIndex >= 0
-          ? parseLeadingNumber(row[block.weightKgIndex])
-          : null;
-      const weightLb =
-        block.weightLbIndex >= 0
-          ? parseLeadingNumber(row[block.weightLbIndex])
-          : null;
-
-      let weight = null;
-      let unitType = null;
-      if (isValidLiftWeight(liftType, weightKg)) {
-        weight = weightKg;
-        unitType = "kg";
-      } else if (isValidLiftWeight(liftType, weightLb)) {
-        weight = weightLb;
-        unitType = "lb";
-      }
-
-      if (!isValidLiftWeight(liftType, weight)) continue;
+      const { weight, unitType } = pickWeight(row, block, liftType);
 
       for (const setIndex of block.setIndices) {
+        if (isBlankCell(row[setIndex])) continue;
+
         const reps = parseLeadingInteger(row[setIndex]);
-        if (!reps || reps <= 0) continue;
+        const skipReason = getSetSkipReason({ date, liftType, reps, weight });
+        if (skipReason) {
+          countSkip(skippedByReason, skipReason);
+          continue;
+        }
 
         parsedData.push({
           date,
@@ -326,9 +332,10 @@ function parseStrongliftsData(data) {
   const hasCurrentLayout =
     findColumn(headers, "Exercise") >= 0 &&
     buildCurrentSetBlocks(headers).length > 0;
+  const skippedByReason = {};
   const parsedData = hasCurrentLayout
-    ? parseCurrentStrongliftsData(data, headers)
-    : parseLegacyStrongliftsData(data, headers);
+    ? parseCurrentStrongliftsData(data, headers, skippedByReason)
+    : parseLegacyStrongliftsData(data, headers, skippedByReason);
 
-  return { entries: parsedData };
+  return { entries: parsedData, skippedByReason };
 }

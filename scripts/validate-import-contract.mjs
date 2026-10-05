@@ -11,7 +11,8 @@
  * rows follow the shape of real exports we have studied. Wodify, BTWB and
  * TurnKey rows are built from each parser's own reading of the format,
  * because we hold no real export of those three; their counts pin what the
- * parser does today, which is not the same as proving it right.
+ * parser does today, which is not the same as proving it right, and none of
+ * the three yet says why it leaves a row out.
  */
 
 import assert from "node:assert/strict";
@@ -71,7 +72,8 @@ const { getSetSkipReason } =
 
 // One or more files per format id. `count` is the sets a file should yield,
 // `skipped` the reasons it should report, or null for a parser that does not
-// yet count its skips. Rows are deliberately out of date order.
+// yet count its skips, and `workoutCount` the workouts it should find when
+// the format marks them. Rows are deliberately out of date order.
 const FIXTURES = {
   hevy: [
     {
@@ -103,30 +105,37 @@ Upper,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Barbell),,,0,norma
       name: "legacy layout, one row per workout",
       csv: `Date,Note,Workout,Body Weight,Exercise 1,Weight (KG),Weight (LB),Set 1,Set 2,Set 3,Set 4,Set 5,Exercise 2,Weight (KG),Weight (LB),Set 1,Set 2,Set 3,Set 4,Set 5
 18/03/2015,"",B,84KG,Squat,62.5,140,5,5,5,5,5,Overhead press,30,65,5,5,5,5,5
-16/03/2015,"",A,84KG,Squat,60,130,5,5,5,5,5,Bench press,40,90,5,5,5,5,5
+16/03/2015,"",A,84KG,Squat,60,130,5,5,5,4,0,Bench press,,,5,5,,,
+bad date,"",A,84KG,Squat,60,130,5,5,,,,,,,,,,,
 `,
-      count: 20,
-      skipped: null,
+      // Sets are counted, not rows: a failed set written as 0, two bench sets
+      // with no load beside them, and two sets under a date that is not one.
+      // Blank set cells were never sets.
+      count: 14,
+      skipped: { missingReps: 1, missingWeight: 2, invalidDate: 2 },
     },
     {
       name: "current layout, one row per exercise",
       csv: `Date (yyyy/mm/dd),Workout Name,Exercise,Set 1 (Reps),Set 1 (KG),Set 2 (Reps),Set 2 (KG),Set 3 (Reps),Set 3 (KG),Note
 2025/03/04,Workout B,Deadlift,5,100,,,,,
-2025/03/02,Workout A,Squat,5,60,5,60,5,60,Easy
+2025/03/02,Workout A,Squat,5,60,5,60,5,0,Easy
 `,
-      count: 4,
-      skipped: null,
+      count: 3,
+      skipped: { invalidWeight: 1 },
     },
   ],
   strong: [
     {
       name: "one row per set",
       csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2024-03-04 18:05:11,Lower A,1h 2m,Squat (Barbell),W,40,5,0,0,,Felt fresh,
 2024-03-04 18:05:11,Lower A,1h 2m,Squat (Barbell),1,60,5,0,0,,Felt fresh,
+2024-03-04 18:05:11,Lower A,1h 2m,Squat (Barbell),Rest Timer,,,,120,,Felt fresh,
 2024-03-04 18:05:11,Lower A,1h 2m,Squat (Barbell),2,100,5,0,0,Belt on,Felt fresh,8
 2024-03-04 18:05:11,Lower A,1h 2m,Squat (Barbell),3,"102,5",5,0,0,,Felt fresh,8.5
 2024-03-04 18:05:11,Lower A,1h 2m,Bench Press (Dumbbell),1,30,10,0,0,,Felt fresh,
 2024-03-04 18:05:11,Lower A,1h 2m,Pull Up,1,0,8,0,0,,Felt fresh,
+2024-03-04 18:05:11,Lower A,1h 2m,Leg Press,1,0,10,0,0,,Felt fresh,
 2024-03-04 18:05:11,Lower A,1h 2m,Plank,1,0,0,0,60,,Felt fresh,
 2024-03-04 18:05:11,Lower A,1h 2m,Running,1,0,0,5,1500,,Felt fresh,
 2024-03-02 07:30:00,Upper A,45m,Overhead Press (Barbell),1,20,5,0,0,,,
@@ -136,8 +145,18 @@ Upper,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Barbell),,,0,norma
 not a date,Upper A,45m,Squat (Barbell),1,100,5,0,0,,,
 2024-03-06 19:00:00,Lower B,50m,Deadlift (Barbell),1,140,3,0,0,,,9
 `,
-      count: 7,
-      skipped: null,
+      // A warm-up marked W is a set. The rest timer row is not one, so it is
+      // neither imported nor counted. Plank and the run are timed work.
+      count: 8,
+      skipped: {
+        unsupportedDurationOrDistance: 2,
+        invalidWeight: 1,
+        missingReps: 1,
+        missingWeight: 1,
+        missingExercise: 1,
+        invalidDate: 1,
+      },
+      workoutCount: 3,
     },
   ],
   wodify: [
@@ -351,6 +370,9 @@ for (const format of IMPORT_FORMATS) {
     // (IMPORT_SKIP_REASON_LABELS in import-workflow-section.js).
     const { diagnostics } = result;
     assert.deepEqual(diagnostics.skippedByReason, fixture.skipped, label);
+    if (fixture.workoutCount !== undefined) {
+      assert.equal(diagnostics.workoutCount, fixture.workoutCount, label);
+    }
     for (const reason of Object.keys(diagnostics.skippedByReason)) {
       assert.ok(KNOWN_SKIP_REASONS.has(reason), `${label} reason ${reason}`);
     }

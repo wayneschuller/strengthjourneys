@@ -5,12 +5,17 @@
 // most likely unit from common barbell warm-up/loading patterns and default to
 // pounds if the file is ambiguous. Not the StrongLifts 5x5 app, which has its
 // own parser. Follows the parser contract in import-dispatcher.js.
+//
+// Besides sets, the file holds cardio and timed work (no reps, a distance or
+// a number of seconds) and, in newer exports, the rest between sets as a row
+// of its own. The first is counted as left out. The second was never a set.
 
 import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
+  countSkip,
   findExactColumn,
-  isValidLiftWeight,
+  getSetSkipReason,
   normalizeExportLiftType,
   parseLeadingInteger,
   parseLeadingNumber,
@@ -97,10 +102,18 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
 function parseStrongData(data) {
   const headers = data[0] || [];
   const dateColumnIndex = findExactColumn(headers, ["Date"]);
+  const workoutNameColumnIndex = findExactColumn(headers, ["Workout Name"]);
   const exerciseNameColumnIndex = findExactColumn(headers, ["Exercise Name"]);
+  const setOrderColumnIndex = findExactColumn(headers, ["Set Order"]);
   const weightHeader = findHeaderByPrefix(headers, ["Weight"]);
   const weightColumnIndex = weightHeader ? headers.indexOf(weightHeader) : -1;
   const repsColumnIndex = findExactColumn(headers, ["Reps"]);
+  const distanceColumnIndex = headers.indexOf(
+    findHeaderByPrefix(headers, ["Distance"]),
+  );
+  const secondsColumnIndex = headers.indexOf(
+    findHeaderByPrefix(headers, ["Seconds"]),
+  );
   const notesColumnIndex = findExactColumn(headers, ["Notes"]);
   const workoutNotesColumnIndex = findExactColumn(headers, ["Workout Notes"]);
   const rpeColumnIndex = findExactColumn(headers, ["RPE"]);
@@ -109,18 +122,40 @@ function parseStrongData(data) {
     extractUnitFromHeader(weightHeader) ||
     inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex);
   const parsedData = [];
+  const skippedByReason = {};
+  const acceptedWorkouts = new Set();
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row || row.length === 0) continue;
+    if (!row || row.length === 0 || row.every((cell) => cell === "")) continue;
+
+    // The rest between two sets, not a set: neither imported nor counted.
+    const setOrder = String(row[setOrderColumnIndex] ?? "").trim();
+    if (/^rest timer$/i.test(setOrder)) continue;
 
     const date = normalizeStrongDate(row[dateColumnIndex]);
     const liftType = normalizeExportLiftType(row[exerciseNameColumnIndex]);
     const reps = parseLeadingInteger(row[repsColumnIndex]);
     const weight = parseLeadingNumber(row[weightColumnIndex]);
 
-    if (!date || !liftType) continue;
-    if (!reps || reps <= 0 || !isValidLiftWeight(liftType, weight)) continue;
+    const skipReason = getSetSkipReason({
+      date,
+      liftType,
+      reps,
+      weight,
+      isDurationOrDistance:
+        parseLeadingNumber(row[distanceColumnIndex]) > 0 ||
+        parseLeadingNumber(row[secondsColumnIndex]) > 0,
+    });
+    if (skipReason) {
+      countSkip(skippedByReason, skipReason);
+      continue;
+    }
+
+    // Every set of a workout repeats its start time and its name.
+    acceptedWorkouts.add(
+      `${String(row[dateColumnIndex] || "").trim()}|${String(row[workoutNameColumnIndex] || "").trim()}`,
+    );
 
     parsedData.push({
       date,
@@ -138,5 +173,10 @@ function parseStrongData(data) {
     });
   }
 
-  return { entries: parsedData };
+  return {
+    entries: parsedData,
+    skippedByReason,
+    workoutCount: acceptedWorkouts.size,
+    unitType,
+  };
 }

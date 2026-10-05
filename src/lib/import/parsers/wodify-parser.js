@@ -5,14 +5,22 @@
 // - public/help-center documented exports where the set/rep/load data is packed
 //   into `Result` or `Fully Formatted Result`
 //
-// Follows the parser contract in import-dispatcher.js. It does not yet say why
-// it leaves a row out, so its imports carry no skip counts.
+// Follows the parser contract in import-dispatcher.js.
+//
+// One row holds several sets, so what is counted as left out is sets: the
+// row's own set count when it has one, otherwise one. The legacy layout is
+// checked against a real export, where the only sets left out are two logged
+// at 0 kg. The public layout, and the reasons given for rows that are not
+// weightlifting (a metcon's time, say), follow Wodify's documentation only.
 
 import { normalizeDateInput } from "@/lib/date-utils";
 import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
+  countSkip,
   findExactColumn,
+  getSetSkipReason,
+  isDistanceOrTimeText,
   isValidLiftWeight,
   normalizeLiftTypeNames,
   parseLeadingInteger,
@@ -78,24 +86,33 @@ function parseUnit(value) {
   return null;
 }
 
-function parseResultString(resultText, fallbackUnitType, liftType) {
+// Reads "3 x 5 @ 100 kg" into its numbers, or null when the text is not a
+// sets x reps @ load result. The caller decides whether they make a set.
+function parseResultString(resultText, fallbackUnitType) {
   const normalized = String(resultText || "").trim();
   if (!normalized) return null;
 
   const standardMatch = normalized.match(
     /(\d+)\s*x\s*(\d+)\s*@\s*([\d.]+)(?:\s*(kg|lb|lbs))?/i,
   );
-  if (standardMatch) {
-    const sets = parseLeadingInteger(standardMatch[1]);
-    const reps = parseLeadingInteger(standardMatch[2]);
-    const weight = parseLeadingNumber(standardMatch[3]);
-    const unitType = parseUnit(standardMatch[4]) || fallbackUnitType;
-    if (sets && reps && isValidLiftWeight(liftType, weight) && unitType) {
-      return { sets, reps, weight, unitType };
-    }
-  }
+  if (!standardMatch) return null;
 
-  return null;
+  return {
+    sets: parseLeadingInteger(standardMatch[1]),
+    reps: parseLeadingInteger(standardMatch[2]),
+    weight: parseLeadingNumber(standardMatch[3]),
+    unitType: parseUnit(standardMatch[4]) || fallbackUnitType,
+  };
+}
+
+function isCompleteResult(liftType, result) {
+  return Boolean(
+    result &&
+    result.sets &&
+    result.reps &&
+    isValidLiftWeight(liftType, result.weight) &&
+    result.unitType,
+  );
 }
 
 // Parse warmup/buildup sets from freeform Wodify Notes text.
@@ -242,23 +259,22 @@ function parseWodifyData(data) {
   ]);
 
   const parsedData = [];
+  const skippedByReason = {};
 
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    if (!row || row.length === 0) continue;
+    if (!row || row.length === 0 || row.every((cell) => cell === "")) continue;
 
-    const date = normalizeDateInput(row[dateColumnIndex], "en-US");
-    if (!date) continue;
-
-    const rawLiftType = String(row[movementColumnIndex] || "").trim();
-    if (!rawLiftType) continue;
-
+    // A total is a sum Wodify worked out across lifts, not a set anyone
+    // lifted, so it is neither imported nor counted.
     const performanceType = String(row[performanceTypeColumnIndex] || "")
       .trim()
       .toLowerCase();
     if (performanceType && performanceType.includes("total")) continue;
 
-    const liftType = normalizeLiftTypeNames(rawLiftType);
+    const date = normalizeDateInput(row[dateColumnIndex], "en-US");
+    const rawLiftType = String(row[movementColumnIndex] || "").trim();
+    const liftType = rawLiftType ? normalizeLiftTypeNames(rawLiftType) : null;
     const notes = buildNotes(
       row[notesColumnIndex],
       row[prDescriptionColumnIndex],
@@ -271,29 +287,44 @@ function parseWodifyData(data) {
     const weight = parseLeadingNumber(row[weightColumnIndex]);
     const rawNotes = String(row[notesColumnIndex] || "").trim();
 
-    let mainSets = null;
-    let mainUnitType = unitTypeFromColumn;
+    // The numeric columns first, then the result text. Whichever is complete
+    // gives the main sets; when neither is, the one that offered anything is
+    // still what the skip reason is read from.
+    const fromColumns = { sets, reps, weight, unitType: unitTypeFromColumn };
+    const fromResult = parseResultString(
+      row[resultColumnIndex],
+      unitTypeFromColumn,
+    );
+    const mainSets = isCompleteResult(liftType, fromColumns)
+      ? fromColumns
+      : isCompleteResult(liftType, fromResult)
+        ? fromResult
+        : null;
+    const mainUnitType = mainSets?.unitType ?? unitTypeFromColumn;
 
-    if (
-      sets &&
-      reps &&
-      isValidLiftWeight(liftType, weight) &&
-      unitTypeFromColumn
-    ) {
-      mainSets = { sets, reps, weight, unitType: unitTypeFromColumn };
-    } else {
-      const parsedResult = parseResultString(
-        row[resultColumnIndex],
-        unitTypeFromColumn,
+    // Reps and a load can still fail to make sets, for want of a set count
+    // or of a unit for the load.
+    const candidate = mainSets ?? fromResult ?? fromColumns;
+    const skipReason =
+      getSetSkipReason({
+        date,
         liftType,
+        reps: candidate.reps,
+        weight: candidate.weight,
+        // A metcon is scored by the clock, not in sets of a lift.
+        isDurationOrDistance: isDistanceOrTimeText(
+          row[resultColumnIndex] ?? "",
+        ),
+      }) ??
+      (mainSets ? null : candidate.unitType ? "missingReps" : "missingWeight");
+    if (skipReason) {
+      countSkip(
+        skippedByReason,
+        skipReason,
+        candidate.sets > 0 ? candidate.sets : 1,
       );
-      if (parsedResult) {
-        mainSets = parsedResult;
-        mainUnitType = parsedResult.unitType;
-      }
+      continue;
     }
-
-    if (!mainSets) continue;
 
     // Parse warmup/buildup sets from the Notes column (added before top set)
     const warmups = parseWarmupNotes(
@@ -329,5 +360,5 @@ function parseWodifyData(data) {
     );
   }
 
-  return { entries: parsedData };
+  return { entries: parsedData, skippedByReason };
 }

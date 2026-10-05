@@ -622,9 +622,10 @@ export function getSetSkipReason({
   return null;
 }
 
-// Adds one to a parser's count of sets left out for `reason`.
-export function countSkip(skippedByReason, reason) {
-  skippedByReason[reason] = (skippedByReason[reason] || 0) + 1;
+// Adds to a parser's count of sets left out for `reason`. One by default;
+// `sets` when one row of the export stood for several.
+export function countSkip(skippedByReason, reason, sets = 1) {
+  skippedByReason[reason] = (skippedByReason[reason] || 0) + sets;
 }
 
 // -- Reading an app's export -------------------------------------------------

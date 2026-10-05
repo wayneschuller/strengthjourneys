@@ -3,12 +3,20 @@
 // One row per assigned exercise, with the sets, reps and weight a coach
 // assigned and whatever the lifter recorded doing instead. Each row is
 // expanded into one entry per set. Follows the parser contract in
-// import-dispatcher.js. It does not yet say why it leaves a row out, so its
-// imports carry no skip counts.
+// import-dispatcher.js.
+//
+// What counts as left out, checked against a real five-year export: an
+// exercise the lifter did whose numbers we cannot read. That is mostly a
+// coach's prescription written as free text ("work up to a heavy 3 to 5"),
+// which has no reps to read, and an exercise assigned by RPE or left at zero
+// with no load recorded against it. A workout never completed, or an exercise
+// marked missed, was not trained, so it is neither imported nor counted.
 
 import { requireImportSource } from "@/lib/import/import-sources";
 import { devLog } from "@/lib/processing-utils";
 import {
+  countSkip,
+  getSetSkipReason,
   isValidLiftWeight,
   normalizeDecimalComma,
   normalizeLiftTypeNames,
@@ -41,6 +49,8 @@ function parseTurnKeyData(data) {
   const units_COL = columnNames.indexOf("weight_units");
 
   let parsedData = [];
+  const skippedByReason = {};
+  const acceptedWorkouts = new Set();
 
   data.slice(1).forEach((row) => {
     if (!row || row[0] === null) {
@@ -56,11 +66,19 @@ function parseTurnKeyData(data) {
     // Give up on this row if missed_COL is true
     if (row[missed_COL] === "TRUE") return;
 
-    // Give up on this row if there are no assigned reps
-    // Happens when a BLOC coach leaves comments in the web app
-    if (isNaN(parseInt(row[assigned_reps_COL]), 10)) {
-      return;
-    }
+    // One row stands for this many sets, whether they are imported or not
+    // This makes no difference to the graph, but it benefits a user wanting to convert their TurnKey data to our bespoke format
+    // It may help with some achievements and tonnage count in a future feature
+    let sets = 1;
+    if (parseInt(row[assigned_sets_COL], 10) > 1)
+      sets = parseInt(row[assigned_sets_COL], 10);
+    if (parseInt(row[actual_sets_COL], 10) > 1)
+      sets = parseInt(row[actual_sets_COL], 10);
+
+    // No assigned reps happens when a BLOC coach writes the prescription as
+    // a comment in the web app. There is no number to read, so the reps stay
+    // missing even if something sits in the actual columns.
+    const hasAssignedReps = !isNaN(parseInt(row[assigned_reps_COL], 10));
 
     let lifted_reps = parseInt(row[assigned_reps_COL], 10);
     let lifted_weight = parseFloat(
@@ -70,32 +88,41 @@ function parseTurnKeyData(data) {
     // Override if there is an actual_reps and actual_weight
     // This happens when the person lifts different to what was assigned by their coach
     if (
-      isFinite(parseInt(row[actual_reps_COL]), 10) &&
+      isFinite(parseInt(row[actual_reps_COL], 10)) &&
       isFinite(parseFloat(normalizeDecimalComma(row[actual_weight_COL])))
     ) {
       lifted_reps = parseInt(row[actual_reps_COL], 10);
       lifted_weight = parseFloat(normalizeDecimalComma(row[actual_weight_COL]));
     }
 
-    let unitType = row[units_COL]; // Record the units type global for later. (we assume it won't change in the data)
+    let unitType = row[units_COL]; // Units are stated per row, and a long history can hold both
 
     const liftURL = `https://app.turnkey.coach/workout/${row[workout_id_COL]}`;
 
     const rawLiftType = row[exercise_name_COL];
     const liftType = normalizeLiftTypeNames(rawLiftType);
 
-    if (isNaN(lifted_reps) || lifted_reps === 0) return;
-    if (!isValidLiftWeight(liftType, lifted_weight)) return;
+    // TurnKey writes 0 where no load was entered, as it does for an exercise
+    // assigned by RPE. That is a missing load, not a zero one, unless the
+    // lift is one that carries none.
+    const noLoadEntered = !isFinite(lifted_weight) || lifted_weight === 0;
+    const skipReason = getSetSkipReason({
+      date: row[workout_date_COL],
+      liftType,
+      reps: hasAssignedReps ? lifted_reps : null,
+      weight:
+        noLoadEntered && !isValidLiftWeight(liftType, lifted_weight)
+          ? null
+          : lifted_weight,
+    });
+    if (skipReason) {
+      countSkip(skippedByReason, skipReason, sets);
+      return;
+    }
+
+    acceptedWorkouts.add(row[workout_id_COL]);
 
     // Expand TurnKey sets into separate liftEntry tuples
-    // This makes no difference to the graph, but it benefits a user wanting to convert their TurnKey data to our bespoke format
-    // It may help with some achievements and tonnage count in a future feature
-    let sets = 1;
-    if (parseInt(row[assigned_sets_COL], 10) > 1)
-      sets = parseInt(row[assigned_sets_COL], 10);
-    if (parseInt(row[actual_sets_COL], 10) > 1)
-      sets = parseInt(row[actual_sets_COL], 10);
-
     for (let i = 1; i <= sets; i++) {
       let notes = `Set ${i} of ${sets}`;
       if (sets === 1) notes = undefined; // No notes for a single set
@@ -112,5 +139,9 @@ function parseTurnKeyData(data) {
     }
   });
 
-  return { entries: parsedData };
+  return {
+    entries: parsedData,
+    skippedByReason,
+    workoutCount: acceptedWorkouts.size,
+  };
 }

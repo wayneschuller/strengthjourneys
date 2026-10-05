@@ -7,12 +7,13 @@
  * it walks the dispatcher's own list, so a format added without a fixture
  * here fails the run.
  *
- * Every fixture is synthetic. Hevy, Strong, StrongLifts, Fitbod and FitNotes
- * rows follow the shape of real exports we have studied. Wodify, BTWB and
- * TurnKey rows are built from each parser's own reading of the format,
- * because we hold no real export of those three; their counts pin what the
- * parser does today, which is not the same as proving it right, and none of
- * the three yet says why it leaves a row out.
+ * Every fixture is synthetic: invented rows under each format's real column
+ * headings. Hevy, Strong, StrongLifts, Fitbod, FitNotes, TurnKey and Wodify's
+ * legacy layout follow the shape of real exports we have studied. BTWB and
+ * Wodify's public layout are built from the parser's own reading of the
+ * format, because we hold no real export of either; their counts pin what
+ * the parser does today, which is not the same as proving it right, and BTWB
+ * does not yet say why it leaves a line out.
  */
 
 import assert from "node:assert/strict";
@@ -162,18 +163,19 @@ not a date,Upper A,45m,Squat (Barbell),1,100,5,0,0,,,
   wodify: [
     {
       name: "legacy layout, numeric columns",
-      csv: `Date,Name(21),Sets,Reps,Weight,UOMLabel,Notes,Text,Description,Performance Result Type Label,Fully Formatted Result
-03/04/2024,Back Squat,3,5,100,kg,"60, 80, 5@90kg",,Build to a heavy five,Weight,3 x 5 @ 100 kg
-03/04/2024,Bench Press,1,3,185,lbs,poor form,New 3RM,,Weight,1 x 3 @ 185 lbs
-03/04/2024,Deadlift,,,,kg,,,,Weight,2 x 2 @ 140 kg
-03/04/2024,Fran,,,,,,,,Time,3:45
-03/06/2024,Back Squat,,,,,,,,Total,300
-,Back Squat,1,1,120,kg,,,,Weight,1 x 1 @ 120 kg
-03/02/2024,Front Squat,1,1,0,kg,,,,Weight,1 x 1 @ 0 kg
-03/02/2024,Pull Up,1,8,0,lbs,,,,Weight,
+      csv: `Name,Name(2),Label,Public Name,Date,Sets,Reps,Weight,Rep Scheme,Notes,Is PR,Text,Result 1,Result 1Label,Result 2,Result 2Label,Fully Formatted Result,Formatted Result,UOMLabel,Performance Result Type Label,Name(21),Description
+Sam Lifter,6:00 AM,kg,Example Box,03/04/2024,3,5,100,,"60, 80, 5@90kg",False,,100,Weight,,,3 x 5 @ 100 kg,3 x 5 @ 100,kg,Weight,Back Squat,Build to a heavy five
+Sam Lifter,6:00 AM,kg,Example Box,03/04/2024,1,3,85,,poor form,True,New 3 rep max. 85 kg 03/04/2024,85,Weight,,,1 x 3 @ 85 kg,1 x 3 @ 85,kg,Weight,Bench Press,
+Sam Lifter,5:30 PM,kg,Example Box,03/02/2024,1,7,0,,,False,,0,Weight,,,1 x 7 @ 0 kg,1 x 7 @ 0,kg,Weight,Front Squat,
+Sam Lifter,5:30 PM,kg,Example Box,03/02/2024,2,2,140,,,False,,140,Weight,,,2 x 2 @ 140 kg,2 x 2 @ 140,kg,Weight,Deadlift,
+Sam Lifter,5:30 PM,kg,Example Box,,1,1,120,,,False,,120,Weight,,,1 x 1 @ 120 kg,1 x 1 @ 120,kg,Weight,Deadlift,
+Sam Lifter,5:30 PM,kg,Example Box,03/06/2024,,,,,,False,,300,Total,,,300 kg,300,kg,Total,Back Squat,
 `,
-      count: 10,
-      skipped: null,
+      // Three warm-ups read from the squat's notes, then its three sets, the
+      // bench single and two deadlift doubles. A set logged at 0 kg and a
+      // row with no date are counted. The total is a sum, not a set.
+      count: 9,
+      skipped: { invalidWeight: 1, invalidDate: 1 },
     },
     {
       name: "public layout, result text",
@@ -181,9 +183,12 @@ not a date,Upper A,45m,Squat (Barbell),1,100,5,0,0,,,
 03/05/2024,Back Squat,5 x 5 @ 225 lbs,Weightlifting,Moved well,,5x5 across
 03/07/2024,Helen,9:12,Metcon,,,
 03/01/2024,Bench Press,3 x 3 @ 100 kg,Weightlifting,,,
+03/01/2024,Deadlift,3 x 3 @ 315,Weightlifting,,,
 `,
+      // A metcon is scored by the clock. Three deadlift sets name no unit,
+      // so their load cannot be used.
       count: 8,
-      skipped: null,
+      skipped: { unsupportedDurationOrDistance: 1, missingWeight: 3 },
     },
   ],
   btwb: [
@@ -222,17 +227,24 @@ never,Back Squat,,true,false,,,,,"5 Back Squats | 100 kg"
   turnkey: [
     {
       name: "assigned and actual sets",
-      csv: `user_name,workout_id,workout_date,workout_completed,exercise_name,assigned_sets,assigned_reps,assigned_weight,actual_sets,actual_reps,actual_weight,assigned_exercise_missed,weight_units
-Sam,9001,2024-03-04,TRUE,Squat,3,5,100,,,,FALSE,kg
-Sam,9001,2024-03-04,TRUE,Bench Press,3,5,70,3,4,72.5,FALSE,kg
-Sam,9001,2024-03-04,TRUE,Deadlift,1,5,140,,,,TRUE,kg
-Sam,9002,2024-03-06,FALSE,Squat,3,5,102.5,,,,FALSE,kg
-Sam,9003,2024-03-01,TRUE,Overhead Press,1,5,"42,5",,,,FALSE,kg
-Sam,9003,2024-03-01,TRUE,Coach comment,,,,,,,FALSE,kg
-Sam,9003,2024-03-01,TRUE,Barbell Row,2,8,0,,,,FALSE,kg
+      csv: `user_name,workout_id,workout_date,workout_completed,workout_type,workout_title,tonnage,assigned_exercise_missed,exercise_name,exercise_type,exercise_text,assigned_reps,assigned_reps_type,assigned_sets,assigned_sets_type,assigned_weight,assigned_weight_type,weight_type_value,weight_units,actual_reps,actual_sets,actual_weight
+Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,FALSE,Squat,resistance,,5,standard,3,standard,100,standard,,kg,,,
+Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,FALSE,Bench Press,resistance,,5,standard,3,standard,70,standard,,kg,4,3,72.5
+Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,TRUE,Deadlift,resistance,,5,standard,1,standard,140,standard,,kg,,,
+Sam,9002,2024-03-06,FALSE,workout,Week 1 Day 2,,FALSE,Squat,resistance,,5,standard,3,standard,102.5,standard,,kg,,,
+Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Press,resistance,,5,standard,1,standard,"42,5",standard,,kg,,,
+Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Deadlift,resistance,Work up to a heavy 3 to 5,,standard,0,custom,0,standard,,kg,,,
+Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Barbell Row,resistance,,8,standard,2,standard,0,RPE,8,kg,,,
+Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Bench Press,resistance,,5,standard,2,standard,0,RPE,8,kg,5,2,95
+Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Chin-Up,resistance,,8,standard,2,standard,0,bodyweight,,kg,,,
 `,
-      count: 7,
-      skipped: null,
+      // One row is several sets. The missed deadlift and the workout never
+      // completed were not trained, so they are not counted. The free-text
+      // prescription has no reps to read, and the rows assigned by RPE with
+      // nothing recorded against them have no load. Chin-ups carry none.
+      count: 11,
+      skipped: { missingReps: 1, missingWeight: 2 },
+      workoutCount: 2,
     },
   ],
   fitnotes: [

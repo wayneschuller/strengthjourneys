@@ -152,7 +152,8 @@ export default async function handler(req, res) {
     // decides whether to check Drive's modifiedTime before reading the rows.
     if (res.statusCode === 304) {
       console.log(
-        `[read-sheet] unchanged: rows=${data.values?.length ?? 0} sheets=${sheetsMs}ms drive=${driveMs}ms total=${totalMs}ms`,
+        `[read-sheet] Unchanged sheet: fetched all ${data.values?.length ?? 0} rows from Google in ${sheetsMs}ms, and they matched what this browser already had. ` +
+          `Drive answered in ${driveMs}ms. If these lines are frequent and the Sheets time is high, checking Drive's modifiedTime first would save that fetch.`,
       );
     }
 

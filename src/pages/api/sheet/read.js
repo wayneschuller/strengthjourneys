@@ -317,8 +317,11 @@ async function recordSheetRead({ session, ssid, rowCount }) {
 }
 
 // One line per read, in production too, saying which way the read went and
-// where the time was spent. It is how to tell whether asking Drive first is
-// paying for itself, and whether Drive's modifiedTime keeps up with the rows.
+// where the time was spent. Every figure is this server talking to Google.
+// The other leg, browser to this server, is not what is being measured: it
+// already sends no rows when they match the browser's copy. The lines show
+// whether asking Drive first is paying for itself, and whether Drive's
+// modifiedTime keeps up with the rows.
 function logRead({
   path,
   rowCount,
@@ -330,27 +333,35 @@ function logRead({
   sendMs,
   totalMs,
 }) {
+  const tag = "[read-sheet] Server to Google:";
+
   if (path === "skipped") {
     console.log(
-      `[read-sheet] Rows fetch skipped: Drive metadata returned in ${driveMs}ms with modifiedTime unchanged since this browser's last full read, so the browser keeps the copy it has. Whole request ${totalMs}ms.`,
+      `${tag} Sheets rows fetch skipped. Google Drive answered the metadata call in ${driveMs}ms with modifiedTime unchanged, so this server never asked Google Sheets for the rows. Whole request ${totalMs}ms.`,
     );
     return;
   }
 
-  const handling = `Then ${bodyMs}ms to download and parse the rows and ${sendMs}ms to fingerprint and send them. Whole request ${totalMs}ms.`;
+  const handling = `This server then spent ${bodyMs}ms downloading and parsing the rows from Google and ${sendMs}ms fingerprinting them for the browser. Whole request ${totalMs}ms.`;
+  const rowsNote =
+    rowsState === "rows unchanged"
+      ? "they matched the browser's copy, so none were sent on to it"
+      : rowsState === "rows changed"
+        ? "they differed from the browser's copy and were sent on to it"
+        : "the browser had no copy, so they were sent on to it";
 
   if (path === "driveFirst") {
     console.log(
-      `[read-sheet] Drive asked first: metadata returned in ${driveMs}ms (modifiedTime changed), so ${rowCount} rows were fetched in a further ${sheetsMs}ms (${rowsState}). ${handling}` +
+      `${tag} Drive asked first. Google Drive answered the metadata call in ${driveMs}ms (modifiedTime changed), so this server went on to fetch ${rowCount} rows from Google Sheets in a further ${sheetsMs}ms; ${rowsNote}. ${handling}` +
         (rowsState === "rows unchanged"
-          ? " Only the timestamp had moved: usually Drive catching up with a change this browser already had."
+          ? " Only Drive's timestamp had moved: usually Drive catching up with a change the browser already had."
           : ""),
     );
     return;
   }
 
   console.log(
-    `[read-sheet] Full read (first load, or the app asked for one): Drive metadata returned in ${driveMs}ms (${modifiedState}); ${rowCount} rows fetched concurrently in ${sheetsMs}ms (${rowsState}). ${handling}` +
+    `${tag} full read (first load, or the app asked for one). Google Drive answered the metadata call in ${driveMs}ms (${modifiedState}) while Google Sheets returned ${rowCount} rows in ${sheetsMs}ms, both requested at once; ${rowsNote}. ${handling}` +
       (modifiedState === "modifiedTime unchanged" &&
       rowsState === "rows changed"
         ? " Drive's modifiedTime had not caught up with this change yet, which is why reads after a change never ask Drive first."

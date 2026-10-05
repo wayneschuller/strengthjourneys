@@ -16,7 +16,10 @@
 import { addDaysFromStr, subtractDaysFromStr } from "@/lib/date-utils";
 import { normalizeLiftTypeNames } from "@/lib/import/import-dispatcher";
 import { getImportSource } from "@/lib/import/import-sources";
-import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
+import {
+  isValidLiftWeight,
+  normalizeLiftTypeLookupKey,
+} from "@/lib/import/parsers/parser-utilities";
 import { getImportedSourceIdentity } from "@/lib/import/provenance";
 
 // How far a scheduled workout can sit from the day it was lifted and still be
@@ -25,11 +28,31 @@ import { getImportedSourceIdentity } from "@/lib/import/provenance";
 // schedule far more often than the day before.
 const SCHEDULED_DATE_OFFSETS = [1, -1, 2, -2, 3, -3];
 
+// A log holds tens of thousands of sets and a few hundred lift names, and
+// this runs while the import preview renders, so each name is worked out once.
+const comparableLiftNames = new Map();
+
+function getComparableLiftName(rawLiftType) {
+  let names = comparableLiftNames.get(rawLiftType);
+  if (!names) {
+    const liftName = normalizeLiftTypeNames(rawLiftType);
+    // A lift outside the registry keeps whatever spelling it arrived with,
+    // so names are compared the way the registry looks them up: case, accents
+    // and punctuation aside. A hand-typed "Dumbbell lateral raise" is the
+    // same lift as an app's "Dumbbell Lateral Raise".
+    names = { liftName, liftType: normalizeLiftTypeLookupKey(liftName) };
+    comparableLiftNames.set(rawLiftType, names);
+  }
+  return names;
+}
+
 function normalizeComparableEntry(entry) {
   if (!entry) return null;
 
   const date = String(entry.date || "").trim();
-  const liftType = normalizeLiftTypeNames(String(entry.liftType || "").trim());
+  const { liftName, liftType } = getComparableLiftName(
+    String(entry.liftType || "").trim(),
+  );
   const reps = Number(entry.reps) || 0;
   const numericWeight = Number(entry.weight);
   const weight = Math.round(numericWeight * 100);
@@ -41,7 +64,7 @@ function normalizeComparableEntry(entry) {
     !date ||
     !liftType ||
     !reps ||
-    !isValidLiftWeight(liftType, numericWeight)
+    !isValidLiftWeight(liftName, numericWeight)
   ) {
     return null;
   }

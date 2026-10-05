@@ -317,4 +317,29 @@ assert.equal(ownDayFirst.nearbyCount, 0);
 assert.equal(ownDayFirst.skippedCount, 3);
 assert.ok(ownDayFirst.newEntries.every((entry) => entry.date === "2026-03-02"));
 
+// A lift the registry does not know keeps the spelling it arrived with, so
+// the duplicate check sets case, accents and punctuation aside. A different
+// lift, and a different qualifier, are still different.
+const typedByHand = [lift("2026-03-02", "dumbbell lateral-raise", 12, 10)];
+const sameLift = deduplicateImportedEntries(
+  [lift("2026-03-02", "Dumbbell Lateral Raise", 12, 10)],
+  typedByHand,
+);
+assert.equal(sameLift.skippedCount, 1);
+assert.equal(sameLift.newEntries.length, 0);
+for (const otherLift of ["Dumbbell Front Raise", "Lateral Raise"]) {
+  const different = deduplicateImportedEntries(
+    [lift("2026-03-02", otherLift, 12, 10)],
+    typedByHand,
+  );
+  assert.equal(different.newEntries.length, 1, otherLift);
+}
+assert.equal(
+  deduplicateImportedEntries(
+    [lift("2026-03-02", "Bench Press (Dumbbell)", 8, 30)],
+    [lift("2026-03-02", "Bench Press", 8, 30)],
+  ).newEntries.length,
+  1,
+);
+
 console.log("Importer and recurring-profile validation passed.");

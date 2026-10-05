@@ -99,7 +99,10 @@ const BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES = {
   muscleups: "Muscle-up",
 };
 
-function normalizeLiftTypeLookupKey(liftType) {
+// A lift name with case, accents and punctuation set aside, so two spellings
+// of one name meet. The registry lookup uses it, and so does the merge's
+// duplicate check for lifts the registry does not know.
+export function normalizeLiftTypeLookupKey(liftType) {
   return String(liftType || "")
     .trim()
     .toLowerCase()

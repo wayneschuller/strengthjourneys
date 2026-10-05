@@ -12,48 +12,17 @@
 
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  buildNotes,
+  findColumn,
   isBodyweightLoadLiftName,
+  isValidCalendarDate,
   isValidLiftWeight,
-  normalizeLiftTypeNames,
-  normalizeDecimalComma,
+  normalizeExportLiftType,
+  normalizeHeaderCell,
+  parseStrictInteger,
+  parseStrictNumber,
 } from "@/lib/import/parsers/parser-utilities";
 import { buildVisibleImportProvenance } from "@/lib/import/provenance";
-
-function normalizeHeader(header) {
-  return String(header || "")
-    .replace(/^﻿/, "")
-    .trim()
-    .toLowerCase();
-}
-
-function getColumnIndex(headers, ...names) {
-  const normalizedHeaders = headers.map(normalizeHeader);
-  return normalizedHeaders.findIndex((header) => names.includes(header));
-}
-
-function parseNumber(value) {
-  const raw = normalizeDecimalComma(value);
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseInteger(value) {
-  const raw = String(value ?? "").trim();
-  if (!/^\d+$/.test(raw)) return null;
-  const parsed = Number(raw);
-  return Number.isSafeInteger(parsed) ? parsed : null;
-}
-
-function isValidCalendarDate(year, month, day) {
-  if (!year || !month || !day) return false;
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
-}
 
 // FitNotes writes an unambiguous yyyy-MM-dd, so there is no day/month order to
 // settle here as there is for a StrongLifts export.
@@ -71,33 +40,15 @@ function normalizeFitNotesDate(dateString) {
     : null;
 }
 
-function normalizeFitNotesLiftType(rawLiftType) {
-  const cleaned = String(rawLiftType || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!cleaned) return null;
-  return normalizeLiftTypeNames(cleaned);
-}
-
 // The unit is only ever stated in the weight header, never in the cell.
 function findWeightColumn(headers) {
   const index = headers.findIndex((header) =>
-    normalizeHeader(header).startsWith("weight"),
+    normalizeHeaderCell(header).startsWith("weight"),
   );
   if (index < 0) return { index: -1, unitType: null };
 
-  const header = normalizeHeader(headers[index]);
+  const header = normalizeHeaderCell(headers[index]);
   return { index, unitType: /\blbs?\b|pounds?/.test(header) ? "lb" : "kg" };
-}
-
-function buildNotes(...parts) {
-  const unique = [];
-  parts.forEach((part) => {
-    const trimmed = String(part || "").trim();
-    if (!trimmed) return;
-    if (!unique.includes(trimmed)) unique.push(trimmed);
-  });
-  return unique.length > 0 ? unique.join(" | ") : undefined;
 }
 
 function incrementReason(reasons, reason) {
@@ -105,7 +56,7 @@ function incrementReason(reasons, reason) {
 }
 
 export function isFitNotesExport(headers) {
-  const normalized = headers.map(normalizeHeader);
+  const normalized = headers.map(normalizeHeaderCell);
   return (
     normalized.includes("date") &&
     normalized.includes("exercise") &&
@@ -119,12 +70,12 @@ export function isFitNotesExport(headers) {
 export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
   const startTime = performance.now();
   const headers = data[0] || [];
-  const dateColumnIndex = getColumnIndex(headers, "date");
-  const exerciseColumnIndex = getColumnIndex(headers, "exercise");
-  const repsColumnIndex = getColumnIndex(headers, "reps");
-  const distanceColumnIndex = getColumnIndex(headers, "distance");
-  const timeColumnIndex = getColumnIndex(headers, "time");
-  const commentColumnIndex = getColumnIndex(headers, "comment", "comments");
+  const dateColumnIndex = findColumn(headers, "date");
+  const exerciseColumnIndex = findColumn(headers, "exercise");
+  const repsColumnIndex = findColumn(headers, "reps");
+  const distanceColumnIndex = findColumn(headers, "distance");
+  const timeColumnIndex = findColumn(headers, "time");
+  const commentColumnIndex = findColumn(headers, "comment", "comments");
   const { index: weightColumnIndex, unitType } = findWeightColumn(headers);
 
   const parsedData = [];
@@ -139,9 +90,9 @@ export function parseFitNotesData(data, { importedAt = new Date() } = {}) {
     sourceRows++;
 
     const date = normalizeFitNotesDate(row[dateColumnIndex]);
-    const liftType = normalizeFitNotesLiftType(row[exerciseColumnIndex]);
-    const reps = parseInteger(row[repsColumnIndex]);
-    const parsedWeight = parseNumber(row[weightColumnIndex]);
+    const liftType = normalizeExportLiftType(row[exerciseColumnIndex]);
+    const reps = parseStrictInteger(row[repsColumnIndex]);
+    const parsedWeight = parseStrictNumber(row[weightColumnIndex]);
     const weight =
       parsedWeight == null && isBodyweightLoadLiftName(liftType)
         ? 0

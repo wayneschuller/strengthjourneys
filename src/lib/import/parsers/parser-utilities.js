@@ -586,3 +586,104 @@ function getParseRepairSuggestion(kind) {
   }
   return "Check the cells shown above and use a number with kg or lb in Weight.";
 }
+
+// -- Reading an app's export -------------------------------------------------
+//
+// Helpers shared by the app-export parsers (Hevy, Strong and the rest). Each
+// parser used to keep its own copy, and the copies had drifted into two
+// readings of a number and two ways of finding a column. Both are kept, under
+// names that say which is which, because merging them would change what some
+// imports accept.
+
+// A header cell as the parsers compare it: byte-order mark gone, trimmed,
+// lower case.
+export function normalizeHeaderCell(header) {
+  return String(header || "")
+    .replace(/^﻿/, "")
+    .trim()
+    .toLowerCase();
+}
+
+// The first column whose header, compared as above, is one of `names`.
+// -1 when the export has no such column.
+export function findColumn(headers, ...names) {
+  const wanted = names.map(normalizeHeaderCell);
+  return headers.findIndex((header) =>
+    wanted.includes(normalizeHeaderCell(header)),
+  );
+}
+
+// The first of `candidates` an export uses as a header, spelled and cased
+// exactly as given. Candidates are in order of preference, so an earlier name
+// wins even when a later one sits in an earlier column.
+export function findExactColumn(headers, candidates) {
+  for (const candidate of candidates) {
+    const index = headers.indexOf(candidate);
+    if (index >= 0) return index;
+  }
+  return -1;
+}
+
+// A number where the whole cell has to be the number: "100" and "117,5" read,
+// "100kg" and a blank cell do not. Hevy, Fitbod and FitNotes are read this way.
+export function parseStrictNumber(value) {
+  const raw = normalizeDecimalComma(value);
+  if (!raw) return null;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function parseStrictInteger(value) {
+  const raw = String(value ?? "").trim();
+  if (!/^\d+$/.test(raw)) return null;
+  const parsed = Number(raw);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+}
+
+// A number read from the front of the cell, so "100kg" reads as 100. Strong,
+// StrongLifts and Wodify are read this way.
+export function parseLeadingNumber(value) {
+  const parsed = Number.parseFloat(normalizeDecimalComma(value));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function parseLeadingInteger(value) {
+  const parsed = Number.parseInt(String(value || "").trim(), 10);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+// A real day on the calendar, so "31 Feb" is turned away rather than rolled
+// over into March.
+export function isValidCalendarDate(year, month, day) {
+  if (!year || !month || !day) return false;
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+// An exercise name as an export wrote it, tidied and passed through the
+// shared normalizer. Apps name equipment in brackets: "Squat (Barbell)",
+// "Bench Press (Dumbbell)". The normalizer drops only the barbell qualifier,
+// so a dumbbell or Smith machine set stays its own lift and never joins the
+// big four. Null for a blank cell.
+export function normalizeExportLiftType(rawLiftType) {
+  const cleaned = String(rawLiftType || "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return null;
+  return normalizeLiftTypeNames(cleaned);
+}
+
+// One notes cell from whatever a row offers, blanks and repeats left out.
+export function buildNotes(...parts) {
+  const unique = [];
+  parts.forEach((part) => {
+    const trimmed = String(part || "").trim();
+    if (!trimmed) return;
+    if (!unique.includes(trimmed)) unique.push(trimmed);
+  });
+  return unique.length > 0 ? unique.join(" | ") : undefined;
+}

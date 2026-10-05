@@ -1,21 +1,16 @@
 import { normalizeDateInput } from "@/lib/date-utils";
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  buildNotes,
+  findExactColumn,
   isValidLiftWeight,
-  normalizeDecimalComma,
   normalizeLiftTypeNames,
+  parseLeadingInteger,
+  parseLeadingNumber,
 } from "@/lib/import/parsers/parser-utilities";
 
-function getColumnIndex(headers, candidates) {
-  for (const candidate of candidates) {
-    const index = headers.indexOf(candidate);
-    if (index >= 0) return index;
-  }
-  return -1;
-}
-
 function getMovementColumnIndex(headers) {
-  const explicit = getColumnIndex(headers, [
+  const explicit = findExactColumn(headers, [
     "Name(21)",
     "Component",
     "Movement",
@@ -35,16 +30,6 @@ function getMovementColumnIndex(headers) {
   return numberedNameColumns[0]?.index ?? -1;
 }
 
-function parseInteger(value) {
-  const parsed = Number.parseInt(String(value || "").trim(), 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseNumber(value) {
-  const parsed = Number.parseFloat(normalizeDecimalComma(value));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function parseUnit(value) {
   const normalized = String(value || "")
     .trim()
@@ -55,16 +40,6 @@ function parseUnit(value) {
   return null;
 }
 
-function buildNotes(...parts) {
-  const unique = [];
-  parts.forEach((part) => {
-    const trimmed = String(part || "").trim();
-    if (!trimmed) return;
-    if (!unique.includes(trimmed)) unique.push(trimmed);
-  });
-  return unique.length > 0 ? unique.join(" | ") : undefined;
-}
-
 function parseResultString(resultText, fallbackUnitType, liftType) {
   const normalized = String(resultText || "").trim();
   if (!normalized) return null;
@@ -73,9 +48,9 @@ function parseResultString(resultText, fallbackUnitType, liftType) {
     /(\d+)\s*x\s*(\d+)\s*@\s*([\d.]+)(?:\s*(kg|lb|lbs))?/i,
   );
   if (standardMatch) {
-    const sets = parseInteger(standardMatch[1]);
-    const reps = parseInteger(standardMatch[2]);
-    const weight = parseNumber(standardMatch[3]);
+    const sets = parseLeadingInteger(standardMatch[1]);
+    const reps = parseLeadingInteger(standardMatch[2]);
+    const weight = parseLeadingNumber(standardMatch[3]);
     const unitType = parseUnit(standardMatch[4]) || fallbackUnitType;
     if (sets && reps && isValidLiftWeight(liftType, weight) && unitType) {
       return { sets, reps, weight, unitType };
@@ -121,9 +96,9 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps, liftType) {
       /^(\d+)\s*x\s*(\d+)\s*@\s*([\d.]+)\s*(kg|lb|lbs)?$/i,
     );
     if (setsRepsWeightMatch) {
-      const sets = parseInteger(setsRepsWeightMatch[1]) || 1;
-      const reps = parseInteger(setsRepsWeightMatch[2]);
-      const weight = parseNumber(setsRepsWeightMatch[3]);
+      const sets = parseLeadingInteger(setsRepsWeightMatch[1]) || 1;
+      const reps = parseLeadingInteger(setsRepsWeightMatch[2]);
+      const weight = parseLeadingNumber(setsRepsWeightMatch[3]);
       const unitType = parseUnit(setsRepsWeightMatch[4]) || fallbackUnitType;
       if (reps && isValidLiftWeight(liftType, weight)) {
         for (let s = 0; s < sets; s++) {
@@ -138,8 +113,8 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps, liftType) {
       /^(\d+)\s*@\s*([\d.]+)\s*(kg|lb|lbs)?$/i,
     );
     if (repsWeightMatch) {
-      const reps = parseInteger(repsWeightMatch[1]);
-      const weight = parseNumber(repsWeightMatch[2]);
+      const reps = parseLeadingInteger(repsWeightMatch[1]);
+      const weight = parseLeadingNumber(repsWeightMatch[2]);
       const unitType = parseUnit(repsWeightMatch[3]) || fallbackUnitType;
       if (reps && isValidLiftWeight(liftType, weight)) {
         results.push({ reps, weight, unitType });
@@ -150,7 +125,7 @@ function parseWarmupNotes(notesText, fallbackUnitType, fallbackReps, liftType) {
     // Pattern: bare weight  e.g. "70", "72.5"
     const bareWeightMatch = cleaned.match(/^([\d.]+)$/);
     if (bareWeightMatch) {
-      const weight = parseNumber(bareWeightMatch[1]);
+      const weight = parseLeadingNumber(bareWeightMatch[1]);
       if (isValidLiftWeight(liftType, weight)) {
         results.push({
           reps: fallbackReps || 1,
@@ -205,31 +180,31 @@ function createSetEntries({
 export function parseWodifyData(data) {
   const startTime = performance.now();
   const headers = data[0] || [];
-  const dateColumnIndex = getColumnIndex(headers, ["Date"]);
-  const setsColumnIndex = getColumnIndex(headers, ["Sets"]);
-  const repsColumnIndex = getColumnIndex(headers, ["Reps"]);
-  const weightColumnIndex = getColumnIndex(headers, ["Weight"]);
-  const unitColumnIndex = getColumnIndex(headers, ["UOMLabel", "Label"]);
+  const dateColumnIndex = findExactColumn(headers, ["Date"]);
+  const setsColumnIndex = findExactColumn(headers, ["Sets"]);
+  const repsColumnIndex = findExactColumn(headers, ["Reps"]);
+  const weightColumnIndex = findExactColumn(headers, ["Weight"]);
+  const unitColumnIndex = findExactColumn(headers, ["UOMLabel", "Label"]);
   const movementColumnIndex = getMovementColumnIndex(headers);
-  const resultColumnIndex = getColumnIndex(headers, [
+  const resultColumnIndex = findExactColumn(headers, [
     "Fully Formatted Result",
     "Formatted Result",
     "Result",
   ]);
-  const notesColumnIndex = getColumnIndex(headers, [
+  const notesColumnIndex = findExactColumn(headers, [
     "Notes",
     "Comment",
     "Full Comment",
   ]);
-  const prDescriptionColumnIndex = getColumnIndex(headers, [
+  const prDescriptionColumnIndex = findExactColumn(headers, [
     "Text",
     "Personal Record Description",
   ]);
-  const descriptionColumnIndex = getColumnIndex(headers, [
+  const descriptionColumnIndex = findExactColumn(headers, [
     "Description",
     "Component Description",
   ]);
-  const performanceTypeColumnIndex = getColumnIndex(headers, [
+  const performanceTypeColumnIndex = findExactColumn(headers, [
     "Performance Result Type Label",
     "Performance Result Type",
     "Result Type Label",
@@ -260,9 +235,9 @@ export function parseWodifyData(data) {
     );
 
     const unitTypeFromColumn = parseUnit(row[unitColumnIndex]);
-    const sets = parseInteger(row[setsColumnIndex]);
-    const reps = parseInteger(row[repsColumnIndex]);
-    const weight = parseNumber(row[weightColumnIndex]);
+    const sets = parseLeadingInteger(row[setsColumnIndex]);
+    const reps = parseLeadingInteger(row[repsColumnIndex]);
+    const weight = parseLeadingNumber(row[weightColumnIndex]);
     const rawNotes = String(row[notesColumnIndex] || "").trim();
 
     let mainSets = null;

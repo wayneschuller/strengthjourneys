@@ -4,9 +4,12 @@
 
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  findColumn,
   isValidLiftWeight,
-  normalizeLiftTypeNames,
-  normalizeDecimalComma,
+  normalizeExportLiftType,
+  normalizeHeaderCell,
+  parseLeadingInteger,
+  parseLeadingNumber,
 } from "@/lib/import/parsers/parser-utilities";
 
 // Legacy exports use a "wide" row per workout. Header shape from a 2018 export:
@@ -23,16 +26,6 @@ import {
 //
 // Current exports use one row per exercise and pair columns such as
 // `Set 1 (Reps)` with `Set 1 (KG)`. Both layouts are pivoted into LiftEntry rows.
-
-function parseNumber(value) {
-  const parsed = Number.parseFloat(normalizeDecimalComma(value));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseInteger(value) {
-  const parsed = Number.parseInt(String(value || "").trim(), 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
 
 // Accept the MM/DD/YY legacy date, the same legacy shape written DD/MM/YYYY
 // outside the US, and the yyyy/MM/dd current date. The caller settles the
@@ -91,30 +84,6 @@ function detectDayFirstDates(data, dateColumnIndex) {
   return firstAboveTwelve && !secondAboveTwelve;
 }
 
-function normalizeHeader(header) {
-  return String(header || "")
-    .replace(/^\uFEFF/, "")
-    .trim()
-    .toLowerCase();
-}
-
-function findHeaderIndex(headers, candidates) {
-  const normalizedCandidates = new Set(candidates.map(normalizeHeader));
-  return headers.findIndex((header) =>
-    normalizedCandidates.has(normalizeHeader(header)),
-  );
-}
-
-// Bracketed equipment stays, as in the Strong parser, so a dumbbell or machine
-// variant never joins the big four. The shared normalizer drops "(Barbell)".
-function normalizeStrongliftsLiftType(rawLiftType) {
-  const cleaned = String(rawLiftType || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!cleaned) return null;
-  return normalizeLiftTypeNames(cleaned);
-}
-
 // Walk the header row and collect the column layout for each exercise block.
 // Returns an array of blocks describing where to find each exercise's name,
 // weight, and set columns. Tolerant of formats with more or fewer than 5
@@ -158,7 +127,7 @@ function buildCurrentSetBlocks(headers) {
   const blocks = new Map();
 
   headers.forEach((header, index) => {
-    const normalized = normalizeHeader(header);
+    const normalized = normalizeHeaderCell(header);
     const setMatch = normalized.match(/^set\s+(\d+)\s*(?:\(([^)]+)\)|(.*))$/);
     if (!setMatch) return;
 
@@ -192,7 +161,7 @@ function buildCurrentSetBlocks(headers) {
 }
 
 export function isStrongliftsExport(headers) {
-  const normalized = headers.map(normalizeHeader);
+  const normalized = headers.map(normalizeHeaderCell);
   const hasLegacyLayout =
     normalized.includes("date") &&
     normalized.some(
@@ -216,11 +185,11 @@ export function isStrongliftsExport(headers) {
 
 function parseCurrentStrongliftsData(data, headers) {
   const dateColumnIndex = headers.findIndex((header) => {
-    const normalized = normalizeHeader(header);
+    const normalized = normalizeHeaderCell(header);
     return normalized === "date" || normalized.startsWith("date (");
   });
-  const exerciseColumnIndex = findHeaderIndex(headers, ["Exercise"]);
-  const notesColumnIndex = findHeaderIndex(headers, ["Note", "Notes"]);
+  const exerciseColumnIndex = findColumn(headers, "Exercise");
+  const notesColumnIndex = findColumn(headers, "Note", "Notes");
   const setBlocks = buildCurrentSetBlocks(headers);
   const dayFirst = detectDayFirstDates(data, dateColumnIndex);
   const parsedData = [];
@@ -231,7 +200,7 @@ function parseCurrentStrongliftsData(data, headers) {
 
     const date = normalizeStrongliftsDate(row[dateColumnIndex], dayFirst);
     const rawExerciseName = String(row[exerciseColumnIndex] || "").trim();
-    const liftType = normalizeStrongliftsLiftType(rawExerciseName);
+    const liftType = normalizeExportLiftType(rawExerciseName);
     if (!date || !liftType) continue;
 
     const notes =
@@ -240,11 +209,15 @@ function parseCurrentStrongliftsData(data, headers) {
         : undefined;
 
     for (const block of setBlocks) {
-      const reps = parseInteger(row[block.repsIndex]);
+      const reps = parseLeadingInteger(row[block.repsIndex]);
       const weightKg =
-        block.weightKgIndex >= 0 ? parseNumber(row[block.weightKgIndex]) : null;
+        block.weightKgIndex >= 0
+          ? parseLeadingNumber(row[block.weightKgIndex])
+          : null;
       const weightLb =
-        block.weightLbIndex >= 0 ? parseNumber(row[block.weightLbIndex]) : null;
+        block.weightLbIndex >= 0
+          ? parseLeadingNumber(row[block.weightLbIndex])
+          : null;
 
       let weight = null;
       let unitType = null;
@@ -274,8 +247,8 @@ function parseCurrentStrongliftsData(data, headers) {
 }
 
 function parseLegacyStrongliftsData(data, headers) {
-  const dateColumnIndex = findHeaderIndex(headers, ["Date"]);
-  const noteColumnIndex = findHeaderIndex(headers, ["Note", "Notes"]);
+  const dateColumnIndex = findColumn(headers, "Date");
+  const noteColumnIndex = findColumn(headers, "Note", "Notes");
   const blocks = buildExerciseBlocks(headers);
   const dayFirst = detectDayFirstDates(data, dateColumnIndex);
   const parsedData = [];
@@ -296,13 +269,17 @@ function parseLegacyStrongliftsData(data, headers) {
       const rawExerciseName = String(row[block.exerciseIndex] || "").trim();
       if (!rawExerciseName) continue;
 
-      const liftType = normalizeStrongliftsLiftType(rawExerciseName);
+      const liftType = normalizeExportLiftType(rawExerciseName);
       if (!liftType) continue;
 
       const weightKg =
-        block.weightKgIndex >= 0 ? parseNumber(row[block.weightKgIndex]) : null;
+        block.weightKgIndex >= 0
+          ? parseLeadingNumber(row[block.weightKgIndex])
+          : null;
       const weightLb =
-        block.weightLbIndex >= 0 ? parseNumber(row[block.weightLbIndex]) : null;
+        block.weightLbIndex >= 0
+          ? parseLeadingNumber(row[block.weightLbIndex])
+          : null;
 
       let weight = null;
       let unitType = null;
@@ -317,7 +294,7 @@ function parseLegacyStrongliftsData(data, headers) {
       if (!isValidLiftWeight(liftType, weight)) continue;
 
       for (const setIndex of block.setIndices) {
-        const reps = parseInteger(row[setIndex]);
+        const reps = parseLeadingInteger(row[setIndex]);
         if (!reps || reps <= 0) continue;
 
         parsedData.push({
@@ -340,7 +317,7 @@ export function parseStrongliftsData(data) {
   const startTime = performance.now();
   const headers = data[0] || [];
   const hasCurrentLayout =
-    findHeaderIndex(headers, ["Exercise"]) >= 0 &&
+    findColumn(headers, "Exercise") >= 0 &&
     buildCurrentSetBlocks(headers).length > 0;
   const parsedData = hasCurrentLayout
     ? parseCurrentStrongliftsData(data, headers)

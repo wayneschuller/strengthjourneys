@@ -1,9 +1,13 @@
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  buildNotes,
+  findColumn,
   isBodyweightLoadLiftName,
+  isValidCalendarDate,
   isValidLiftWeight,
-  normalizeLiftTypeNames,
-  normalizeDecimalComma,
+  normalizeExportLiftType,
+  parseStrictInteger,
+  parseStrictNumber,
 } from "@/lib/import/parsers/parser-utilities";
 import {
   buildHevySetProvenance,
@@ -24,42 +28,6 @@ const HEVY_MONTHS = {
   nov: 11,
   dec: 12,
 };
-
-function normalizeHeader(header) {
-  return String(header || "")
-    .replace(/^\uFEFF/, "")
-    .trim()
-    .toLowerCase();
-}
-
-function getColumnIndex(headers, ...names) {
-  const normalizedHeaders = headers.map(normalizeHeader);
-  return normalizedHeaders.findIndex((header) => names.includes(header));
-}
-
-function parseNumber(value) {
-  const raw = normalizeDecimalComma(value);
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseInteger(value) {
-  const raw = String(value ?? "").trim();
-  if (!/^\d+$/.test(raw)) return null;
-  const parsed = Number(raw);
-  return Number.isSafeInteger(parsed) ? parsed : null;
-}
-
-function isValidCalendarDate(year, month, day) {
-  if (!year || !month || !day) return false;
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
-}
 
 function normalizeHevyDate(dateTimeString) {
   const raw = String(dateTimeString || "").trim();
@@ -111,27 +79,6 @@ function getHevyTime(dateTimeString) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function normalizeHevyLiftType(rawLiftType) {
-  const cleaned = String(rawLiftType || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!cleaned) return null;
-
-  // The shared normalizer drops Hevy's "(Barbell)" qualifier and keeps every
-  // other equipment qualifier, so "Bench Press (Dumbbell)" stays its own lift.
-  return normalizeLiftTypeNames(cleaned);
-}
-
-function buildNotes(...parts) {
-  const unique = [];
-  parts.forEach((part) => {
-    const trimmed = String(part || "").trim();
-    if (!trimmed) return;
-    if (!unique.includes(trimmed)) unique.push(trimmed);
-  });
-  return unique.length > 0 ? unique.join(" | ") : undefined;
-}
-
 function buildHevyNotes({
   time,
   exerciseNotes,
@@ -168,31 +115,27 @@ function incrementReason(reasons, reason) {
 export function parseHevyData(data, { importedAt = new Date() } = {}) {
   const startTime = performance.now();
   const headers = data[0] || [];
-  const startTimeColumnIndex = getColumnIndex(headers, "start_time");
-  const exerciseTitleColumnIndex = getColumnIndex(headers, "exercise_title");
-  const weightKgColumnIndex = getColumnIndex(headers, "weight_kg");
-  const weightLbColumnIndex = getColumnIndex(
-    headers,
-    "weight_lbs",
-    "weight_lb",
-  );
+  const startTimeColumnIndex = findColumn(headers, "start_time");
+  const exerciseTitleColumnIndex = findColumn(headers, "exercise_title");
+  const weightKgColumnIndex = findColumn(headers, "weight_kg");
+  const weightLbColumnIndex = findColumn(headers, "weight_lbs", "weight_lb");
   const weightColumnIndex =
     weightKgColumnIndex >= 0 ? weightKgColumnIndex : weightLbColumnIndex;
   const unitType = weightKgColumnIndex >= 0 ? "kg" : "lb";
-  const repsColumnIndex = getColumnIndex(headers, "reps");
-  const workoutTitleColumnIndex = getColumnIndex(headers, "title");
-  const workoutDescriptionColumnIndex = getColumnIndex(headers, "description");
-  const exerciseNotesColumnIndex = getColumnIndex(headers, "exercise_notes");
-  const setIndexColumnIndex = getColumnIndex(headers, "set_index");
-  const setTypeColumnIndex = getColumnIndex(headers, "set_type");
-  const rpeColumnIndex = getColumnIndex(headers, "rpe");
-  const distanceColumnIndex = getColumnIndex(
+  const repsColumnIndex = findColumn(headers, "reps");
+  const workoutTitleColumnIndex = findColumn(headers, "title");
+  const workoutDescriptionColumnIndex = findColumn(headers, "description");
+  const exerciseNotesColumnIndex = findColumn(headers, "exercise_notes");
+  const setIndexColumnIndex = findColumn(headers, "set_index");
+  const setTypeColumnIndex = findColumn(headers, "set_type");
+  const rpeColumnIndex = findColumn(headers, "rpe");
+  const distanceColumnIndex = findColumn(
     headers,
     "distance_km",
     "distance_miles",
     "distance_meters",
   );
-  const durationColumnIndex = getColumnIndex(headers, "duration_seconds");
+  const durationColumnIndex = findColumn(headers, "duration_seconds");
 
   const parsedData = [];
   const skippedByReason = {};
@@ -208,9 +151,9 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
     const rawStartTime = row[startTimeColumnIndex];
     const date = normalizeHevyDate(rawStartTime);
     const time = getHevyTime(rawStartTime);
-    const liftType = normalizeHevyLiftType(row[exerciseTitleColumnIndex]);
-    const reps = parseInteger(row[repsColumnIndex]);
-    const parsedWeight = parseNumber(row[weightColumnIndex]);
+    const liftType = normalizeExportLiftType(row[exerciseTitleColumnIndex]);
+    const reps = parseStrictInteger(row[repsColumnIndex]);
+    const parsedWeight = parseStrictNumber(row[weightColumnIndex]);
     const weight =
       parsedWeight == null && isBodyweightLoadLiftName(liftType)
         ? 0
@@ -226,8 +169,8 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
     }
     if (!reps || reps <= 0) {
       const hasDurationOrDistance =
-        parseNumber(row[durationColumnIndex]) != null ||
-        parseNumber(row[distanceColumnIndex]) != null;
+        parseStrictNumber(row[durationColumnIndex]) != null ||
+        parseStrictNumber(row[distanceColumnIndex]) != null;
       incrementReason(
         skippedByReason,
         hasDurationOrDistance ? "unsupportedDurationOrDistance" : "missingReps",
@@ -268,7 +211,7 @@ export function parseHevyData(data, { importedAt = new Date() } = {}) {
         setType: String(row[setTypeColumnIndex] || "").trim(),
         rpe: row[rpeColumnIndex],
         workoutTitle,
-        setIndex: parseInteger(row[setIndexColumnIndex]),
+        setIndex: parseStrictInteger(row[setIndexColumnIndex]),
         importProvenance,
       }),
     });

@@ -11,48 +11,17 @@
 
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  buildNotes,
+  findColumn,
   isBodyweightLoadLiftName,
+  isValidCalendarDate,
   isValidLiftWeight,
-  normalizeLiftTypeNames,
-  normalizeDecimalComma,
+  normalizeExportLiftType,
+  normalizeHeaderCell,
+  parseStrictInteger,
+  parseStrictNumber,
 } from "@/lib/import/parsers/parser-utilities";
 import { buildVisibleImportProvenance } from "@/lib/import/provenance";
-
-function normalizeHeader(header) {
-  return String(header || "")
-    .replace(/^﻿/, "")
-    .trim()
-    .toLowerCase();
-}
-
-function getColumnIndex(headers, ...names) {
-  const normalizedHeaders = headers.map(normalizeHeader);
-  return normalizedHeaders.findIndex((header) => names.includes(header));
-}
-
-function parseNumber(value) {
-  const raw = normalizeDecimalComma(value);
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseInteger(value) {
-  const raw = String(value ?? "").trim();
-  if (!/^\d+$/.test(raw)) return null;
-  const parsed = Number(raw);
-  return Number.isSafeInteger(parsed) ? parsed : null;
-}
-
-function isValidCalendarDate(year, month, day) {
-  if (!year || !month || !day) return false;
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  );
-}
 
 // Fitbod's exact date/time string format isn't publicly documented, so this
 // accepts both common shapes rather than assuming one: ISO-like
@@ -96,24 +65,6 @@ function getFitbodTime(dateTimeString) {
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
-function normalizeFitbodLiftType(rawLiftType) {
-  const cleaned = String(rawLiftType || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!cleaned) return null;
-  return normalizeLiftTypeNames(cleaned);
-}
-
-function buildNotes(...parts) {
-  const unique = [];
-  parts.forEach((part) => {
-    const trimmed = String(part || "").trim();
-    if (!trimmed) return;
-    if (!unique.includes(trimmed)) unique.push(trimmed);
-  });
-  return unique.length > 0 ? unique.join(" | ") : undefined;
-}
-
 function isTruthyFlag(value) {
   const normalized = String(value ?? "")
     .trim()
@@ -126,7 +77,7 @@ function incrementReason(reasons, reason) {
 }
 
 export function isFitbodExport(headers) {
-  const normalized = headers.map(normalizeHeader);
+  const normalized = headers.map(normalizeHeaderCell);
   return (
     normalized.includes("date") &&
     normalized.includes("exercise") &&
@@ -148,16 +99,16 @@ function roundImportedWeight(weight) {
 export function parseFitbodData(data, { importedAt = new Date() } = {}) {
   const startTime = performance.now();
   const headers = data[0] || [];
-  const dateColumnIndex = getColumnIndex(headers, "date");
-  const exerciseColumnIndex = getColumnIndex(headers, "exercise");
-  const repsColumnIndex = getColumnIndex(headers, "reps");
+  const dateColumnIndex = findColumn(headers, "date");
+  const exerciseColumnIndex = findColumn(headers, "exercise");
+  const repsColumnIndex = findColumn(headers, "reps");
   const weightColumnIndex = headers.findIndex((header) =>
-    normalizeHeader(header).startsWith("weight(kg"),
+    normalizeHeaderCell(header).startsWith("weight(kg"),
   );
-  const durationColumnIndex = getColumnIndex(headers, "duration(s)");
-  const distanceColumnIndex = getColumnIndex(headers, "distance(m)");
-  const isWarmupColumnIndex = getColumnIndex(headers, "iswarmup");
-  const noteColumnIndex = getColumnIndex(headers, "note");
+  const durationColumnIndex = findColumn(headers, "duration(s)");
+  const distanceColumnIndex = findColumn(headers, "distance(m)");
+  const isWarmupColumnIndex = findColumn(headers, "iswarmup");
+  const noteColumnIndex = findColumn(headers, "note");
 
   const parsedData = [];
   const skippedByReason = {};
@@ -173,9 +124,9 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
     const rawDate = row[dateColumnIndex];
     const date = normalizeFitbodDate(rawDate);
     const time = getFitbodTime(rawDate);
-    const liftType = normalizeFitbodLiftType(row[exerciseColumnIndex]);
-    const reps = parseInteger(row[repsColumnIndex]);
-    const parsedWeight = parseNumber(row[weightColumnIndex]);
+    const liftType = normalizeExportLiftType(row[exerciseColumnIndex]);
+    const reps = parseStrictInteger(row[repsColumnIndex]);
+    const parsedWeight = parseStrictNumber(row[weightColumnIndex]);
     const weight =
       parsedWeight == null && isBodyweightLoadLiftName(liftType)
         ? 0
@@ -191,8 +142,8 @@ export function parseFitbodData(data, { importedAt = new Date() } = {}) {
     }
     if (!reps || reps <= 0) {
       const hasDurationOrDistance =
-        parseNumber(row[durationColumnIndex]) != null ||
-        parseNumber(row[distanceColumnIndex]) != null;
+        parseStrictNumber(row[durationColumnIndex]) != null ||
+        parseStrictNumber(row[distanceColumnIndex]) != null;
       incrementReason(
         skippedByReason,
         hasDurationOrDistance ? "unsupportedDurationOrDistance" : "missingReps",

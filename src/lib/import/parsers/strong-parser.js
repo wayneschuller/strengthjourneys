@@ -1,17 +1,12 @@
 import { recordTiming } from "@/lib/processing-utils";
 import {
+  buildNotes,
+  findExactColumn,
   isValidLiftWeight,
-  normalizeLiftTypeNames,
-  normalizeDecimalComma,
+  normalizeExportLiftType,
+  parseLeadingInteger,
+  parseLeadingNumber,
 } from "@/lib/import/parsers/parser-utilities";
-
-function getColumnIndex(headers, candidates) {
-  for (const candidate of candidates) {
-    const index = headers.indexOf(candidate);
-    if (index >= 0) return index;
-  }
-  return -1;
-}
 
 function findHeaderByPrefix(headers, prefixes) {
   return headers.find((header) => {
@@ -24,34 +19,12 @@ function findHeaderByPrefix(headers, prefixes) {
   });
 }
 
-function parseNumber(value) {
-  const parsed = Number.parseFloat(normalizeDecimalComma(value));
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseInteger(value) {
-  const parsed = Number.parseInt(String(value || "").trim(), 10);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
 function normalizeStrongDate(dateTimeString) {
   const match = String(dateTimeString || "")
     .trim()
     .match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!match) return null;
   return `${match[1]}-${match[2]}-${match[3]}`;
-}
-
-// Strong names equipment in brackets: "Squat (Barbell)", "Bench Press
-// (Dumbbell)". The brackets stay, because deleting them filed dumbbell and
-// Smith machine sets under the big four. The shared normalizer drops only the
-// barbell qualifier.
-function normalizeStrongLiftType(rawLiftType) {
-  const cleaned = String(rawLiftType || "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (!cleaned) return null;
-  return normalizeLiftTypeNames(cleaned);
 }
 
 function extractUnitFromHeader(header) {
@@ -68,16 +41,6 @@ function extractUnitFromHeader(header) {
   return null;
 }
 
-function buildNotes(...parts) {
-  const unique = [];
-  parts.forEach((part) => {
-    const trimmed = String(part || "").trim();
-    if (!trimmed) return;
-    if (!unique.includes(trimmed)) unique.push(trimmed);
-  });
-  return unique.length > 0 ? unique.join(" | ") : undefined;
-}
-
 function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
   let kgScore = 0;
   let lbScore = 0;
@@ -86,7 +49,7 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
     const row = data[i];
     if (!row || row.length === 0) continue;
 
-    const weight = parseNumber(row[weightColumnIndex]);
+    const weight = parseLeadingNumber(row[weightColumnIndex]);
     if (!weight || weight <= 0) continue;
 
     const exerciseName = String(
@@ -111,14 +74,14 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
 export function parseStrongData(data) {
   const startTime = performance.now();
   const headers = data[0] || [];
-  const dateColumnIndex = getColumnIndex(headers, ["Date"]);
-  const exerciseNameColumnIndex = getColumnIndex(headers, ["Exercise Name"]);
+  const dateColumnIndex = findExactColumn(headers, ["Date"]);
+  const exerciseNameColumnIndex = findExactColumn(headers, ["Exercise Name"]);
   const weightHeader = findHeaderByPrefix(headers, ["Weight"]);
   const weightColumnIndex = weightHeader ? headers.indexOf(weightHeader) : -1;
-  const repsColumnIndex = getColumnIndex(headers, ["Reps"]);
-  const notesColumnIndex = getColumnIndex(headers, ["Notes"]);
-  const workoutNotesColumnIndex = getColumnIndex(headers, ["Workout Notes"]);
-  const rpeColumnIndex = getColumnIndex(headers, ["RPE"]);
+  const repsColumnIndex = findExactColumn(headers, ["Reps"]);
+  const notesColumnIndex = findExactColumn(headers, ["Notes"]);
+  const workoutNotesColumnIndex = findExactColumn(headers, ["Workout Notes"]);
+  const rpeColumnIndex = findExactColumn(headers, ["RPE"]);
 
   const unitType =
     extractUnitFromHeader(weightHeader) ||
@@ -130,9 +93,9 @@ export function parseStrongData(data) {
     if (!row || row.length === 0) continue;
 
     const date = normalizeStrongDate(row[dateColumnIndex]);
-    const liftType = normalizeStrongLiftType(row[exerciseNameColumnIndex]);
-    const reps = parseInteger(row[repsColumnIndex]);
-    const weight = parseNumber(row[weightColumnIndex]);
+    const liftType = normalizeExportLiftType(row[exerciseNameColumnIndex]);
+    const reps = parseLeadingInteger(row[repsColumnIndex]);
+    const weight = parseLeadingNumber(row[weightColumnIndex]);
 
     if (!date || !liftType) continue;
     if (!reps || reps <= 0 || !isValidLiftWeight(liftType, weight)) continue;

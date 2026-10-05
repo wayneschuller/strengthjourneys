@@ -57,21 +57,30 @@ export const MEET_LIFTS = [
 const LB_PER_KG = 2.20462;
 
 /**
- * A meet's total as display text ("510kg", "1124lb"), or null. A total needs
- * a single at each of squat, bench and deadlift; anything less is not a
- * total. Added in kg so a meet logged in mixed units still sums correctly.
+ * A meet's total in kg, or null. A total needs a single at each of squat,
+ * bench and deadlift; anything less is not a total. Added in kg so a meet
+ * logged in mixed units still sums correctly, and so meets can be ranked.
+ *
+ * @param {Object} topSets - A meetDays entry's topSets.
+ * @returns {number|null}
+ */
+export function getMeetTotalKg(topSets) {
+  const singles = MEET_LIFTS.map(({ liftType }) => topSets?.[liftType]);
+  if (singles.some((set) => !set || set.reps !== 1)) return null;
+  return singles.reduce((sum, set) => sum + toKg(set.weight, set.unitType), 0);
+}
+
+/**
+ * A meet's total as display text ("510kg", "1124lb"), or null when the day
+ * has no total (see getMeetTotalKg).
  *
  * @param {Object} topSets - A meetDays entry's topSets.
  * @param {boolean} isMetric - Unit to show the total in.
  * @returns {string|null}
  */
 export function formatMeetTotal(topSets, isMetric) {
-  const singles = MEET_LIFTS.map(({ liftType }) => topSets?.[liftType]);
-  if (singles.some((set) => !set || set.reps !== 1)) return null;
-  const totalKg = singles.reduce(
-    (sum, set) => sum + toKg(set.weight, set.unitType),
-    0,
-  );
+  const totalKg = getMeetTotalKg(topSets);
+  if (totalKg === null) return null;
   return isMetric
     ? `${Math.round(totalKg * 2) / 2}kg`
     : `${Math.round(totalKg * LB_PER_KG)}lb`;

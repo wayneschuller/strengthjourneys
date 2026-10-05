@@ -35,13 +35,11 @@ import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { computeStrengthResults } from "@/lib/strength-circles/universe-percentiles";
-import { findBestE1RM } from "@/lib/processing-utils";
 import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
 import { useToast } from "@/hooks/use-toast";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { convertWeight, toKg, toLb, unitTypeFor } from "@/lib/weight-units";
+import { convertWeight } from "@/lib/weight-units";
 import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
@@ -51,7 +49,6 @@ import {
 import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
-import { getWeakestLiftHint } from "@/lib/thousand-club";
 import {
   addDaysFromStr,
   getReadableDateString,
@@ -65,11 +62,11 @@ import {
 } from "@/lib/lifts/lift-registry";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
+import { ImportHero } from "@/components/onboarding/import-hero";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 import { DailyTrainingHeatmap } from "@/components/home-dashboard/long-game/daily-training-heatmap";
-import { ThousandDonut } from "@/components/thousand-club-donut";
 import { useScrollToLatestYear } from "@/hooks/use-scroll-to-latest-year";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,334 +80,6 @@ function useStoredE1rmFormula() {
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
     }) ?? "Brzycki"
-  );
-}
-
-function clampFileName(rawName) {
-  if (!rawName) return null;
-  const fileNameOnly = rawName.split(/[\\/]/).pop() || rawName;
-  const extensionMatch = fileNameOnly.match(/(\.[^.]{1,4})$/);
-  const extension = extensionMatch ? extensionMatch[1].toLowerCase() : "";
-  const withoutExtension = extension
-    ? fileNameOnly.slice(0, -extension.length)
-    : fileNameOnly;
-  const normalized = withoutExtension.replace(/\s+/g, " ").trim();
-  if (!normalized) return null;
-  const MAX = 34;
-  const reserved = extension ? extension.length + 3 : 3;
-  const visible = Math.max(8, MAX - reserved);
-  const base =
-    normalized.length > visible
-      ? `${normalized.slice(0, visible).trimEnd()}...`
-      : normalized;
-  return `${base}${extension}`;
-}
-
-const IMPORT_SKIP_REASON_LABELS = {
-  invalidDate: "invalid dates",
-  missingExercise: "missing exercise names",
-  missingReps: "missing or invalid reps",
-  missingWeight: "missing loads",
-  invalidWeight: "invalid loads",
-  unsupportedDurationOrDistance: "duration or distance-only sets",
-};
-
-function ImportDiagnosticsNotice({ diagnostics }) {
-  if (!diagnostics?.skippedRows) return null;
-
-  const reasonSummary = Object.entries(diagnostics.skippedByReason || {})
-    .filter(([, count]) => count > 0)
-    .map(
-      ([reason, count]) =>
-        `${count.toLocaleString()} ${IMPORT_SKIP_REASON_LABELS[reason] || "unsupported rows"}`,
-    )
-    .join(", ");
-
-  return (
-    <div className="mt-4 flex w-full items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50/50 p-3 text-left dark:border-amber-500/30 dark:bg-amber-500/5">
-      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
-      <div className="text-sm">
-        <p className="font-medium">
-          Imported {diagnostics.parsedRows.toLocaleString()} of{" "}
-          {diagnostics.sourceRows.toLocaleString()} set rows
-        </p>
-        <p className="text-muted-foreground mt-1 leading-5">
-          {diagnostics.skippedRows.toLocaleString()} could not become weighted,
-          rep-based Strength Journeys entries
-          {reasonSummary ? `: ${reasonSummary}.` : "."}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function getMotivationalPhrase(percentile) {
-  if (percentile >= 95) return "You're in rare company. Elite strength.";
-  if (percentile >= 85) return "Seriously strong. Most people never get here.";
-  if (percentile >= 70) return "Stronger than most. Your hard work shows.";
-  if (percentile >= 50) return "Above average. You're building real strength.";
-  if (percentile >= 30) return "A solid foundation. Keep pushing.";
-  return "Every journey starts somewhere. You're on your way.";
-}
-
-function SinglePercentileRing({ percentile }) {
-  const RADIUS = 70;
-  const STROKE = 12;
-  const SIZE = (RADIUS + STROKE) * 2;
-  const CENTER = SIZE / 2;
-  const circumference = 2 * Math.PI * RADIUS;
-  const offset = circumference * (1 - (percentile ?? 0) / 100);
-
-  return (
-    <Link href="/how-strong-am-i" className="relative block">
-      <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full">
-        {/* Background track */}
-        <circle
-          cx={CENTER}
-          cy={CENTER}
-          r={RADIUS}
-          fill="none"
-          style={{ stroke: "var(--muted-foreground)", opacity: 0.12 }}
-          strokeWidth={STROKE}
-        />
-        {/* Filled arc */}
-        <circle
-          cx={CENTER}
-          cy={CENTER}
-          r={RADIUS}
-          fill="none"
-          style={{ stroke: "var(--chart-1)" }}
-          strokeWidth={STROKE}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          transform={`rotate(-90, ${CENTER}, ${CENTER})`}
-        />
-      </svg>
-      {/* Center label */}
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-muted-foreground text-[10px] leading-snug">
-          Stronger than
-        </span>
-        <span className="text-3xl leading-none font-bold tabular-nums">
-          {percentile}%
-        </span>
-        <span
-          className="mt-0.5 text-[10px] leading-snug font-semibold"
-          style={{ color: "var(--chart-1)" }}
-        >
-          of Gen. Pop.
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function ImportHero({ parsedData, fileName, formatName, diagnostics }) {
-  const { age, sex, bodyWeight, isMetric } = useAthleteBio();
-  const e1rmFormula = useStoredE1rmFormula();
-  const { topLiftsByTypeAndReps } = useUserLiftingData();
-
-  const stats = useMemo(() => {
-    if (!parsedData?.length) return null;
-    const entries = parsedData;
-    if (!entries.length) return null;
-    const dates = [...new Set(entries.map((e) => e.date))].sort();
-    const liftTypes = new Set(entries.map((e) => e.liftType));
-    return {
-      activityCount: diagnostics?.workoutCount || dates.length,
-      activityLabel: diagnostics?.workoutCount ? "workouts" : "training days",
-      totalSets: entries.length,
-      exerciseCount: liftTypes.size,
-      first: dates[0],
-      last: dates[dates.length - 1],
-    };
-  }, [diagnostics?.workoutCount, parsedData]);
-
-  const strength = useMemo(() => {
-    if (!topLiftsByTypeAndReps) return null;
-
-    const bodyWeightKg = toKg(bodyWeight, unitTypeFor(isMetric));
-    const liftKgs = {};
-
-    for (const [key, liftType] of Object.entries({
-      squat: "Back Squat",
-      bench: "Bench Press",
-      deadlift: "Deadlift",
-    })) {
-      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula);
-      liftKgs[key] =
-        best.bestE1RMWeight > 0
-          ? toKg(best.bestE1RMWeight, best.unitType)
-          : null;
-    }
-
-    if (!liftKgs.squat && !liftKgs.bench && !liftKgs.deadlift) return null;
-
-    const results = computeStrengthResults({ age, sex, bodyWeightKg }, liftKgs);
-
-    // Average the Gen Pop percentile across all available SBD lifts
-    const pcts = [];
-    const liftLabels = [];
-    for (const [key, label] of [
-      ["squat", "Back Squat"],
-      ["bench", "Bench Press"],
-      ["deadlift", "Deadlift"],
-    ]) {
-      const pct = results.lifts[key]?.percentiles?.["General Population"];
-      if (pct != null) {
-        pcts.push(pct);
-        liftLabels.push(label);
-      }
-    }
-
-    if (!pcts.length) return null;
-
-    const avgPct = Math.round(pcts.reduce((a, b) => a + b, 0) / pcts.length);
-
-    return {
-      pct: avgPct,
-      liftCount: pcts.length,
-      liftLabels,
-    };
-  }, [topLiftsByTypeAndReps, age, sex, bodyWeight, isMetric, e1rmFormula]);
-
-  const thousandClub = useMemo(() => {
-    if (!topLiftsByTypeAndReps) return null;
-
-    const sbdLifts = [
-      ["Back Squat", "squat"],
-      ["Bench Press", "bench"],
-      ["Deadlift", "deadlift"],
-    ];
-    const liftTotals = {};
-
-    for (const [liftType, key] of sbdLifts) {
-      const best = findBestE1RM(liftType, topLiftsByTypeAndReps, e1rmFormula);
-      if (!best?.bestE1RMWeight || !best.unitType) return null;
-      liftTotals[key] = Math.round(toLb(best.bestE1RMWeight, best.unitType));
-    }
-
-    const total = liftTotals.squat + liftTotals.bench + liftTotals.deadlift;
-    const inClub = total >= 1000;
-    const delta = Math.abs(total - 1000);
-    const biggestOpportunity = getWeakestLiftHint(
-      liftTotals.squat,
-      liftTotals.bench,
-      liftTotals.deadlift,
-    );
-
-    return {
-      total,
-      inClub,
-      delta,
-      lifts: liftTotals,
-      biggestOpportunity,
-    };
-  }, [topLiftsByTypeAndReps, e1rmFormula]);
-
-  if (!stats) return null;
-
-  const displayName = clampFileName(fileName);
-  const source = formatName || "your file";
-
-  return (
-    <div className="mb-2 w-full">
-      {/* Storytelling headline */}
-      <h3 className="mb-1 text-xl font-bold">
-        Your {source} data is ready to explore
-      </h3>
-      <div className="text-muted-foreground mb-3 space-y-0.5 text-sm">
-        {displayName && (
-          <p>
-            We parsed{" "}
-            <span className="text-foreground font-medium">{displayName}</span>{" "}
-            and found{" "}
-            <strong className="text-foreground">
-              {stats.activityCount.toLocaleString()}
-            </strong>{" "}
-            {stats.activityLabel} across{" "}
-            <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
-            exercises.
-          </p>
-        )}
-        {!displayName && (
-          <p>
-            We found{" "}
-            <strong className="text-foreground">
-              {stats.activityCount.toLocaleString()}
-            </strong>{" "}
-            {stats.activityLabel} across{" "}
-            <strong className="text-foreground">{stats.exerciseCount}</strong>{" "}
-            exercises.
-          </p>
-        )}
-        <p>
-          Your training spans {getReadableDateString(stats.first)} to{" "}
-          {getReadableDateString(stats.last)}.
-        </p>
-        <p>
-          That&apos;s{" "}
-          <strong className="text-foreground">
-            {stats.totalSets.toLocaleString()}
-          </strong>{" "}
-          sets of work.
-        </p>
-        <ImportDiagnosticsNotice diagnostics={diagnostics} />
-      </div>
-
-      {/* Strength rating row */}
-      {strength && (
-        <div className="flex flex-col items-center gap-2 sm:flex-row">
-          <div className="w-36 shrink-0 sm:w-40">
-            <SinglePercentileRing percentile={strength.pct} />
-          </div>
-          <div className="text-center sm:text-left">
-            <p className="text-2xl font-bold">
-              Stronger than {strength.pct}% of the general population
-            </p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              {getMotivationalPhrase(strength.pct)}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {thousandClub && (
-        <div className="-mt-3 flex flex-col items-center gap-0.5 sm:-mt-10 sm:flex-row">
-          <div className="min-w-0 flex-1 text-center sm:-mr-3 sm:pr-0 sm:text-right">
-            <p className="text-2xl font-bold">
-              Your 1000lb Club total is {thousandClub.total} lbs
-            </p>
-            <p className="text-muted-foreground mt-0.5 text-sm">
-              {thousandClub.inClub
-                ? `You’re in the 1000lb Club. You’re ${thousandClub.delta} lbs past 1000.`
-                : `You’re ${thousandClub.delta} lbs away from the 1000lb Club.`}
-            </p>
-            {thousandClub.biggestOpportunity && !thousandClub.inClub && (
-              <p className="text-muted-foreground mt-0.5 text-sm">
-                <span className="text-foreground font-semibold">
-                  Biggest opportunity:
-                </span>{" "}
-                Add ~{thousandClub.biggestOpportunity.gapLbs} lb (
-                {Math.round(toKg(thousandClub.biggestOpportunity.gapLbs, "lb"))}{" "}
-                kg) to your {thousandClub.biggestOpportunity.lift.toLowerCase()}
-                .
-              </p>
-            )}
-          </div>
-          <div className="w-36 shrink-0 sm:w-40">
-            <ThousandDonut
-              total={thousandClub.total}
-              prefersReducedMotion={true}
-              compact={true}
-              href="/1000lb-club-calculator"
-              className="my-0 h-[144px] w-full max-w-[144px] xl:h-[144px] xl:max-w-[144px]"
-            />
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -587,7 +256,7 @@ function ImportedDataOverview({ parsedData, label }) {
           <div>
             <div className="mb-2">
               <p className="text-sm font-semibold">Your strength journey</p>
-              {stats.bestStreak > 0 && (
+              {label && stats.bestStreak > 0 && (
                 <p className="text-muted-foreground text-xs">
                   Longest streak: {stats.bestStreak} week
                   {stats.bestStreak === 1 ? "" : "s"}
@@ -731,6 +400,28 @@ function ImportedDataOverview({ parsedData, label }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// The one ask on the preview: turn this file into a sheet the lifter owns and
+// keep logging here. Signed-out lifters get the sign-in button, signed-in
+// ones without a sheet get the create button; the frame is the same so the
+// offer reads the same either way.
+function SaveImportPanel({ description, finePrint = null, children }) {
+  return (
+    <div className="border-primary/30 bg-primary/5 mt-5 flex w-full flex-col items-center gap-3 rounded-lg border px-4 py-6">
+      {/* Keep Google's canonical icon URL without proxying an ownership trust mark. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={GOOGLE_SHEETS_ICON_URL} alt="" width={36} height={36} />
+      <p className="text-xl font-bold">Make this your training log</p>
+      <p className="text-muted-foreground max-w-xl text-sm leading-6">
+        {description}
+      </p>
+      {children}
+      {finePrint && (
+        <p className="text-muted-foreground max-w-md text-xs">{finePrint}</p>
+      )}
     </div>
   );
 }
@@ -1289,14 +980,13 @@ export function ImportWorkflowSection({
             ) : (
               <>
                 <ImportHero
-                  parsedData={parsedData}
                   fileName={importedFileName}
                   formatName={importedFormatName}
                   diagnostics={importedDiagnostics}
                 />
 
                 {showMerge && isFullyDuplicate && (
-                  <p className="text-muted-foreground mb-4 text-sm">
+                  <p className="text-muted-foreground mt-5 text-sm">
                     All {skippedCount}{" "}
                     {skippedCount === 1 ? "entry" : "entries"} from this file
                     already exist in your linked sheet.
@@ -1304,27 +994,25 @@ export function ImportWorkflowSection({
                 )}
 
                 {showCreateSheet && (
-                  <div className="w-full max-w-md space-y-3">
-                    <p className="text-muted-foreground text-sm">
-                      We&apos;ll create a new Google Sheet in your Drive and
-                      populate it with your {entryCount}{" "}
-                      {entryCount === 1 ? "entry" : "entries"}. This becomes
-                      your permanent lifting archive, ready for every future app
-                      import too.
-                    </p>
-                    <Button
-                      onClick={handleCreateSheetFromImport}
-                      disabled={entryCount === 0}
-                      className="w-full gap-2"
+                  <>
+                    <SaveImportPanel
+                      description={`We'll create a Google Sheet in your own Drive holding ${entryCount === 1 ? "your entry" : `all ${entryCount.toLocaleString()} entries`}. It is yours to keep, ready for every future app import, and each session you log here adds to the story above.`}
                     >
-                      <ArrowRight className="h-4 w-4" />
-                      Create Google Sheet with this data
-                    </Button>
-                  </div>
+                      <Button
+                        onClick={handleCreateSheetFromImport}
+                        disabled={entryCount === 0}
+                        className="w-full max-w-md gap-2"
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                        Create Google Sheet with this data
+                      </Button>
+                    </SaveImportPanel>
+                    <ImportedDataOverview parsedData={parsedData} />
+                  </>
                 )}
 
                 {showMerge && (
-                  <div className="w-full space-y-3">
+                  <div className="mt-5 w-full space-y-3">
                     {overlapNote && !isSheetComparisonPending && (
                       <div className="mx-auto flex max-w-md items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50/50 p-3 text-left text-sm dark:border-amber-500/30 dark:bg-amber-500/5">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
@@ -1381,6 +1069,16 @@ export function ImportWorkflowSection({
 
                 {!isAuthenticated && (
                   <>
+                    {/* The ask comes straight after the story, while it is
+                        still on screen, and the deeper look sits below it. */}
+                    <SaveImportPanel
+                      description={`Sign in with Google and Strength Journeys saves ${entryCount === 1 ? "your entry" : `all ${entryCount.toLocaleString()} entries`} to a Google Sheet in your own Drive. It is yours to keep, and each session you log here adds to the story above.`}
+                      finePrint="Google will ask for Drive access. Approve it to create your sheet. Until then this preview lives in this tab."
+                    >
+                      <GoogleSignInButton cta="import_overview">
+                        Save &amp; keep my progress
+                      </GoogleSignInButton>
+                    </SaveImportPanel>
                     <ImportedDataOverview parsedData={parsedData} />
 
                     {/* Explore buttons — data-aware */}
@@ -1447,24 +1145,6 @@ export function ImportWorkflowSection({
                           Your workouts, organized by date
                         </p>
                       </div>
-                    </div>
-
-                    {/* Sign-in CTA — separated, reward-framed */}
-                    <div className="mt-6 flex flex-col items-center">
-                      <p className="text-muted-foreground mb-2 text-sm">
-                        This preview will disappear when you close the tab.
-                      </p>
-                      <GoogleSignInButton size="sm" cta="import_overview">
-                        Save &amp; keep my progress
-                      </GoogleSignInButton>
-                      <p className="text-muted-foreground mt-1.5 text-xs">
-                        Save this preview to your own Google Sheet, then keep
-                        merging future exports there.
-                      </p>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        Google will ask for Drive access. Approve it to create
-                        your sheet.
-                      </p>
                     </div>
                   </>
                 )}

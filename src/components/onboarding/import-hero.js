@@ -12,7 +12,7 @@
  * lib/import/import-story.js. Nothing here rescans the parsed rows.
  */
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "motion/react";
 import { useReadLocalStorage } from "usehooks-ts";
@@ -32,6 +32,10 @@ import { findBestE1RM, getDisplayWeight } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { toKg, toLb, unitTypeFor } from "@/lib/weight-units";
 import { buildImportStory, pluralize } from "@/lib/import/import-story";
+import {
+  guessAthleteBio,
+  roundGuessedBodyWeight,
+} from "@/lib/import/guess-athlete-bio";
 import { formatLifetimeTonnage } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { MEET_LIFTS, formatMeetTotal } from "@/lib/meet-detection";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
@@ -43,6 +47,9 @@ import {
   getMeetLogHref,
 } from "@/components/meet-medal";
 import { ThousandDonut } from "@/components/thousand-club-donut";
+import { UnitChooser } from "@/components/unit-type-chooser";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 // More meets than this and the panel names the newest and counts the rest.
 const MAX_MEETS_LISTED = 6;
@@ -178,6 +185,15 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
         .
       </p>
       <ImportDiagnosticsNotice diagnostics={diagnostics} />
+
+      {/* Before the numbers, not after: the ranking below is worked out from
+          these, and an athlete who has never set them would otherwise be
+          ranked as the default 30 year old, 200lb man. */}
+      <AboutYouSentence
+        topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+        sessionCount={story.sessionCount}
+        e1rmFormula={e1rmFormula}
+      />
 
       {/* The four numbers a lifter would say out loud */}
       <Reveal index={0} className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
@@ -359,6 +375,135 @@ function buildHighlights(story) {
   }
 
   return highlights;
+}
+
+// The athlete's details as a sentence they can correct: "I am a 34 year old
+// man and I weigh 185 lb". It opens with our guess from their lifts (see
+// lib/import/guess-athlete-bio.js) in the unit their file uses (see
+// useAthleteBioData), so most athletes have one number to fix, not a form to
+// fill in. The guess is only shown, never saved: touching any part of the
+// sentence, or agreeing with it, records the whole of it as theirs.
+function AboutYouSentence({
+  topLiftsByTypeAndReps,
+  sessionCount,
+  e1rmFormula,
+}) {
+  const {
+    age,
+    setAge,
+    sex,
+    setSex,
+    bodyWeight,
+    setBodyWeight,
+    isMetric,
+    toggleIsMetric,
+    applyBioGuess,
+    bioDataIsDefault,
+    bioDataIsInitialized,
+  } = useAthleteBio();
+
+  const guess = useMemo(
+    () => guessAthleteBio({ topLiftsByTypeAndReps, sessionCount, e1rmFormula }),
+    [topLiftsByTypeAndReps, sessionCount, e1rmFormula],
+  );
+
+  // Once per file and unit, and only for an athlete who has never told us:
+  // a unit change redoes it so the guess is a round number in that unit.
+  const appliedGuessRef = useRef(null);
+  useEffect(() => {
+    if (!bioDataIsInitialized || !bioDataIsDefault) return;
+    if (!guess.bodyWeightKg) return;
+    const applied = appliedGuessRef.current;
+    if (applied?.guess === guess && applied.isMetric === isMetric) return;
+    appliedGuessRef.current = { guess, isMetric };
+    applyBioGuess({
+      sex: guess.sex,
+      bodyWeight: roundGuessedBodyWeight(guess.bodyWeightKg, isMetric),
+    });
+  }, [guess, isMetric, bioDataIsDefault, bioDataIsInitialized, applyBioGuess]);
+
+  // Any edit confirms the rest of the sentence too, or a guessed bodyweight
+  // beside a corrected age would be gone on the next visit.
+  const save = (changes = {}) => {
+    setAge(changes.age ?? age);
+    setSex(changes.sex ?? sex);
+    setBodyWeight(changes.bodyWeight ?? bodyWeight);
+  };
+  const readNumber = (event) => {
+    const value = parseInt(event.target.value || "0", 10);
+    return Number.isNaN(value) ? null : value;
+  };
+
+  const inputClassName = "h-9 px-2 text-center text-lg font-semibold";
+
+  return (
+    <div className="mt-5 rounded-lg border p-4">
+      <p className="text-sm font-semibold">Tell us about yourself, athlete</p>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-2 text-lg font-medium">
+        <span>I am a</span>
+        <Input
+          type="number"
+          min={13}
+          max={100}
+          value={age}
+          aria-label="Age"
+          onChange={(event) => {
+            const value = readNumber(event);
+            if (value !== null) save({ age: value });
+          }}
+          className={`${inputClassName} w-16`}
+        />
+        <span>year old</span>
+        <span className="inline-flex rounded-md border p-0.5">
+          {[
+            ["male", "man"],
+            ["female", "woman"],
+          ].map(([value, word]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={sex === value}
+              onClick={() => save({ sex: value })}
+              className={`rounded px-2.5 py-0.5 text-lg font-semibold transition-colors ${
+                sex === value
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {word}
+            </button>
+          ))}
+        </span>
+        <span>and I weigh</span>
+        <Input
+          type="number"
+          min={1}
+          value={bodyWeight}
+          aria-label="Bodyweight"
+          onChange={(event) => {
+            const value = readNumber(event);
+            if (value !== null) save({ bodyWeight: value });
+          }}
+          className={`${inputClassName} w-20`}
+        />
+        <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
+        <p className="text-muted-foreground text-xs">
+          {bioDataIsDefault
+            ? guess.bodyWeightKg
+              ? "Our first guess, worked out from your lifts. Make it yours and the ranking below follows."
+              : "Make it yours and your strength ranking follows."
+            : "This sets your strength ranking below. It stays in your browser."}
+        </p>
+        {bioDataIsDefault && (
+          <Button variant="outline" size="sm" onClick={() => save()}>
+            That&apos;s me
+          </Button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function StatTile({ value, label, detail }) {

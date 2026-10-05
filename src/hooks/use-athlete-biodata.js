@@ -23,7 +23,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { LB_PER_KG, toKg } from "@/lib/weight-units";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
-import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { isOwnData, useUserLiftingData } from "@/hooks/use-userlift-data";
 
 /** Emoji for each strength level, shared across UI */
 export const STRENGTH_LEVEL_EMOJI = {
@@ -206,8 +206,8 @@ export const AthleteBioProvider = ({ children }) => {
   // URL syncing for specific pages (like calculators) can be handled separately.
   // Import parsedData here so we can auto-initialize isMetric from the user's data.
   // AthleteBioProvider is nested inside UserLiftingDataProvider so this hook call is valid.
-  const { parsedData } = useUserLiftingData();
-  const value = useAthleteBioData(false, { parsedData });
+  const { parsedData, dataSource } = useUserLiftingData();
+  const value = useAthleteBioData(false, { parsedData, dataSource });
   return (
     <AthleteBioContext.Provider value={value}>
       {children}
@@ -334,11 +334,16 @@ export const useAthleteBio = (options = {}) => {
 // modifyURLQuery controls whether query parameters are updated (defaults to false)
 // options.isAdvancedAnalysis: when false (e.g. calculator with advanced off), age/sex/bodyWeight/liftType
 // are not synced to URL. When true or undefined, they sync together so shared URLs are complete.
-// options.parsedData: when provided, auto-initializes isMetric from the majority unit in the data
-//   (only on first load, before the user has explicitly set a preference).
+// options.parsedData + options.dataSource: when the data is the lifter's own (their sheet or an
+//   imported file, never the demo), isMetric follows the majority unit in it until the lifter
+//   chooses a unit themselves.
 export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   const router = useRouter();
-  const { isAdvancedAnalysis = true, parsedData = null } = options;
+  const {
+    isAdvancedAnalysis = true,
+    parsedData = null,
+    dataSource = null,
+  } = options;
   const syncAdvancedParams = modifyURLQuery && isAdvancedAnalysis;
   // Gate URL sync: only after user changes a value, never on initial load (avoids polluting shared links)
   const hasAdvancedInteractedRef = useRef(false);
@@ -346,12 +351,13 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
   // Advanced params: syncQuery=false here; we sync all four together in the effect below
   const [age, setAgeBase, ageIsDefault, , ageIsInitialized] =
     useStateFromQueryOrLocalStorage(LOCAL_STORAGE_KEYS.ATHLETE_AGE, 30, false);
-  const [isMetric, setIsMetric] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
-    false,
-    modifyURLQuery,
-  );
-  const [sex, setSexBase, sexIsDefault, , sexIsInitialized] =
+  const [isMetric, setIsMetric, , , isMetricIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
+      false,
+      modifyURLQuery,
+    );
+  const [sex, setSexBase, sexIsDefault, setSexSilent, sexIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.ATHLETE_SEX,
       "male",
@@ -496,50 +502,54 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     setStandards(newStandards);
   }, [age, sex, bodyWeight, isMetric]);
 
-  // Auto-initialize isMetric from the majority unit in the user's data.
+  // Follow the majority unit in the lifter's own data until they choose one.
   //
-  // WHY: new users land with isMetric=false (lb) by default because the app
-  // was originally US-focused. But kg users shouldn't have to manually toggle
-  // the setting on first visit — if their data is clearly in kg, we set isMetric
-  // automatically so every chart, PR, and analyzer display is correct from the start.
+  // WHY: new users land with isMetric=false (lb) by default because most of
+  // our audience is American. A kg lifter should not have to find a toggle
+  // before their numbers make sense, least of all on the import preview, the
+  // first screen that shows them their own history. If their data is mostly
+  // kg, every chart, PR and total reads in kg from the start.
   //
   // Priority chain (highest wins):
-  //   1. URL query param (calcIsMetric=true/false) — always wins. Shared links from
+  //   1. URL query param (calcIsMetric=true/false) always wins. Shared links from
   //      calculator pages bring their own unit; the recipient should see what was shared.
-  //      Note: useStateFromQueryOrLocalStorage already applies URL → isMetric state before
-  //      this effect runs, so here we just mark it as an explicit preference and skip
-  //      data auto-init. No need to call setIsMetric.
-  //   2. SJ_unitPreferenceSet flag in localStorage — user has previously made an explicit
-  //      choice (toggle, URL param visit, or auto-init completed). Honor it and return.
-  //   3. Majority unit from parsedData — one-time auto-init for fresh users. If the user's
-  //      data is majority kg, start them in kg mode so everything looks right immediately.
-  //   4. false (lb) — no data, demo mode, or tie → default remains lb.
+  //      useStateFromQueryOrLocalStorage already applied it to isMetric before this
+  //      effect runs, so here we only record it as a choice.
+  //   2. SJ_unitPreferenceSet === "1": the lifter chose a unit (a toggle,
+  //      setIsMetric(), or a URL param visit). Never overridden.
+  //   3. Majority unit of their own data: a linked sheet, read once per visit,
+  //      or an imported file, read afresh for every file. Recorded as "data"
+  //      so a later file in another unit can still be followed.
+  //   4. false (lb): no data, or the demo. The demo is our data, not theirs,
+  //      and must not settle the question before they import anything.
   //
-  // The SJ_unitPreferenceSet flag is set by any explicit action: toggling the UnitChooser,
-  // setIsMetric(), visiting a URL with the param, or completing data auto-init. Once set,
-  // this effect never overrides the user's choice on future visits.
-  const hasAutoInitRef = useRef(false);
+  // The chosen unit is written to localStorage either way, so it holds on
+  // every page and on the next visit.
+  const lastUnitDetectionRef = useRef(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!router.isReady) return;
 
     // 1. URL query param always wins (highest priority).
-    //    useStateFromQueryOrLocalStorage already applied it to isMetric; we just
-    //    mark the preference as set so data auto-init doesn't run on top of it.
     if (router.query[LOCAL_STORAGE_KEYS.CALC_IS_METRIC] !== undefined) {
       localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
       return;
     }
 
-    // 2. User has already made an explicit choice — respect it, nothing to do.
-    if (localStorage.getItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET)) return;
+    // 2. The lifter has made an explicit choice. Respect it, nothing to do.
+    if (localStorage.getItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET) === "1") {
+      return;
+    }
 
-    // 3. One-time data auto-init for fresh users (no URL param, no stored preference).
-    if (hasAutoInitRef.current) return;
-    if (!parsedData?.length) return;
-    hasAutoInitRef.current = true;
+    // 3. Their own data decides. Wait for the stored unit and bodyweight to
+    //    load first, or a kg lifter's saved bodyweight would be converted
+    //    from the lb default a second time.
+    if (!isMetricIsInitialized || !bodyWeightIsInitialized) return;
+    if (!isOwnData(dataSource) || !parsedData?.length) return;
+    const detectionKey = dataSource === "import" ? parsedData : "sheet";
+    if (lastUnitDetectionRef.current === detectionKey) return;
+    lastUnitDetectionRef.current = detectionKey;
 
-    // Count units across all lifts and use the majority
     let kgCount = 0;
     let lbCount = 0;
     parsedData.forEach((lift) => {
@@ -547,13 +557,28 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
       else lbCount++;
     });
 
-    if (kgCount > lbCount) {
-      setIsMetric(true);
+    // A tie tells us nothing, so the unit stays as it is.
+    const dataIsMetric = kgCount === lbCount ? isMetric : kgCount > lbCount;
+    if (dataIsMetric !== isMetric) {
+      // Carry the bodyweight across as the unit toggle does, so the 200lb
+      // default does not become a 200kg athlete with a crushed ranking.
+      setBodyWeightSilent(
+        dataIsMetric
+          ? Math.round(bodyWeight / LB_PER_KG)
+          : Math.round(bodyWeight * LB_PER_KG),
+      );
     }
-    // Mark as initialized so future loads don't override the user's subsequent choices
-    localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "1");
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- router object excluded to prevent infinite loop; router.query and router.isReady are explicit
-  }, [parsedData, router.isReady, router.query]);
+    setIsMetric(dataIsMetric);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET, "data");
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- router object excluded to prevent infinite loop; isMetric and bodyWeight are read once per detection, not tracked
+  }, [
+    parsedData,
+    dataSource,
+    router.isReady,
+    router.query,
+    isMetricIsInitialized,
+    bodyWeightIsInitialized,
+  ]);
 
   // Helper function - if user toggles unit type, update isMetric and bodyweight state
   const toggleIsMetric = (isMetric) => {
@@ -585,9 +610,23 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     }, 100); // Adjust delay as needed
   };
 
+  // Show a guess at the athlete's sex and bodyweight (see
+  // lib/import/guess-athlete-bio.js) without recording it as theirs. The
+  // silent setters leave bioDataIsDefault true and write nothing to
+  // localStorage, so the rest of the app still knows they have never said,
+  // until they edit or confirm it through the ordinary setters.
+  const applyBioGuess = useCallback(
+    ({ sex: guessedSex, bodyWeight: guessedBodyWeight }) => {
+      if (guessedSex) setSexSilent(guessedSex);
+      if (guessedBodyWeight) setBodyWeightSilent(guessedBodyWeight);
+    },
+    [setSexSilent, setBodyWeightSilent],
+  );
+
   return {
     age,
     setAge,
+    applyBioGuess,
     isMetric,
     setIsMetric,
     sex,

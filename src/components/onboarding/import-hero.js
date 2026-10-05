@@ -486,15 +486,17 @@ function AboutYouSentence({
           }}
           className={`${inputClassName} w-20`}
         />
-        <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+        {/* The unit button looks like part of the bodyweight, but it is the
+            app-wide unit switch, so its caption sits right beside it. */}
+        <span className="inline-flex items-center gap-2">
+          <UnitChooser isMetric={isMetric} onSwitchChange={toggleIsMetric} />
+          <span className="text-muted-foreground text-left text-xs leading-tight font-normal">
+            Tap to switch to {isMetric ? "lb" : "kg"}
+            <br />
+            across the whole app
+          </span>
+        </span>
       </div>
-      {/* The unit button looks like part of the bodyweight, but it is the
-          app-wide unit switch, so say so right under it. */}
-      <p className="mt-2 text-sm">
-        The <span className="font-semibold">{isMetric ? "kg" : "lb"}</span>{" "}
-        button is also where you choose your units. Tap it to see every lift,
-        total and chart here in {isMetric ? "lb" : "kg"}.
-      </p>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-2">
         <p className="text-muted-foreground text-xs">
           {bioDataIsDefault

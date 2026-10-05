@@ -289,7 +289,20 @@ export function normalizeColumnName(columnName) {
 
   // Then try case-insensitive match with normalized version
   const normalizedInput = columnName.toLowerCase().replace(/[_-]/g, " ").trim();
-  return standardColumnNames[normalizedInput] || columnName; // Default to original if no match
+  if (standardColumnNames[normalizedInput]) {
+    return standardColumnNames[normalizedInput];
+  }
+
+  // Last, look past decoration a lifter adds to a header: a unit or hint in
+  // brackets, a trailing colon, doubled spaces. "Weight (kg)" is still the
+  // Weight column, and reading it as one keeps the parser from going looking
+  // for the weights in some other column.
+  const undecorated = normalizedInput
+    .replace(/\s*[([{][^)\]}]*[)\]}]\s*/g, " ")
+    .replace(/[:.]+$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return standardColumnNames[undecorated] || columnName; // Default to original if no match
 }
 
 // Used to convert number strings to integer

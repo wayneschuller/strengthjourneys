@@ -29,6 +29,42 @@ import {
   STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET,
 } from "@/lib/import/parsers/parser-utilities";
 
+// How each parse found its columns, kept beside the array it returned so the
+// rows themselves stay plain lift objects.
+const sheetLayouts = new WeakMap();
+
+/**
+ * Where the sheet behind a parse keeps its columns, and which of them had to
+ * be worked out from their contents.
+ *
+ * @param {import("./index").ParsedData} parsedData As returned by
+ *   parseStrengthJourneysData (the same array, not a copy).
+ * @returns {{hasHeaderRow: boolean, columns: Object<string, number>,
+ *   inferred: string[]} | null} `columns` maps Date, Lift Type, Reps, Weight,
+ *   Notes, Label and URL to a 0-based column index, -1 when absent.
+ */
+export function getSheetLayout(parsedData) {
+  return (parsedData && sheetLayouts.get(parsedData)) ?? null;
+}
+
+/**
+ * The layout the log page writes: a header in row 1 over Date, Lift Type,
+ * Reps, Weight, Notes and URL in columns A to F. Its write routes address
+ * those cells by position, so any other arrangement is read-only there.
+ */
+export function isStandardSheetLayout(layout) {
+  if (!layout?.hasHeaderRow) return false;
+  const { columns } = layout;
+  return (
+    columns.Date === 0 &&
+    columns["Lift Type"] === 1 &&
+    columns.Reps === 2 &&
+    columns.Weight === 3 &&
+    columns.Notes === 4 &&
+    columns.URL === 5
+  );
+}
+
 /**
  * Parse the Strength Journeys Google Sheet format into `ParsedData`.
  *
@@ -85,8 +121,10 @@ export function parseStrengthJourneysData(data) {
     normalizedColumnNames,
     firstDataRow,
   );
+  const inferredColumns = [];
   for (const [name, index] of Object.entries(columns)) {
     if (index !== -1 && normalizedColumnNames[index] !== name) {
+      inferredColumns.push(name);
       const evidence = {
         Date: "date values",
         "Lift Type": "known lift names",
@@ -298,6 +336,20 @@ export function parseStrengthJourneysData(data) {
     `${objectsArray.length} lifts`,
   );
 
+  sheetLayouts.set(objectsArray, {
+    hasHeaderRow,
+    columns: {
+      Date: dateColumnIndex,
+      "Lift Type": liftTypeColumnIndex,
+      Reps: repsColumnIndex,
+      Weight: weightColumnIndex,
+      Notes: notesColumnIndex,
+      Label: labelColumnIndex,
+      URL: urlColumnIndex,
+    },
+    inferred: inferredColumns,
+  });
+
   return objectsArray;
 }
 
@@ -311,8 +363,77 @@ function inferRequiredColumns(
   headers,
   firstDataRow,
 ) {
+  if (Object.values(namedColumns).every((index) => index !== -1)) {
+    return { ...namedColumns };
+  }
+  return dropImplausibleAnchors(
+    data,
+    inferFromColumnProfiles(
+      data,
+      namedColumns,
+      localeHint,
+      headers,
+      firstDataRow,
+    ),
+    namedColumns,
+    firstDataRow,
+  );
+}
+
+// A column can look like Date or Lift Type on very little: two meet dates
+// typed beside a set are a column where "every filled cell is a date", and a
+// single "Deadlift" in a spare column is 100% known lifts. Normally the real
+// column is found too and the tie refuses to guess. But when the real column
+// is ruled out (one stray word among the dates, lift names the registry does
+// not know) the stray column is the only candidate left, and every set in the
+// sheet would be shown under two dates or one lift.
+//
+// So an inferred Date or Lift Type column has to do the job of one:
+// - nearly every set has a value on its row or above it, since that is where
+//   a set gets its date and lift from. A few orphan rows at the top of a real
+//   log are tolerated; a column that starts halfway down is not.
+// - it carries enough values for the sets under it. Even a long session is a
+//   few dozen sets, so a column averaging more than MAX_SETS_PER_ANCHOR sets
+//   per value is not labelling them.
+// Columns named in the header are never questioned.
+const MIN_ANCHOR_COVERAGE = 0.95;
+const MAX_SETS_PER_ANCHOR = 200;
+
+function dropImplausibleAnchors(data, columns, namedColumns, firstDataRow) {
+  if (columns.Reps === -1 || columns.Weight === -1) return columns;
+
+  const checked = { ...columns };
+  for (const name of ["Date", "Lift Type"]) {
+    const column = columns[name];
+    if (column === -1 || namedColumns[name] !== -1) continue;
+    let values = 0;
+    let sets = 0;
+    let coveredSets = 0;
+    for (let row = firstDataRow; row < data.length; row++) {
+      if (String(data[row][column] ?? "").trim()) values++;
+      if (!isSetRow(data[row], columns.Reps, columns.Weight)) continue;
+      sets++;
+      if (values > 0) coveredSets++;
+    }
+    if (
+      sets > 0 &&
+      (coveredSets < sets * MIN_ANCHOR_COVERAGE ||
+        values * MAX_SETS_PER_ANCHOR < sets)
+    ) {
+      checked[name] = -1;
+    }
+  }
+  return checked;
+}
+
+function inferFromColumnProfiles(
+  data,
+  namedColumns,
+  localeHint,
+  headers,
+  firstDataRow,
+) {
   const columns = { ...namedColumns };
-  if (Object.values(columns).every((index) => index !== -1)) return columns;
 
   // Sheets omits trailing blank header cells, including an entirely blank row.
   const columnCount = data.reduce(
@@ -439,12 +560,17 @@ function inferenceWeight(text) {
 
 function hasPairedSet(data, repsColumn, weightColumn, firstDataRow) {
   for (let row = firstDataRow; row < data.length; row++) {
-    const reps = String(data[row][repsColumn] ?? "").trim();
-    const weight = String(data[row][weightColumn] ?? "").trim();
-    if (/^\d+$/.test(reps) && Number(reps) > 0 && inferenceWeight(weight))
-      return true;
+    if (isSetRow(data[row], repsColumn, weightColumn)) return true;
   }
   return false;
+}
+
+function isSetRow(row, repsColumn, weightColumn) {
+  const reps = String(row[repsColumn] ?? "").trim();
+  const weight = String(row[weightColumn] ?? "").trim();
+  return (
+    /^\d+$/.test(reps) && Number(reps) > 0 && Boolean(inferenceWeight(weight))
+  );
 }
 
 function uniqueColumn(profiles) {

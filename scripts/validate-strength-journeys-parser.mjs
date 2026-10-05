@@ -513,6 +513,113 @@ assert.deepEqual(
 );
 assert.match(groupEvents[0][1], /Strength Journeys parsing.*3 notices/);
 
+// An inferred Date or Lift Type column has to do that column's job. A stray
+// column that merely passes the content test (two dates typed beside a set, a
+// single known lift name) must not be taken when the real column is ruled
+// out, or every set would be shown under two dates or one lift.
+const quietly = (run) => {
+  const saved = [console.groupCollapsed, console.groupEnd, console.info];
+  console.groupCollapsed = () => {};
+  console.groupEnd = () => {};
+  console.info = () => {};
+  try {
+    return run();
+  } finally {
+    [console.groupCollapsed, console.groupEnd, console.info] = saved;
+  }
+};
+const strayDateRows = [
+  ["2026-03-02", "Back Squat", "5", "100kg", "", "", ""],
+  ["", "", "5", "100kg", "", "", ""],
+  ["see notes", "", "5", "100kg", "", "", ""],
+  ["2026-03-04", "Bench Press", "5", "60kg", "", "", ""],
+  ["", "", "5", "60kg", "", "", "2026-06-01"],
+  ["", "", "5", "60kg", "", "", ""],
+  ["2026-03-06", "Deadlift", "3", "140kg", "", "", "2026-06-08"],
+  ["", "", "3", "140kg", "", "", ""],
+];
+assert.throws(
+  () => quietly(() => parseStrengthJourneysData(strayDateRows)),
+  /Missing required columns: Date/,
+  "a column that starts halfway down the sets is not the Date column",
+);
+
+// The same stray column on the very first row covers every set, so only its
+// thinness gives it away: one value for hundreds of sets.
+const thinDateRows = Array.from({ length: 450 }, (_, i) => [
+  i === 40
+    ? "deload"
+    : i % 9 === 0
+      ? `2025-${String(1 + (i % 12)).padStart(2, "0")}-10`
+      : "",
+  i % 9 === 0 ? "Back Squat" : "",
+  "5",
+  "100kg",
+  "",
+  "",
+  i === 0 ? "2026-06-01" : "",
+]);
+assert.throws(
+  () => quietly(() => parseStrengthJourneysData(thinDateRows)),
+  /Missing required columns: Date/,
+  "one date over hundreds of sets is not the Date column",
+);
+
+const strayLiftRows = [
+  ["Date", "", "Reps", "Weight", "Notes", "URL", ""],
+  ["2026-03-02", "Kniebeuge", "5", "100kg", "", "", ""],
+  ["", "", "5", "100kg", "", "", ""],
+  ["2026-03-04", "Bankdruecken", "5", "60kg", "", "", ""],
+  ["", "", "5", "60kg", "", "", "Deadlift"],
+  ["2026-03-06", "Kreuzheben", "3", "140kg", "", "", ""],
+  ["", "", "3", "140kg", "", "", ""],
+];
+assert.throws(
+  () => quietly(() => parseStrengthJourneysData(strayLiftRows)),
+  /Missing required columns: Lift Type/,
+  "one known lift name in a spare column is not the Lift Type column",
+);
+
+// A real log may open with a set or two that has no date yet. That is not a
+// reason to refuse a Date column which covers everything after it.
+const orphanTopRows = [
+  ["", "Lift Type", "Reps", "Weight"],
+  ["", "Back Squat", "5", "20kg"],
+  ...Array.from({ length: 40 }, (_, i) => [
+    i % 4 === 0 ? `2026-03-${String(2 + i / 4).padStart(2, "0")}` : "",
+    i % 4 === 0 ? "Back Squat" : "",
+    "5",
+    "100kg",
+  ]),
+];
+assert.equal(
+  quietly(() => parseStrengthJourneysData(orphanTopRows)).length,
+  40,
+  "orphan sets above the first date are skipped, not a reason to refuse",
+);
+
+// A unit or hint in brackets is decoration on a header, not a different
+// column: the weights must come from "Weight (kg)", not from the unlabelled
+// numeric column beside it.
+const decoratedRows = [
+  ["Date (yyyy-mm-dd)", "Lift Type", "Reps:", "Weight (kg)", "Notes", ""],
+  ["2026-03-02", "Deadlift", "5", "140", "", "8"],
+  ["", "", "3", "160", "", "9"],
+  ["", "", "1", "180", "", "10"],
+];
+assert.deepEqual(
+  quietly(() => parseStrengthJourneysData(decoratedRows)).map((entry) => [
+    entry.date,
+    entry.reps,
+    entry.weight,
+  ]),
+  [
+    ["2026-03-02", 5, 140],
+    ["2026-03-02", 3, 160],
+    ["2026-03-02", 1, 180],
+  ],
+);
+
 console.log("Strength Journeys parser checks passed.");
 
 function permutations(values) {

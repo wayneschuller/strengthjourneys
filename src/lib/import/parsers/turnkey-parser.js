@@ -11,11 +11,18 @@
 // which has no reps to read, and an exercise assigned by RPE or left at zero
 // with no load recorded against it. A workout never completed, or an exercise
 // marked missed, was not trained, so it is neither imported nor counted.
+//
+// The export states a unit on every row, and it can state the wrong one. That
+// same history labels its first seven months lb, while the numbers are the
+// kilograms the lifter logged in their own sheet on those days. A lifter
+// trains in one unit, so when a file states two, every row is read in the one
+// most of its rows use, and the console says how many sets that changed.
 
 import { requireImportSource } from "@/lib/import/import-sources";
 import { devLog } from "@/lib/processing-utils";
 import {
   countSkip,
+  createParseRepairLog,
   getSetSkipReason,
   isValidLiftWeight,
   normalizeDecimalComma,
@@ -30,6 +37,29 @@ export const turnKeyFormat = {
 
 function isTurnKeyExport(headers) {
   return headers.includes("user_name") && headers.includes("workout_id");
+}
+
+function readUnit(value) {
+  const text = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (text.startsWith("kg")) return "kg";
+  if (text.startsWith("lb")) return "lb";
+  return null;
+}
+
+// The unit most rows state, or null when no row states one or the two are
+// level, in which case each row keeps its own.
+function getMainUnit(data, units_COL) {
+  let kg = 0;
+  let lb = 0;
+  for (const row of data.slice(1)) {
+    const unit = readUnit(row?.[units_COL]);
+    if (unit === "kg") kg++;
+    if (unit === "lb") lb++;
+  }
+  if (kg === lb) return null;
+  return kg > lb ? "kg" : "lb";
 }
 
 function parseTurnKeyData(data) {
@@ -51,6 +81,8 @@ function parseTurnKeyData(data) {
   let parsedData = [];
   const skippedByReason = {};
   const acceptedWorkouts = new Set();
+  const mainUnit = getMainUnit(data, units_COL);
+  let setsReadInMainUnit = 0;
 
   data.slice(1).forEach((row) => {
     if (!row || row[0] === null) {
@@ -95,7 +127,8 @@ function parseTurnKeyData(data) {
       lifted_weight = parseFloat(normalizeDecimalComma(row[actual_weight_COL]));
     }
 
-    let unitType = row[units_COL]; // Units are stated per row, and a long history can hold both
+    const statedUnit = readUnit(row[units_COL]);
+    const unitType = mainUnit ?? row[units_COL];
 
     const liftURL = `https://app.turnkey.coach/workout/${row[workout_id_COL]}`;
 
@@ -121,6 +154,9 @@ function parseTurnKeyData(data) {
     }
 
     acceptedWorkouts.add(row[workout_id_COL]);
+    if (mainUnit && statedUnit && statedUnit !== mainUnit) {
+      setsReadInMainUnit += sets;
+    }
 
     // Expand TurnKey sets into separate liftEntry tuples
     for (let i = 1; i <= sets; i++) {
@@ -139,9 +175,20 @@ function parseTurnKeyData(data) {
     }
   });
 
+  if (setsReadInMainUnit > 0) {
+    const otherUnit = mainUnit === "kg" ? "lb" : "kg";
+    const repairLog = createParseRepairLog(turnKeyFormat.name);
+    repairLog.issue(
+      `${setsReadInMainUnit} sets are labelled ${otherUnit} in this export and were read as ${mainUnit}, the unit most of it uses.`,
+      `TurnKey can label a row with a unit the lifter never trained in. Check a lift from those dates, and use the feedback button if it should be ${otherUnit}.`,
+    );
+    repairLog.flush();
+  }
+
   return {
     entries: parsedData,
     skippedByReason,
     workoutCount: acceptedWorkouts.size,
+    unitType: mainUnit ?? undefined,
   };
 }

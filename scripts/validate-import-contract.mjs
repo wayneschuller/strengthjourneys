@@ -73,8 +73,9 @@ const { getSetSkipReason } =
 
 // One or more files per format id. `count` is the sets a file should yield,
 // `skipped` the reasons it should report, or null for a parser that does not
-// yet count its skips, and `workoutCount` the workouts it should find when
-// the format marks them. Rows are deliberately out of date order.
+// yet count its skips, `workoutCount` the workouts it should find when the
+// format marks them, and `unitType` the one unit it should report for the
+// whole file. Rows are deliberately out of date order.
 const FIXTURES = {
   hevy: [
     {
@@ -228,8 +229,8 @@ never,Back Squat,,true,false,,,,,"5 Back Squats | 100 kg"
     {
       name: "assigned and actual sets",
       csv: `user_name,workout_id,workout_date,workout_completed,workout_type,workout_title,tonnage,assigned_exercise_missed,exercise_name,exercise_type,exercise_text,assigned_reps,assigned_reps_type,assigned_sets,assigned_sets_type,assigned_weight,assigned_weight_type,weight_type_value,weight_units,actual_reps,actual_sets,actual_weight
-Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,FALSE,Squat,resistance,,5,standard,3,standard,100,standard,,kg,,,
-Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,FALSE,Bench Press,resistance,,5,standard,3,standard,70,standard,,kg,4,3,72.5
+Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,FALSE,Squat,resistance,,5,standard,3,standard,100,standard,,lb,,,
+Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,FALSE,Bench Press,resistance,,5,standard,3,standard,70,standard,,lb,4,3,72.5
 Sam,9001,2024-03-04,TRUE,workout,Week 1 Day 1,3585,TRUE,Deadlift,resistance,,5,standard,1,standard,140,standard,,kg,,,
 Sam,9002,2024-03-06,FALSE,workout,Week 1 Day 2,,FALSE,Squat,resistance,,5,standard,3,standard,102.5,standard,,kg,,,
 Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Press,resistance,,5,standard,1,standard,"42,5",standard,,kg,,,
@@ -242,9 +243,12 @@ Sam,9003,2024-03-01,TRUE,workout,Week 0 Day 3,1162.5,FALSE,Chin-Up,resistance,,8
       // completed were not trained, so they are not counted. The free-text
       // prescription has no reps to read, and the rows assigned by RPE with
       // nothing recorded against them have no load. Chin-ups carry none.
+      // Two rows are labelled lb in a file that is otherwise kg, and are read
+      // as kg: the export can state a unit the lifter never trained in.
       count: 11,
       skipped: { missingReps: 1, missingWeight: 2 },
       workoutCount: 2,
+      unitType: "kg",
     },
   ],
   fitnotes: [
@@ -384,6 +388,16 @@ for (const format of IMPORT_FORMATS) {
     assert.deepEqual(diagnostics.skippedByReason, fixture.skipped, label);
     if (fixture.workoutCount !== undefined) {
       assert.equal(diagnostics.workoutCount, fixture.workoutCount, label);
+    }
+    if (fixture.unitType !== undefined) {
+      assert.equal(diagnostics.unitType, fixture.unitType, label);
+    }
+    // A unit reported for the whole file is the unit of every set in it.
+    if (diagnostics.unitType !== undefined) {
+      assert.ok(
+        result.data.every((entry) => entry.unitType === diagnostics.unitType),
+        `${label} reports one unit but its sets carry another`,
+      );
     }
     for (const reason of Object.keys(diagnostics.skippedByReason)) {
       assert.ok(KNOWN_SKIP_REASONS.has(reason), `${label} reason ${reason}`);

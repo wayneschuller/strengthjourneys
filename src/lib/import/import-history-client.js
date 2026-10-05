@@ -20,7 +20,26 @@ async function gzipJsonString(jsonString) {
   return await new Response(compressedStream).arrayBuffer();
 }
 
-export async function postImportHistory(
+/**
+ * Write sets into a sheet through the import route and hand back its answer.
+ * This is the `write` the import writer is given (see
+ * src/hooks/use-import-merge.js).
+ *
+ * @returns {Promise<object>} The route's answer. Rejects when the route
+ *   refused, with its `errorCode` on the error when it sent one.
+ */
+export async function writeImportHistory({ ssid, entries, ...options }) {
+  const response = await postImportHistory({ ssid, entries }, options);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data?.error || "Failed to write data to sheet");
+    error.errorCode = data?.errorCode || null;
+    throw error;
+  }
+  return data;
+}
+
+async function postImportHistory(
   payload,
   {
     source = "unknown",

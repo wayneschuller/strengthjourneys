@@ -35,19 +35,15 @@ import {
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
-import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
+import { useImportMerge } from "@/hooks/use-import-merge";
 import { useToast } from "@/hooks/use-toast";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { convertWeight } from "@/lib/weight-units";
 import {
-  analyzeImportedEntries,
-  deduplicateImportedEntries,
   describeNearbyDuplicates,
   describeOverlappingSets,
 } from "@/lib/import/dedupe";
-import { postImportHistory } from "@/lib/import/import-history-client";
-import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import {
   addDaysFromStr,
@@ -671,12 +667,15 @@ export function ImportWorkflowSection({
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const { toast } = useToast();
-  const mayMergeOverlap = useMergeOverlapAsk();
+  const {
+    merge,
+    isMerging: merging,
+    isComparisonPending: isSheetComparisonPending,
+    comparison,
+  } = useImportMerge({ source: "import_workflow" });
   const {
     sheetInfo,
     hasLinkedSheet,
-    mutate,
-    isLoading,
     parsedData,
     importFile,
     clearImportedData,
@@ -685,21 +684,17 @@ export function ImportWorkflowSection({
     importedFormatId,
     importedFileName,
     importedDiagnostics,
-    sheetParsedData,
   } = useUserLiftingData();
 
   const fileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState(null);
-  const [merging, setMerging] = useState(false);
 
   const isAuthenticated = authStatus === "authenticated" && !!session;
   const canMerge = hasLinkedSheet;
   const mergeMode = isAuthenticated && canMerge;
   const createMode = isAuthenticated && !canMerge;
-  const isSheetComparisonPending =
-    mergeMode && isLoading && !Array.isArray(sheetParsedData);
   const sheetName = sheetInfo?.filename || "your Google Sheet";
   const dailyCopyIndex = useSyncExternalStore(
     subscribeToDailyCopy,
@@ -766,160 +761,12 @@ export function ImportWorkflowSection({
 
   const onDragLeave = useCallback(() => setDragOver(false), []);
 
-  const writeEntriesToSheet = useCallback(
-    async (targetSsid, entries, importSummary = null) => {
-      const apiEntries = entries.map((entry) => ({
-        date: entry.date,
-        liftType: entry.liftType,
-        reps: entry.reps,
-        weight: entry.weight,
-        unitType: entry.unitType || "kg",
-        ...(entry.notes ? { notes: entry.notes } : {}),
-      }));
-
-      const res = await postImportHistory(
-        { ssid: targetSsid, entries: apiEntries },
-        {
-          source: "import_workflow",
-          formatId: importedFormatId,
-          formatName: importedFormatName,
-          importSummary,
-        },
-      );
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to write data to sheet");
-      }
-      return data;
-    },
-    [importedFormatId, importedFormatName],
-  );
-
+  // The merge itself, and what the lifter is told about it, is the import
+  // writer's. This page only sends them home once the preview is all in.
   const handleMerge = useCallback(async () => {
-    if (!parsedData || !sheetInfo?.ssid) return;
-    if (isSheetComparisonPending) {
-      toast({
-        title: "Still checking your sheet",
-        description:
-          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
-      });
-      return;
-    }
-
-    const {
-      newEntries,
-      skippedCount,
-      nearbyCount,
-      overlapCount,
-      conflictCount,
-    } = deduplicateImportedEntries(parsedData, sheetParsedData, {
-      formatId: importedFormatId,
-    });
-    const canGoAhead = mayMergeOverlap({
-      overlapCount,
-      newCount: newEntries.length,
-      formatId: importedFormatId,
-    });
-    if (!canGoAhead) return;
-    const nearbyNote = describeNearbyDuplicates(
-      nearbyCount,
-      importedFormatName,
-    );
-    const importSummary = {
-      outcome:
-        newEntries.length > 0
-          ? "merged"
-          : conflictCount > 0
-            ? "conflicts_only"
-            : "already_current",
-      candidateEntryCount: parsedData.length,
-      skippedCount,
-      conflictCount,
-      latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
-    };
-
-    if (newEntries.length === 0) {
-      setMerging(true);
-      try {
-        await writeEntriesToSheet(sheetInfo.ssid, [], importSummary);
-        toast({
-          title:
-            conflictCount > 0
-              ? "Changed sets need review"
-              : "Your training data is already up to date",
-          description:
-            conflictCount > 0
-              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
-              : `All ${skippedCount} entries already exist in your linked sheet.${nearbyNote} You can still import another supported format at any time.`,
-          ...(conflictCount > 0 ? { variant: "destructive" } : {}),
-        });
-      } catch {
-        toast({
-          title:
-            conflictCount > 0
-              ? "Changed sets need review"
-              : "Nothing new to merge",
-          description:
-            conflictCount > 0
-              ? `${conflictCount} changed ${conflictCount === 1 ? "set was" : "sets were"} left untouched.`
-              : `All ${skippedCount} entries already exist in your linked sheet.${nearbyNote}`,
-        });
-      } finally {
-        setMerging(false);
-      }
-      return;
-    }
-
-    setMerging(true);
-    try {
-      const data = await writeEntriesToSheet(
-        sheetInfo.ssid,
-        newEntries,
-        importSummary,
-      );
-      const skippedNote =
-        skippedCount > 0
-          ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
-          : "";
-      const conflictNote =
-        conflictCount > 0
-          ? ` Left ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} untouched for review.`
-          : "";
-
-      toast({
-        title: "Data merged into your linked sheet!",
-        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${nearbyNote}${conflictNote}`,
-      });
-
-      mutate();
-      if (conflictCount === 0) {
-        clearImportedData();
-        router.push("/");
-      }
-    } catch (err) {
-      toast({
-        title: "Merge failed",
-        description: err.message || "Network error. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setMerging(false);
-    }
-  }, [
-    clearImportedData,
-    importedFormatId,
-    importedFormatName,
-    mayMergeOverlap,
-    mutate,
-    parsedData,
-    router,
-    sheetInfo,
-    sheetParsedData,
-    isSheetComparisonPending,
-    toast,
-    writeEntriesToSheet,
-  ]);
+    const result = await merge();
+    if (result.previewDone) router.push("/");
+  }, [merge, router]);
 
   const handleCreateSheetFromImport = useCallback(() => {
     if (!parsedData || parsedData.length === 0) return;
@@ -935,11 +782,7 @@ export function ImportWorkflowSection({
     const entryCount = parsedData?.length || 0;
     const showCreateSheet = isAuthenticated && !hasLinkedSheet;
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
-    const importAnalysis = showMerge
-      ? analyzeImportedEntries(parsedData || [], sheetParsedData, {
-          formatId: importedFormatId,
-        })
-      : null;
+    const importAnalysis = showMerge ? comparison : null;
     const newEntries = importAnalysis?.newEntries || parsedData || [];
     const skippedCount = importAnalysis?.duplicateCount || 0;
     const nearbyNote = describeNearbyDuplicates(

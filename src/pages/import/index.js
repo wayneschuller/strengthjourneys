@@ -49,7 +49,7 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
-import { postImportHistory } from "@/lib/import/import-history-client";
+import { importWriter } from "@/hooks/use-import-merge";
 import { getRepeatImportAppName } from "@/lib/import/import-sources";
 import { IMPORT_APP_PAGES } from "@/lib/import/import-app-guides";
 
@@ -547,27 +547,11 @@ export default function ImportPage() {
 
     setSaving(true);
     try {
-      const res = await postImportHistory(
-        {
-          ssid: sheetInfo.ssid,
-          entries: validEntries,
-        },
-        {
-          source: "import_page_manual",
-          formatName: "Strength Journeys",
-          trackImportRitual: false,
-        },
-      );
-      const data = await res.json();
-
-      if (!res.ok) {
-        toast({
-          title: "Import failed",
-          description: data.error || "Something went wrong.",
-          variant: "destructive",
-        });
-        return;
-      }
+      const data = await importWriter.writeManualEntries({
+        ssid: sheetInfo.ssid,
+        entries: validEntries,
+        source: "import_page_manual",
+      });
 
       toast({
         title: "History imported!",
@@ -584,7 +568,7 @@ export default function ImportPage() {
     } catch (err) {
       toast({
         title: "Import failed",
-        description: "Network error. Please try again.",
+        description: err?.message || "Something went wrong.",
         variant: "destructive",
       });
     } finally {

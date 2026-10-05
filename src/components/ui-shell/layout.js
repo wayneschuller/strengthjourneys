@@ -24,7 +24,7 @@ import {
 } from "@/components/onboarding/google-sign-in";
 import { SheetSetupDialog } from "@/components/onboarding/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
+import { useImportMerge } from "@/hooks/use-import-merge";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,12 +48,6 @@ import { AlertTriangle, FileUp, Loader2, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
-import {
-  analyzeImportedEntries,
-  describeNearbyDuplicates,
-} from "@/lib/import/dedupe";
-import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
-import { postImportHistory } from "@/lib/import/import-history-client";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
 import { PENDING_SHEET_ACTIONS } from "@/lib/sheet/pending-sheet-action";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -85,8 +79,6 @@ export function Layout({ children }) {
     fetchFailed,
     apiError,
     dataSource,
-    importedFormatName,
-    importedFormatId,
     clearImportedData,
     parseError,
     sheetLayout,
@@ -331,8 +323,6 @@ export function Layout({ children }) {
         <NavBar />
         {dataSource === "import" ? (
           <ImportedDataBanner
-            formatId={importedFormatId}
-            formatName={importedFormatName}
             entryCount={parsedData?.length || 0}
             onClear={clearImportedData}
           />
@@ -831,187 +821,38 @@ function DataQualityBanner({ warnings, onFix }) {
 // - Not signed in: sign-in CTA (data will be saved to a new GSheet)
 // - Signed in + no sheet: "Save to Google Sheet" button
 // - Signed in + has sheet: "Merge into your sheet" button
-function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
-  const router = useRouter();
+function ImportedDataBanner({ entryCount, onClear }) {
   const { status: authStatus } = useSession();
+  const { hasLinkedSheet, parsedData } = useUserLiftingData();
+  // The merge, the question it may ask first and what it says afterwards all
+  // belong to the import writer; the banner shows the comparison and a button.
   const {
-    hasLinkedSheet,
-    sheetInfo,
-    parsedData,
-    sheetParsedData,
-    isLoading,
-    mutate,
-    clearImportedData,
-  } = useUserLiftingData();
-  const { toast } = useToast();
-  const mayMergeOverlap = useMergeOverlapAsk();
-  const [working, setWorking] = useState(false);
+    merge,
+    isMerging: working,
+    isComparisonPending: isSheetComparisonPending,
+    comparison: importAnalysis,
+    noteComparison,
+  } = useImportMerge({
+    source: "preview_banner_merge",
+    comparisonSource: "preview_banner_comparison",
+  });
 
   const isAuthenticated = authStatus === "authenticated";
   const hasSsid = hasLinkedSheet;
-  const importAnalysis = useMemo(() => {
-    if (!hasSsid) return null;
-    return analyzeImportedEntries(parsedData || [], sheetParsedData, {
-      formatId,
-    });
-  }, [hasSsid, parsedData, sheetParsedData, formatId]);
   const mergeEntryCount = importAnalysis?.newEntriesCount ?? 0;
   const duplicateCount = importAnalysis?.duplicateCount ?? 0;
+  const conflictCount = importAnalysis?.conflictCount ?? 0;
   const isFullyDuplicate = importAnalysis?.status === "already_in_linked_sheet";
   const isPartialOverlap = importAnalysis?.status === "partial_overlap";
-  const isSheetComparisonPending =
-    hasSsid && isAuthenticated && isLoading && !Array.isArray(sheetParsedData);
-  const recordedComparisonRef = useRef(null);
+  // Nothing left to merge, but sets the sheet holds differently are still in
+  // the preview for the lifter to look at.
+  const isConflictsOnly = mergeEntryCount === 0 && conflictCount > 0;
 
+  // The banner is on every page of a preview, so it is what records that a
+  // file with nothing to add was checked. The writer keeps it to once.
   useEffect(() => {
-    if (
-      !isAuthenticated ||
-      !hasSsid ||
-      isSheetComparisonPending ||
-      !importAnalysis ||
-      importAnalysis.newEntriesCount > 0
-    ) {
-      return;
-    }
-
-    const comparisonKey = [
-      formatId || formatName || "unknown",
-      entryCount,
-      getLatestImportedWorkoutDate(parsedData),
-      importAnalysis.duplicateCount,
-      importAnalysis.conflictCount,
-    ].join(":");
-    if (recordedComparisonRef.current === comparisonKey) return;
-    recordedComparisonRef.current = comparisonKey;
-
-    void postImportHistory(
-      { ssid: sheetInfo.ssid, entries: [] },
-      {
-        source: "preview_banner_comparison",
-        formatId,
-        formatName,
-        importSummary: {
-          outcome:
-            importAnalysis.conflictCount > 0
-              ? "conflicts_only"
-              : "already_current",
-          candidateEntryCount: entryCount,
-          skippedCount: importAnalysis.duplicateCount,
-          conflictCount: importAnalysis.conflictCount,
-          latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
-        },
-      },
-    ).catch(() => {
-      // The preview remains correct even if convenience metadata cannot sync.
-    });
-  }, [
-    entryCount,
-    formatId,
-    formatName,
-    hasSsid,
-    importAnalysis,
-    isAuthenticated,
-    isSheetComparisonPending,
-    parsedData,
-    sheetInfo?.ssid,
-  ]);
-
-  const handleMergeFromBanner = useCallback(async () => {
-    if (!parsedData || !sheetInfo?.ssid) return;
-    if (isSheetComparisonPending) {
-      toast({
-        title: "Still checking your sheet",
-        description:
-          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
-      });
-      return;
-    }
-
-    const {
-      newEntries,
-      duplicateCount: skippedCount,
-      nearbyCount,
-      overlapCount,
-      conflictCount,
-    } = analyzeImportedEntries(parsedData, sheetParsedData, { formatId });
-    const canGoAhead = mayMergeOverlap({
-      overlapCount,
-      newCount: newEntries.length,
-      formatId,
-    });
-    if (!canGoAhead) return;
-    const nearbyNote = describeNearbyDuplicates(nearbyCount, formatName);
-
-    if (newEntries.length === 0) {
-      toast({
-        title: "Nothing new to merge",
-        description: `All ${skippedCount} entries already exist in your linked sheet.${nearbyNote}`,
-      });
-      return;
-    }
-
-    setWorking(true);
-    try {
-      const apiEntries = newEntries.map((e) => ({
-        date: e.date,
-        liftType: e.liftType,
-        reps: e.reps,
-        weight: e.weight,
-        unitType: e.unitType || "kg",
-        ...(e.notes ? { notes: e.notes } : {}),
-      }));
-      const res = await postImportHistory(
-        {
-          ssid: sheetInfo.ssid,
-          entries: apiEntries,
-        },
-        {
-          source: "preview_banner_merge",
-          formatId,
-          formatName,
-          importSummary: {
-            outcome: "merged",
-            candidateEntryCount: parsedData.length,
-            skippedCount,
-            conflictCount,
-            latestWorkoutDate: getLatestImportedWorkoutDate(parsedData),
-          },
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Merge failed");
-
-      const skippedNote =
-        skippedCount > 0
-          ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
-          : "";
-      toast({
-        title: "Data merged!",
-        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${nearbyNote}`,
-      });
-      clearImportedData();
-      mutate();
-    } catch (err) {
-      toast({
-        title: "Merge failed",
-        description: err.message || "Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setWorking(false);
-    }
-  }, [
-    parsedData,
-    sheetParsedData,
-    sheetInfo,
-    isSheetComparisonPending,
-    clearImportedData,
-    formatId,
-    formatName,
-    mayMergeOverlap,
-    mutate,
-    toast,
-  ]);
+    if (isAuthenticated) noteComparison();
+  }, [isAuthenticated, noteComparison]);
 
   const handleCreateFromBanner = useCallback(() => {
     if (!parsedData || parsedData.length === 0) return;
@@ -1031,11 +872,13 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
             <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
             {hasSsid && isFullyDuplicate
               ? `This preview file already matches your linked sheet.`
-              : hasSsid && isPartialOverlap
-                ? `This preview adds ${mergeEntryCount.toLocaleString()} new ${mergeEntryCount === 1 ? "entry" : "entries"}; ${duplicateCount.toLocaleString()} already exist in your linked sheet.`
-                : hasSsid
-                  ? `This preview has ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"} ready for your linked sheet.`
-                  : `You're in preview mode with ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"}.`}
+              : hasSsid && isConflictsOnly
+                ? `This preview has ${conflictCount.toLocaleString()} changed ${conflictCount === 1 ? "set" : "sets"} to review. Your sheet keeps its own version.`
+                : hasSsid && isPartialOverlap
+                  ? `This preview adds ${mergeEntryCount.toLocaleString()} new ${mergeEntryCount === 1 ? "entry" : "entries"}; ${duplicateCount.toLocaleString()} already exist in your linked sheet.`
+                  : hasSsid
+                    ? `This preview has ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"} ready for your linked sheet.`
+                    : `You're in preview mode with ${entryCount.toLocaleString()} ${entryCount === 1 ? "lift" : "lifts"}.`}
             {!hasSsid && (
               <span className="hidden sm:inline">
                 {" "}
@@ -1072,23 +915,26 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
             </TooltipProvider>
           )}
           {/* Signed in + has sheet: merge */}
-          {isAuthenticated && hasSsid && !isFullyDuplicate && (
-            <Button
-              size="sm"
-              className={cn(
-                "h-7 text-xs",
-                bannerAccentButtonClassName({ tint: "blue" }),
-              )}
-              disabled={working || isSheetComparisonPending}
-              onClick={handleMergeFromBanner}
-            >
-              {isSheetComparisonPending
-                ? "Checking sheet..."
-                : working
-                  ? "Saving..."
-                  : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
-            </Button>
-          )}
+          {isAuthenticated &&
+            hasSsid &&
+            !isFullyDuplicate &&
+            !isConflictsOnly && (
+              <Button
+                size="sm"
+                className={cn(
+                  "h-7 text-xs",
+                  bannerAccentButtonClassName({ tint: "blue" }),
+                )}
+                disabled={working || isSheetComparisonPending}
+                onClick={merge}
+              >
+                {isSheetComparisonPending
+                  ? "Checking sheet..."
+                  : working
+                    ? "Saving..."
+                    : `Merge ${mergeEntryCount.toLocaleString()} ${mergeEntryCount === 1 ? "entry" : "entries"}`}
+              </Button>
+            )}
           {/* Signed in + no sheet: create */}
           {isAuthenticated && !hasSsid && (
             <Button

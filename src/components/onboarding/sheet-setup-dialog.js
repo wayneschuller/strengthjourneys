@@ -11,12 +11,6 @@ import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
-import {
-  deduplicateImportedEntries,
-  describeNearbyDuplicates,
-} from "@/lib/import/dedupe";
-import { postImportHistory } from "@/lib/import/import-history-client";
-import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { useLocalStorage } from "usehooks-ts";
 import { OPEN_SHEET_SETUP_EVENT } from "@/lib/sheet/open-sheet-setup";
@@ -29,7 +23,7 @@ import {
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { SHEET_FLOW_ERROR_CODES } from "@/lib/sheet/sheet-flow-errors";
-import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
+import { importWriter, useImportMerge } from "@/hooks/use-import-merge";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -175,44 +169,6 @@ function shouldShowSyncToastOnAutoLink(payload) {
   );
 }
 
-async function writeEntriesToSheet(
-  targetSsid,
-  entries,
-  { formatId, formatName, importSummary } = {},
-) {
-  const apiEntries = entries.map((entry) => ({
-    date: entry.date,
-    liftType: entry.liftType,
-    reps: entry.reps,
-    weight: entry.weight,
-    unitType: entry.unitType || "kg",
-    ...(entry.notes ? { notes: entry.notes } : {}),
-  }));
-
-  const response = await postImportHistory(
-    {
-      ssid: targetSsid,
-      entries: apiEntries,
-    },
-    {
-      source: "sheet_setup_write",
-      formatId,
-      formatName,
-      importSummary,
-    },
-  );
-  const payload = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw buildClientFlowError(
-      payload?.error || "Failed to write data to sheet",
-      payload?.errorCode || null,
-    );
-  }
-
-  return payload;
-}
-
 function buildClientFlowError(message, errorCode = null) {
   const error = new Error(message || "Automatic setup failed");
   error.errorCode = errorCode;
@@ -310,7 +266,6 @@ export function SheetSetupDialog() {
   const {
     sheetInfo,
     parsedData,
-    sheetParsedData,
     isLoading,
     selectSheet,
     clearSheet,
@@ -324,7 +279,9 @@ export function SheetSetupDialog() {
     mutate,
   } = useUserLiftingData();
   const { toast } = useToast();
-  const mayMergeOverlap = useMergeOverlapAsk();
+  const { merge: mergeImportedPreview } = useImportMerge({
+    source: "sheet_setup_write",
+  });
 
   const [open, setOpen] = useState(false);
   // Once a signed-in lifter closes setup without a sheet (or disconnects one),
@@ -918,130 +875,21 @@ export function SheetSetupDialog() {
     ],
   );
 
+  // Merging the preview into the linked sheet is the import writer's job;
+  // the dialog only closes once the whole preview is in.
   const handleMergeImportedIntoCurrentSheet = useCallback(async () => {
-    if (
-      !sheetInfo?.ssid ||
-      !Array.isArray(parsedData) ||
-      parsedData.length === 0
-    ) {
-      return;
-    }
-
-    const isSheetComparisonPending =
-      isLoading && !Array.isArray(sheetParsedData);
-    if (isSheetComparisonPending) {
-      toast({
-        title: "Still checking your sheet",
-        description:
-          "Wait a moment so Strength Journeys can compare this preview against your linked data.",
-      });
-      return;
-    }
-
     setProvisionError(null);
     setIsProvisionActionLoading(true);
     try {
-      const importedEntries = parsedData;
-      const {
-        newEntries,
-        skippedCount,
-        nearbyCount,
-        overlapCount,
-        conflictCount,
-      } = deduplicateImportedEntries(importedEntries, sheetParsedData, {
-        formatId: importedFormatId,
-      });
-      const canGoAhead = mayMergeOverlap({
-        overlapCount,
-        newCount: newEntries.length,
-        formatId: importedFormatId,
-      });
-      if (!canGoAhead) return;
-      const nearbyNote = describeNearbyDuplicates(
-        nearbyCount,
-        importedFormatName,
-      );
-      const importSummary = {
-        outcome:
-          newEntries.length > 0
-            ? "merged"
-            : conflictCount > 0
-              ? "conflicts_only"
-              : "already_current",
-        candidateEntryCount: importedEntries.length,
-        skippedCount,
-        conflictCount,
-        latestWorkoutDate: getLatestImportedWorkoutDate(importedEntries),
-      };
-
-      if (newEntries.length === 0) {
-        await writeEntriesToSheet(sheetInfo.ssid, [], {
-          formatId: importedFormatId,
-          formatName: importedFormatName,
-          importSummary,
-        });
-        toast({
-          title:
-            conflictCount > 0
-              ? "Changed sets need review"
-              : "Your training data is already up to date",
-          description:
-            conflictCount > 0
-              ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
-              : `All ${skippedCount} entries already exist in your sheet.${nearbyNote} You can still import another supported format at any time.`,
-          ...(conflictCount > 0 ? { variant: "destructive" } : {}),
-        });
-        return;
-      }
-
-      const payload = await writeEntriesToSheet(sheetInfo.ssid, newEntries, {
-        formatId: importedFormatId,
-        formatName: importedFormatName,
-        importSummary,
-      });
-      mutate();
-      if (conflictCount === 0) {
-        clearImportedData();
+      const result = await mergeImportedPreview();
+      if (result.previewDone) {
         setOpen(false);
         resetUiState();
       }
-
-      const skippedNote =
-        skippedCount > 0
-          ? ` Skipped ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"}.`
-          : "";
-      const conflictNote =
-        conflictCount > 0
-          ? ` Left ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} untouched for review.`
-          : "";
-
-      toast({
-        title: "Preview merged into your sheet",
-        description: `Added ${payload.insertedRows} rows across ${payload.dateCount} date${payload.dateCount === 1 ? "" : "s"}.${skippedNote}${nearbyNote}${conflictNote}`,
-      });
-    } catch (error) {
-      toast({
-        title: "Merge failed",
-        description:
-          error?.message || "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsProvisionActionLoading(false);
     }
-  }, [
-    clearImportedData,
-    importedFormatName,
-    importedFormatId,
-    isLoading,
-    mayMergeOverlap,
-    mutate,
-    parsedData,
-    resetUiState,
-    sheetInfo,
-    sheetParsedData,
-    toast,
-  ]);
+  }, [mergeImportedPreview, resetUiState]);
 
   const handleCreateSheetFromImportedPreview = useCallback(
     async ({ resumeAfterReauth = false } = {}) => {
@@ -1084,21 +932,13 @@ export function SheetSetupDialog() {
         }
 
         const importedEntries = parsedData;
-        const payload = await writeEntriesToSheet(
-          linkPayload.ssid,
-          importedEntries,
-          {
-            formatId: importedFormatId,
-            formatName: importedFormatName,
-            importSummary: {
-              outcome: "merged",
-              candidateEntryCount: importedEntries.length,
-              skippedCount: 0,
-              conflictCount: 0,
-              latestWorkoutDate: getLatestImportedWorkoutDate(importedEntries),
-            },
-          },
-        );
+        const payload = await importWriter.writeWholeImport({
+          ssid: linkPayload.ssid,
+          entries: importedEntries,
+          formatId: importedFormatId,
+          formatName: importedFormatName,
+          source: "sheet_setup_write",
+        });
         const nextSheetInfo = {
           ssid: linkPayload.ssid,
           url: linkPayload.webViewLink ?? null,
@@ -1216,37 +1056,13 @@ export function SheetSetupDialog() {
           setSheetDiscoveryStatusMessage(
             `Loading ${importedEntries.length.toLocaleString()} entries onto the bar.`,
           );
-          const apiEntries = importedEntries.map((e) => ({
-            date: e.date,
-            liftType: e.liftType,
-            reps: e.reps,
-            weight: e.weight,
-            unitType: e.unitType || "kg",
-            ...(e.notes ? { notes: e.notes } : {}),
-          }));
-          const writeRes = await postImportHistory(
-            {
-              ssid: linkPayload.ssid,
-              entries: apiEntries,
-            },
-            {
-              source: "sheet_setup_create",
-              formatId,
-              formatName,
-              importSummary: {
-                outcome: "merged",
-                candidateEntryCount: importedEntries.length,
-                skippedCount: 0,
-                conflictCount: 0,
-                latestWorkoutDate:
-                  getLatestImportedWorkoutDate(importedEntries),
-              },
-            },
-          );
-          const writeData = await writeRes.json();
-          if (!writeRes.ok) {
-            throw new Error(writeData.error || "Failed to write data to sheet");
-          }
+          await importWriter.writeWholeImport({
+            ssid: linkPayload.ssid,
+            entries: importedEntries,
+            formatId,
+            formatName,
+            source: "sheet_setup_create",
+          });
         }
 
         // Step 4: Link the sheet

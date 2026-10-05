@@ -35,13 +35,17 @@ npm run format         # format the whole repo; format:check only reports
 npm run validate:imports  # importer and lift-name checks on synthetic rows
 node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-log-sync.mjs
                        # the log's sheet sync against a simulated sheet
+node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/validate-import-merge.mjs
+                       # what a merge writes, asks and says, with the write faked
 ```
 
 There is **no test framework configured**. Validation is lint, plus
 `validate:imports` whenever you touch import parsing, the lift-name normalizer,
 or a registry synonym, plus `scripts/validate-log-sync.mjs` whenever you touch
 the log's sheet sync or the row rules its write routes share
-(`src/lib/sheet/log-sync-*.js`, `src/lib/sheet/sheet-row-ops.js`).
+(`src/lib/sheet/log-sync-*.js`, `src/lib/sheet/sheet-row-ops.js`), plus
+`scripts/validate-import-merge.mjs` whenever you touch what a merge does or
+says (`src/lib/import/import-merge.js`, `src/lib/import/dedupe.js`).
 
 Do not run `npm run build` unless the user asks. It disrupts the user's local
 `npm run dev` flow. It runs `next-sitemap` as a postbuild step.
@@ -134,9 +138,17 @@ authenticated users.
   called up to a third of genuine sets duplicates. Names are compared with
   case and punctuation set aside. When five or more of the sets left over
   are for a lift the sheet already has that day, the lifter is asked before
-  anything is written: every merge button goes through `useMergeOverlapAsk`
-  (`src/hooks/use-merge-overlap-ask.js`), and a new one must too. An ordinary
-  re-import adds whole new sessions and is never asked.
+  anything is written. An ordinary re-import adds whole new sessions and is
+  never asked.
+- **One writer of an import:** `src/lib/import/import-merge.js` holds
+  everything a merge does and says: the comparison, the question above, the
+  outcome, the record kept of it and the toast wording. Every merge button
+  goes through `useImportMerge` (`src/hooks/use-import-merge.js`), and a new
+  one must too; a screen decides only where to go once the result says the
+  preview is done. A preview stays open while changed sets are left for
+  review. The paths that fill a new sheet, and the manual entry on `/import`,
+  call the same writer (`importWriter`). Nothing else posts to
+  `/api/sheet/import-history`.
 - **One reader of a sheet's header:** `detectSheetLayout` in
   `import/parsers/strength-journeys-parser.js` decides where a sheet keeps its
   columns: headings in any order, by any known name, and a missing required

@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { parseData, parseImportedFile } from "@/lib/import/import-dispatcher";
+import { getSheetLayout } from "@/lib/import/parsers/strength-journeys-parser";
 import {
   getDemoAnchorDate,
   getDemoParsedData,
@@ -122,6 +123,27 @@ const _hadSheetOnLoad = (() => {
   }
 })();
 
+// The sheet's Drive modifiedTime as this browser last read it, sent back with
+// each read so the server can log whether Drive saw a change when the rows
+// did. Diagnostic only: nothing is decided on it. After a reload the copy
+// saved with the sheet's details stands in.
+const modifiedTimeByUrl = new Map();
+
+function getKnownModifiedTime(url) {
+  if (modifiedTimeByUrl.has(url)) return modifiedTimeByUrl.get(url);
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.SHEET_INFO),
+    );
+    if (stored?.ssid && String(url).endsWith(`ssid=${stored.ssid}`)) {
+      return stored.modifiedTime ?? null;
+    }
+  } catch {
+    // No saved details to read: the server logs this read as a first one.
+  }
+  return null;
+}
+
 /**
  * Generic JSON fetcher for useSWR.
  * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
@@ -130,7 +152,20 @@ const fetcher = async (...args) => {
   // Stamped before the request leaves: the log's sync uses it to tell which
   // of its own writes a snapshot was read after (see parsedDataReadAt).
   const readStartedAt = performance.now();
-  const res = await fetch(...args);
+  const [url, init] = args;
+  const knownModifiedTime = getKnownModifiedTime(url);
+  const res = await fetch(
+    url,
+    knownModifiedTime
+      ? {
+          ...init,
+          headers: {
+            ...init?.headers,
+            "X-Sheet-Modified-Time": knownModifiedTime,
+          },
+        }
+      : init,
+  );
   const json = await res.json().catch(() => null);
 
   if (!res.ok) {
@@ -149,6 +184,9 @@ const fetcher = async (...args) => {
   // every refocus reparse the whole sheet.
   if (json && typeof json === "object") {
     Object.defineProperty(json, "readStartedAt", { value: readStartedAt });
+  }
+  if (typeof json?.modifiedTime === "string") {
+    modifiedTimeByUrl.set(url, json.modifiedTime);
   }
   return json;
 };
@@ -217,6 +255,9 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context hasLinkedSheet {boolean} - Signed in with a sheet linked, even while an import is
  *   previewed on top of it. Import surfaces use it to offer merge vs create.
  * @context sheetParsedData {Array|null} - The linked sheet's rows, kept loaded under an import.
+ * @context sheetLayout {{hasHeaderRow: boolean, columns: Object, inferred: string[]}|null} - Where
+ *   the linked sheet keeps its columns and which headers had to be inferred from their contents.
+ *   See getSheetLayout and isStandardSheetLayout in the Strength Journeys parser.
  * @context parsedDataReadAt {number|null} - performance.now() when the sheet read behind
  *   `sheetParsedData` began; the log's sync uses it to tell which of its writes a snapshot includes.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.
@@ -229,6 +270,8 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   const [parsedData, setParsedData] = useState(null); // see @/lib/import/sample-parsed-data.js for data structure design
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [latestReadStartedAt, setLatestReadStartedAt] = useState(null);
+  // Where the linked sheet keeps its columns, set with the rows it describes.
+  const [sheetLayout, setSheetLayout] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
 
@@ -656,6 +699,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       parsedDataSource.set(result.parsedData, data);
     }
     setParsedData(result.parsedData);
+    setSheetLayout(result.sheetLayout);
     setParseError(result.parseError);
   }, [
     data,
@@ -864,6 +908,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         clearImportedData,
         sheetParsedData: parsedData,
         parsedDataReadAt,
+        sheetLayout,
       }}
     >
       {children}
@@ -887,10 +932,12 @@ function getParsedDataWithFallback({
 }) {
   let parsedData = null; // A local version for this scope only
   let parseError = null;
+  let sheetLayout = null;
 
   if (authStatus === "authenticated" && data?.values) {
     try {
       parsedData = parseData(data.values); // Will be sorted date ascending
+      sheetLayout = getSheetLayout(parsedData);
       gaEvent(GA_EVENT_TAGS.GSHEET_DATA_UPDATED); // Google Analytics: sheet data loaded successfully
     } catch (error) {
       // Parsing error
@@ -913,7 +960,8 @@ function getParsedDataWithFallback({
 
   // The demo arrives with its PRs already marked, and the same array every
   // time, so switching into demo mode recomputes nothing downstream.
-  if (dataSource === "demo") return { parsedData: demoParsedData, parseError };
+  if (dataSource === "demo")
+    return { parsedData: demoParsedData, parseError, sheetLayout: null };
 
   // Authenticated users without a selected/valid sheet should not see demo data.
   if (!parsedData) parsedData = [];
@@ -925,5 +973,5 @@ function getParsedDataWithFallback({
   // state variables everything needs.
   parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
-  return { parsedData, parseError };
+  return { parsedData, parseError, sheetLayout };
 }

@@ -146,16 +146,14 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
 
-    // Next answers 304 when the body matches the copy the browser holds, so
-    // the whole sheet was fetched from Google to learn nothing had changed.
-    // Logged in production too: how often this happens, and what it costs,
-    // decides whether to check Drive's modifiedTime before reading the rows.
-    if (res.statusCode === 304) {
-      console.log(
-        `[read-sheet] Unchanged sheet: fetched all ${data.values?.length ?? 0} rows from Google in ${sheetsMs}ms, and they matched what this browser already had. ` +
-          `Drive answered in ${driveMs}ms. If these lines are frequent and the Sheets time is high, checking Drive's modifiedTime first would save that fetch.`,
-      );
-    }
+    logReadTimings({
+      req,
+      res,
+      rowCount: data.values?.length ?? 0,
+      modifiedTime: data.modifiedTime ?? null,
+      sheetsMs,
+      driveMs,
+    });
 
     // Prompts the developer to offer personal support at key moments.
     // Runs after the response is sent so the user never waits for this.
@@ -259,4 +257,41 @@ export default async function handler(req, res) {
     console.error("[read-sheet] could not reach Google:", error);
     res.status(502).json({ error: "Could not reach Google Sheets." });
   }
+}
+
+// One line per read, in production too. It records what a "check Drive's
+// modifiedTime before fetching the rows" shortcut would have seen: how long
+// each Google call took, and whether modifiedTime moved when the rows did. The
+// browser sends the modifiedTime it last read, so nothing is kept here.
+function logReadTimings({
+  req,
+  res,
+  rowCount,
+  modifiedTime,
+  sheetsMs,
+  driveMs,
+}) {
+  const knownModifiedTime = req.headers["x-sheet-modified-time"] ?? null;
+  const modifiedState = !modifiedTime
+    ? "modifiedTime unavailable"
+    : !knownModifiedTime
+      ? "first modifiedTime this browser has sent"
+      : knownModifiedTime === modifiedTime
+        ? "modifiedTime unchanged"
+        : "modifiedTime changed";
+  // Next answers 304 when the rows match the copy the browser holds.
+  const rowsState =
+    res.statusCode === 304
+      ? "rows unchanged"
+      : req.headers["if-none-match"]
+        ? "rows changed"
+        : "browser had no copy";
+  const driveMissedIt =
+    modifiedState === "modifiedTime unchanged" && rowsState === "rows changed";
+  console.log(
+    `[read-sheet] Drive metadata returned in ${driveMs}ms (${modifiedState}); ${rowCount} rows fetched concurrently in ${sheetsMs}ms (${rowsState}). ` +
+      (driveMissedIt
+        ? "Drive's modifiedTime had not caught up with the rows, so a modifiedTime-first check would have missed this change."
+        : "If the rows fetch gets much slower than Drive, modifiedTime could be checked first and the fetch skipped when it is unchanged."),
+  );
 }

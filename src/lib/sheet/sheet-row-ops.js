@@ -22,6 +22,37 @@
  * much less likely while the client sync model is being hardened.
  */
 
+import { normalizeColumnName } from "@/lib/import/parsers/parser-utilities";
+
+// The sheet layout every write here addresses by position: a header in row 1
+// over these six columns, A to F.
+const STANDARD_HEADERS = [
+  "Date",
+  "Lift Type",
+  "Reps",
+  "Weight",
+  "Notes",
+  "URL",
+];
+
+/**
+ * Is this row 1 the standard header? The parser can read a sheet whose
+ * columns are in another order, or which has no header at all, by finding or
+ * inferring each column. A write cannot: it puts a date in column A and a
+ * weight in column D. So a route that writes by position checks first.
+ *
+ * The four required headers must be in place. Notes and URL may be blank,
+ * which only means the app will not read those columns back.
+ *
+ * @param {string[]|undefined} row Raw cells of the sheet's first row.
+ */
+export function isStandardHeaderRow(row) {
+  return STANDARD_HEADERS.every((name, column) => {
+    const cell = normalizeColumnName(String(row?.[column] ?? "").trim());
+    return cell === name || (column >= 4 && cell === "");
+  });
+}
+
 export const EDITABLE_COLUMN_CONFIG = {
   reps: { letter: "C", startColumnIndex: 2 },
   weight: { letter: "D", startColumnIndex: 3 },

@@ -39,30 +39,50 @@ const sheetLayouts = new WeakMap();
  *
  * @param {import("./index").ParsedData} parsedData As returned by
  *   parseStrengthJourneysData (the same array, not a copy).
- * @returns {{hasHeaderRow: boolean, columns: Object<string, number>,
- *   inferred: string[]} | null} `columns` maps Date, Lift Type, Reps, Weight,
- *   Notes, Label and URL to a 0-based column index, -1 when absent.
+ * @returns {{hasHeaderRow: boolean, header: string[],
+ *   columns: Object<string, number>, inferred: string[]} | null} `header` is
+ *   row 1 with recognised names normalised (empty when the sheet has no
+ *   header row). `columns` maps Date, Lift Type, Reps, Weight, Notes, Label
+ *   and URL to a 0-based column index, -1 when absent.
  */
 export function getSheetLayout(parsedData) {
   return (parsedData && sheetLayouts.get(parsedData)) ?? null;
 }
 
+const STANDARD_COLUMN_ORDER = [
+  "Date",
+  "Lift Type",
+  "Reps",
+  "Weight",
+  "Notes",
+  "URL",
+];
+
 /**
- * The layout the log page writes: a header in row 1 over Date, Lift Type,
- * Reps, Weight, Notes and URL in columns A to F. Its write routes address
- * those cells by position, so any other arrangement is read-only there.
+ * Can the log page write to a sheet laid out like this? Its write routes
+ * address cells by position: a header in row 1, then Date, Lift Type, Reps,
+ * Weight, Notes and URL in columns A to F. Reading copes with any order, and
+ * with no header at all; a write to such a sheet would land under the wrong
+ * heading.
+ *
+ * A required column still counts when its header cell is blank and its
+ * contents put it in the right place (a header deleted by accident). Notes
+ * and URL may be unlabelled, as on older sheets; they may not be labelled as
+ * something else.
  */
 export function isStandardSheetLayout(layout) {
   if (!layout?.hasHeaderRow) return false;
-  const { columns } = layout;
-  return (
-    columns.Date === 0 &&
-    columns["Lift Type"] === 1 &&
-    columns.Reps === 2 &&
-    columns.Weight === 3 &&
-    columns.Notes === 4 &&
-    columns.URL === 5
-  );
+  // A first row with nothing recognisable in it is not a header to trust.
+  if (!STANDARD_COLUMN_ORDER.some((name, i) => layout.header[i] === name)) {
+    return false;
+  }
+  return STANDARD_COLUMN_ORDER.every((name, column) => {
+    const header = layout.header[column] ?? "";
+    if (column >= 4) return header === name || header === "";
+    return (
+      layout.columns[name] === column && (header === name || header === "")
+    );
+  });
 }
 
 /**
@@ -338,6 +358,7 @@ export function parseStrengthJourneysData(data) {
 
   sheetLayouts.set(objectsArray, {
     hasHeaderRow,
+    header: normalizedColumnNames.map((name) => String(name ?? "").trim()),
     columns: {
       Date: dateColumnIndex,
       "Lift Type": liftTypeColumnIndex,

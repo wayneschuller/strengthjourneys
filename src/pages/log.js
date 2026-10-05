@@ -44,6 +44,12 @@ import { LiftBlock } from "@/components/log/lift-block";
 import { SessionFooterActions } from "@/components/log/session-footer-actions";
 import { EmptySessionState } from "@/components/log/empty-session-state";
 import { useNextLiftPlan } from "@/components/log/big-four-next-up";
+import {
+  AppBanner,
+  AppBannerContent,
+  AppBannerMessage,
+} from "@/components/ui/app-banner";
+import { isStandardSheetLayout } from "@/lib/import/parsers/strength-journeys-parser";
 import { LogDateNav } from "@/components/log/log-date-nav";
 import { MeetDayBanner } from "@/components/log/meet-day-banner";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
@@ -179,6 +185,7 @@ export default function LogSessionPage({
     meetDays,
     dataSource,
     parsedDataReadAt,
+    sheetLayout,
   } = useUserLiftingData();
   const { isMetric, sex, toggleIsMetric } = useAthleteBio();
   const { toast } = useToast();
@@ -388,9 +395,19 @@ export default function LogSessionPage({
   // is being deleted. Nothing new is accepted then, by decision: a change
   // taken while the sheet cannot be reached would sit in this tab's memory
   // and be lost with it. Changes accepted earlier keep retrying.
+  //
+  // Nor is anything written to a sheet whose columns are not where the write
+  // routes put them. The parser reads such a sheet happily, by header name or
+  // by inference, so the session still shows; a set written to it by
+  // position would land under the wrong heading.
+  const hasUnsupportedLayout =
+    hasLinkedSheet &&
+    sheetLayout !== null &&
+    !isStandardSheetLayout(sheetLayout);
   const isWriteBlocked =
     showSessionBootstrap ||
     isDeletingSession ||
+    hasUnsupportedLayout ||
     isLoading ||
     isError ||
     fetchFailed ||
@@ -716,6 +733,20 @@ export default function LogSessionPage({
                 syncState={syncState}
                 todayIso={todayIso}
               />
+
+              {hasUnsupportedLayout && !showSessionBootstrap && (
+                <AppBanner tint="amber" role="status" className="mt-3">
+                  <AppBannerContent density="compact">
+                    <AppBannerMessage>
+                      <strong>Logging is paused for this sheet.</strong> Sets
+                      are written to columns A to F in the order Date, Lift
+                      Type, Reps, Weight, Notes, URL, under a header in row 1.
+                      Put your sheet&apos;s first row back in that order and
+                      logging picks up again. Everything else keeps working.
+                    </AppBannerMessage>
+                  </AppBannerContent>
+                </AppBanner>
+              )}
 
               {showSessionBootstrap && <LogSessionSkeleton />}
               {isPresumedDemo && (

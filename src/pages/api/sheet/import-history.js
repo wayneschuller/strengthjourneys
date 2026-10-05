@@ -17,6 +17,7 @@ import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
+import { isStandardHeaderRow } from "@/lib/sheet/sheet-row-ops";
 import {
   buildVisibleImportProvenance,
   hasVisibleImportProvenance,
@@ -358,6 +359,18 @@ export default async function handler(req, res) {
       return res.status(failure.httpStatus).json(failure.payload);
     }
     const { values: sheetRows = [] } = await dataRes.json();
+
+    // Everything below places rows by position: dates are looked up in column
+    // A, row 1 is skipped as the header, and new rows are written A to F. On a
+    // sheet laid out any other way that would split a session from its date
+    // or put values under the wrong headings, so stop before writing.
+    if (!isStandardHeaderRow(sheetRows[0])) {
+      return res.status(409).json({
+        error:
+          "Your sheet's first row needs the headers Date, Lift Type, Reps, Weight, Notes and URL in columns A to F before an import can be merged into it.",
+        errorCode: "SHEET_LAYOUT_UNSUPPORTED",
+      });
+    }
 
     // Build a map of date → highest row index (1-based, skipping header at index 0)
     // Sheet is newest-first: row index 1 = header, row 2+ = data

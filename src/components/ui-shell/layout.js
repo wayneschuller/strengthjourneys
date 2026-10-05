@@ -85,6 +85,7 @@ export function Layout({ children }) {
     importedFormatId,
     clearImportedData,
     parseError,
+    sheetLayout,
     parsedData,
     rawRows,
     hasCachedSheetData,
@@ -123,6 +124,7 @@ export function Layout({ children }) {
   const apiErrorShown = useRef(false);
   const prevRawRowsRef = useRef(null);
   const parseErrorShown = useRef(false);
+  const inferredHeadersShown = useRef("");
   const demoShown = useRef(false);
 
   // Sheet fetch error — uses fetchFailed from useSWR's onErrorRetry callback,
@@ -229,6 +231,22 @@ export function Layout({ children }) {
     });
   }, [parseError, toast]);
 
+  // The parser reads a sheet whose headers are damaged by working the columns
+  // out from their contents, so the lifter still sees their data. Say so once,
+  // with the cell to fix, because nothing else on screen would tell them.
+  useEffect(() => {
+    if (dataSource !== "sheet") return;
+    const notice = getInferredHeaderNotice(sheetLayout);
+    const signature = notice
+      ? `${sheetLayout.hasHeaderRow}:${sheetLayout.inferred.join(",")}`
+      : "";
+    if (inferredHeadersShown.current === signature) return;
+    inferredHeadersShown.current = signature;
+    if (!notice) return;
+
+    toast({ ...notice, duration: 15000 });
+  }, [dataSource, sheetLayout, toast]);
+
   // Sign-in nudge — delayed prompt on data pages when unauthenticated
   useEffect(() => {
     if (demoShown.current) return;
@@ -316,6 +334,37 @@ export function Layout({ children }) {
       </div>
     </div>
   );
+}
+
+// Copy for the toast that follows a parse which had to infer columns, or
+// null when every header was where it should be.
+function getInferredHeaderNotice(sheetLayout) {
+  if (!sheetLayout) return null;
+  const { hasHeaderRow, columns, inferred } = sheetLayout;
+
+  if (!hasHeaderRow) {
+    return {
+      title: "Your sheet has no header row",
+      description:
+        "Your sets loaded: we worked the columns out from what is in them. Insert a row above your first set labelled Date, Lift Type, Reps, Weight, Notes and URL to bring back your notes and video links, and logging here.",
+    };
+  }
+  if (!inferred.length) return null;
+
+  const cells = inferred.map(
+    (name) => `"${name}" in ${String.fromCharCode(65 + columns[name])}1`,
+  );
+  const fix =
+    cells.length === 1
+      ? cells[0]
+      : `${cells.slice(0, -1).join(", ")} and ${cells.at(-1)}`;
+  return {
+    title:
+      inferred.length === 1
+        ? `Row 1 is missing its ${inferred[0]} header`
+        : "Row 1 is missing some headers",
+    description: `Your data loaded: we worked out the column${inferred.length === 1 ? "" : "s"} from what is in ${inferred.length === 1 ? "it" : "them"}. Type ${fix} in your Google Sheet to set it right.`,
+  };
 }
 
 function buildApiErrorToast(apiError) {

@@ -11,7 +11,10 @@ import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { parseData, parseImportedFile } from "@/lib/import/import-dispatcher";
-import { getSheetLayout } from "@/lib/import/parsers/strength-journeys-parser";
+import {
+  getSheetLayout,
+  getSheetWriteColumns,
+} from "@/lib/import/parsers/strength-journeys-parser";
 import {
   getDemoAnchorDate,
   getDemoParsedData,
@@ -822,11 +825,15 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         throw new Error("No linked data source is available to update.");
       }
 
+      // The sheet's own column map goes with the fix, as with every other
+      // write, so the dates are corrected wherever the lifter keeps them.
+      const columns = getSheetWriteColumns(sheetLayout);
       const res = await fetch("/api/sheet/fix-date-outlier", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ssid: linkedSheetId,
+          ...(columns ? { columns } : {}),
           startRowIndex: warning.startRowIndex,
           endRowIndex: warning.endRowIndex,
           currentDate: warning.currentDate,
@@ -841,7 +848,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       await mutate();
       return { ...body, mode: "linked" };
     },
-    [importedParsedData, linkedSheetId, mutate],
+    [importedParsedData, linkedSheetId, mutate, sheetLayout],
   );
 
   // Calculate liftTypes from activeParsedData (computed automatically when data changes)

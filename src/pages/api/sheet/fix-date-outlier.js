@@ -5,11 +5,21 @@
  * one parsed workout section. Blank inherited date cells stay blank, so the
  * official sparse sheet format keeps working while manually filled-down dates
  * are corrected too.
+ *
+ * The date cells are found the way every other sheet write finds its
+ * columns: by the Date heading, wherever the lifter keeps it. The client
+ * sends the column map its parse found and the server checks it against row 1
+ * before writing (see resolveWriteColumns).
  */
 
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { getServerSession } from "next-auth/next";
 import { normalizeDateInput } from "@/lib/date-utils";
+import {
+  columnLetter,
+  readSheetRows,
+  resolveWriteColumns,
+} from "@/lib/sheet/sheet-row-ops";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -22,8 +32,14 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorized" });
   }
 
-  const { ssid, startRowIndex, endRowIndex, currentDate, suggestedDate } =
-    req.body;
+  const {
+    ssid,
+    startRowIndex,
+    endRowIndex,
+    currentDate,
+    suggestedDate,
+    columns: requestedColumns,
+  } = req.body;
 
   if (
     !ssid ||
@@ -46,25 +62,33 @@ export default async function handler(req, res) {
   };
 
   try {
-    const range = `A${startRowIndex}:A${endRowIndex}`;
-    const readResponse = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?majorDimension=ROWS&dateTimeRenderOption=FORMATTED_STRING`,
-      { headers },
-    );
-
-    if (!readResponse.ok) {
-      const body = await readResponse.json().catch(() => ({}));
-      const message = body?.error?.message || "Failed to read date cells";
-      return res.status(readResponse.status).json({ error: message });
+    // Row 1 settles which column holds the dates, and is read alongside the
+    // section's own rows.
+    const [[headerRow], sectionRows] = await Promise.all([
+      readSheetRows({ ssid, headers, fromRow: 1, toRow: 1 }),
+      readSheetRows({
+        ssid,
+        headers,
+        fromRow: startRowIndex,
+        toRow: endRowIndex,
+      }),
+    ]);
+    const layout = resolveWriteColumns(requestedColumns, headerRow);
+    if (!layout.ok) {
+      return res.status(409).json({
+        error: `Sheet layout check failed: ${layout.message}`,
+        code: "PRECONDITION_FAILED",
+      });
     }
+    const dateColumn = layout.columns.date;
 
-    const payload = await readResponse.json();
+    // Sheets leaves out trailing blank rows, so pad to the section's length.
     const rowCount = endRowIndex - startRowIndex + 1;
     const rows = Array.from({ length: rowCount }, (_, index) => {
-      return payload.values?.[index] ?? [];
+      return sectionRows[index] ?? [];
     });
 
-    const firstDate = normalizeDateInput(rows[0]?.[0]);
+    const firstDate = normalizeDateInput(rows[0]?.[dateColumn]);
     if (firstDate !== currentDate) {
       return res.status(409).json({
         error: `The workout date changed before it could be fixed.`,
@@ -74,7 +98,7 @@ export default async function handler(req, res) {
     }
 
     const nextRows = rows.map((row) => {
-      const rawDate = row?.[0] ?? "";
+      const rawDate = row?.[dateColumn] ?? "";
       const normalizedDate = normalizeDateInput(rawDate);
       if (!rawDate) return [""];
       if (normalizedDate !== currentDate) {
@@ -83,6 +107,8 @@ export default async function handler(req, res) {
       return [suggestedDate];
     });
 
+    const letter = columnLetter(dateColumn);
+    const range = `${letter}${startRowIndex}:${letter}${endRowIndex}`;
     const writeResponse = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/${range}?valueInputOption=USER_ENTERED`,
       {
@@ -119,8 +145,9 @@ export default async function handler(req, res) {
     }
 
     console.error("[sheet/fix-date-outlier] unexpected error:", error);
+    // A read Google refused keeps Google's status.
     return res
-      .status(500)
+      .status(error.status || 500)
       .json({ error: error.message || "Internal server error" });
   }
 }

@@ -135,6 +135,7 @@ export default async function handler(req, res) {
       res.status(304).end();
       logRead({
         path: "skipped",
+        modifiedAge: describeAge(driveData.modifiedTime),
         driveMs,
         totalMs: Date.now() - t0,
       });
@@ -183,6 +184,7 @@ export default async function handler(req, res) {
     const rowCount = data.values?.length ?? 0;
     logRead({
       path: mayAnswerUnchanged ? "driveFirst" : "full",
+      modifiedAge: describeAge(driveData?.modifiedTime),
       rowCount,
       modifiedState: !driveData?.modifiedTime
         ? "modifiedTime unavailable"
@@ -319,6 +321,7 @@ async function recordSheetRead({ session, ssid, rowCount }) {
 // modifiedTime keeps up with the rows.
 function logRead({
   path,
+  modifiedAge,
   rowCount,
   modifiedState,
   rowsState,
@@ -332,34 +335,44 @@ function logRead({
 
   if (path === "skipped") {
     console.log(
-      `${tag} Sheets rows fetch skipped. Google Drive answered the metadata call in ${driveMs}ms with modifiedTime unchanged, so this server never asked Google Sheets for the rows. Whole request ${totalMs}ms.`,
+      `${tag} Sheets rows fetch skipped. Google Drive answered the metadata call in ${driveMs}ms with modifiedTime unchanged (${modifiedAge}), so this server never asked Google Sheets for the rows. Whole request ${totalMs}ms.`,
     );
     return;
   }
 
   const handling = `This server then spent ${bodyMs}ms downloading and parsing the rows from Google and ${sendMs}ms fingerprinting them for the browser. Whole request ${totalMs}ms.`;
+  // The response carries modifiedTime, so once that has changed the response
+  // differs from the browser's copy whether or not a single row does.
   const rowsNote =
     rowsState === "rows unchanged"
       ? "they matched the browser's copy, so none were sent on to it"
-      : rowsState === "rows changed"
-        ? "they differed from the browser's copy and were sent on to it"
-        : "the browser had no copy, so they were sent on to it";
+      : rowsState !== "rows changed"
+        ? "the browser had no copy, so they were sent on to it"
+        : modifiedState === "modifiedTime changed"
+          ? "they were sent on to the browser, because the timestamp alone makes the response new, whether or not any row changed"
+          : "they differed from the browser's copy and were sent on to it";
 
   if (path === "driveFirst") {
     console.log(
-      `${tag} Drive asked first. Google Drive answered the metadata call in ${driveMs}ms (modifiedTime changed), so this server went on to fetch ${rowCount} rows from Google Sheets in a further ${sheetsMs}ms; ${rowsNote}. ${handling}` +
-        (rowsState === "rows unchanged"
-          ? " Only Drive's timestamp had moved: usually Drive catching up with a change the browser already had."
-          : ""),
+      `${tag} Drive asked first. Google Drive answered the metadata call in ${driveMs}ms (${modifiedState}, ${modifiedAge}), so this server went on to fetch ${rowCount} rows from Google Sheets in a further ${sheetsMs}ms; ${rowsNote}. ${handling}` +
+        " If the browser made this change itself, this is Drive catching up with rows the browser already had.",
     );
     return;
   }
 
   console.log(
-    `${tag} full read (first load, or the app asked for one). Google Drive answered the metadata call in ${driveMs}ms (${modifiedState}) while Google Sheets returned ${rowCount} rows in ${sheetsMs}ms, both requested at once; ${rowsNote}. ${handling}` +
+    `${tag} full read (first load, or the app asked for one). Google Drive answered the metadata call in ${driveMs}ms (${modifiedState}, ${modifiedAge}) while Google Sheets returned ${rowCount} rows in ${sheetsMs}ms, both requested at once; ${rowsNote}. ${handling}` +
       (modifiedState === "modifiedTime unchanged" &&
       rowsState === "rows changed"
         ? " Drive's modifiedTime had not caught up with this change yet, which is why reads after a change never ask Drive first."
         : ""),
   );
+}
+
+/** How long ago Drive says the sheet was last modified, for the log line. */
+function describeAge(modifiedTime) {
+  const modifiedAt = Date.parse(modifiedTime ?? "");
+  if (!Number.isFinite(modifiedAt)) return "age unknown";
+  const seconds = Math.max(0, Math.round((Date.now() - modifiedAt) / 1000));
+  return `last modified ${seconds}s ago by Drive's clock`;
 }

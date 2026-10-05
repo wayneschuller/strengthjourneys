@@ -47,7 +47,10 @@ import { AlertTriangle, FileUp, Loader2, X } from "lucide-react";
 import { devLog } from "@/lib/processing-utils";
 import { cn } from "@/lib/utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
-import { analyzeImportedEntries } from "@/lib/import/dedupe";
+import {
+  analyzeImportedEntries,
+  describeNearbyDuplicates,
+} from "@/lib/import/dedupe";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { postImportHistory } from "@/lib/import/import-history-client";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
@@ -846,8 +849,10 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
   const hasSsid = hasLinkedSheet;
   const importAnalysis = useMemo(() => {
     if (!hasSsid) return null;
-    return analyzeImportedEntries(parsedData || [], sheetParsedData);
-  }, [hasSsid, parsedData, sheetParsedData]);
+    return analyzeImportedEntries(parsedData || [], sheetParsedData, {
+      formatId,
+    });
+  }, [hasSsid, parsedData, sheetParsedData, formatId]);
   const mergeEntryCount = importAnalysis?.newEntriesCount ?? 0;
   const duplicateCount = importAnalysis?.duplicateCount ?? 0;
   const isFullyDuplicate = importAnalysis?.status === "already_in_linked_sheet";
@@ -923,13 +928,15 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
     const {
       newEntries,
       duplicateCount: skippedCount,
+      nearbyCount,
       conflictCount,
-    } = analyzeImportedEntries(parsedData, sheetParsedData);
+    } = analyzeImportedEntries(parsedData, sheetParsedData, { formatId });
+    const nearbyNote = describeNearbyDuplicates(nearbyCount, formatName);
 
     if (newEntries.length === 0) {
       toast({
         title: "Nothing new to merge",
-        description: `All ${skippedCount} entries already exist in your linked sheet.`,
+        description: `All ${skippedCount} entries already exist in your linked sheet.${nearbyNote}`,
       });
       return;
     }
@@ -971,7 +978,7 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
           : "";
       toast({
         title: "Data merged!",
-        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}`,
+        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${nearbyNote}`,
       });
       clearImportedData();
       mutate();

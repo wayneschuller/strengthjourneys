@@ -18,7 +18,11 @@ const IMPORT_SOURCES = [
   { id: "fitnotes", name: "FitNotes" },
   { id: "wodify", name: "Wodify" },
   { id: "btwb", name: "BTWB" },
-  { id: "turnkey", name: "TurnKey" },
+  // A coach's app: its date is the day a workout was scheduled, which is
+  // often a day or more from the day it was lifted. The merge allows for that
+  // when it looks for sets already in the sheet (see dedupe.js). The apps a
+  // lifter logs in themselves date a set by when it happened.
+  { id: "turnkey", name: "TurnKey", scheduledDates: true },
   { id: "strength-journeys", name: "Strength Journeys" },
 ];
 

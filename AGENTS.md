@@ -123,6 +123,15 @@ authenticated users.
   format's id and name are written once, in `import/import-sources.js`.
   `scripts/validate-import-contract.mjs` holds every listed format to it and
   fails when a format has no fixture.
+- **What a merge counts as a duplicate:** `import/dedupe.js` is the one
+  place that decides which imported sets the sheet already has, and every
+  merge entry point calls it with the import's format id. A duplicate is the
+  same lift, reps and load on the same date, matched one-for-one so repeated
+  sets survive. A source marked `scheduledDates` in `import-sources.js`
+  (TurnKey, a coach's app) is also matched up to three days either side, one
+  whole lift at a time, and the lifter is told how many sets that covered. Do
+  not widen that to apps a lifter logs in themselves: on real histories it
+  called up to a third of genuine sets duplicates.
 - **One reader of a sheet's header:** `detectSheetLayout` in
   `import/parsers/strength-journeys-parser.js` decides where a sheet keeps its
   columns: headings in any order, by any known name, and a missing required

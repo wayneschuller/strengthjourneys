@@ -11,7 +11,10 @@ import { ChooseSheetPanel } from "@/components/home-dashboard/choose-sheet-panel
 import { AthleteBioSliderSettings } from "@/components/athlete-bio-quick-settings";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
-import { deduplicateImportedEntries } from "@/lib/import/dedupe";
+import {
+  deduplicateImportedEntries,
+  describeNearbyDuplicates,
+} from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -937,8 +940,14 @@ export function SheetSetupDialog() {
     setIsProvisionActionLoading(true);
     try {
       const importedEntries = parsedData;
-      const { newEntries, skippedCount, conflictCount } =
-        deduplicateImportedEntries(importedEntries, sheetParsedData);
+      const { newEntries, skippedCount, nearbyCount, conflictCount } =
+        deduplicateImportedEntries(importedEntries, sheetParsedData, {
+          formatId: importedFormatId,
+        });
+      const nearbyNote = describeNearbyDuplicates(
+        nearbyCount,
+        importedFormatName,
+      );
       const importSummary = {
         outcome:
           newEntries.length > 0
@@ -966,7 +975,7 @@ export function SheetSetupDialog() {
           description:
             conflictCount > 0
               ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
-              : `All ${skippedCount} entries already exist in your sheet. You can still import another supported format at any time.`,
+              : `All ${skippedCount} entries already exist in your sheet.${nearbyNote} You can still import another supported format at any time.`,
           ...(conflictCount > 0 ? { variant: "destructive" } : {}),
         });
         return;
@@ -995,7 +1004,7 @@ export function SheetSetupDialog() {
 
       toast({
         title: "Preview merged into your sheet",
-        description: `Added ${payload.insertedRows} rows across ${payload.dateCount} date${payload.dateCount === 1 ? "" : "s"}.${skippedNote}${conflictNote}`,
+        description: `Added ${payload.insertedRows} rows across ${payload.dateCount} date${payload.dateCount === 1 ? "" : "s"}.${skippedNote}${nearbyNote}${conflictNote}`,
       });
     } catch (error) {
       toast({

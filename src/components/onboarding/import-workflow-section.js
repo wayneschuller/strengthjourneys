@@ -44,6 +44,7 @@ import { convertWeight, toKg, toLb, unitTypeFor } from "@/lib/weight-units";
 import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
+  describeNearbyDuplicates,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
@@ -1112,8 +1113,14 @@ export function ImportWorkflowSection({
       return;
     }
 
-    const { newEntries, skippedCount, conflictCount } =
-      deduplicateImportedEntries(parsedData, sheetParsedData);
+    const { newEntries, skippedCount, nearbyCount, conflictCount } =
+      deduplicateImportedEntries(parsedData, sheetParsedData, {
+        formatId: importedFormatId,
+      });
+    const nearbyNote = describeNearbyDuplicates(
+      nearbyCount,
+      importedFormatName,
+    );
     const importSummary = {
       outcome:
         newEntries.length > 0
@@ -1139,7 +1146,7 @@ export function ImportWorkflowSection({
           description:
             conflictCount > 0
               ? `${conflictCount} ${conflictCount === 1 ? "set has" : "sets have"} matching source details but different lifting data. Nothing was overwritten.`
-              : `All ${skippedCount} entries already exist in your linked sheet. You can still import another supported format at any time.`,
+              : `All ${skippedCount} entries already exist in your linked sheet.${nearbyNote} You can still import another supported format at any time.`,
           ...(conflictCount > 0 ? { variant: "destructive" } : {}),
         });
       } catch {
@@ -1151,7 +1158,7 @@ export function ImportWorkflowSection({
           description:
             conflictCount > 0
               ? `${conflictCount} changed ${conflictCount === 1 ? "set was" : "sets were"} left untouched.`
-              : `All ${skippedCount} entries already exist in your linked sheet.`,
+              : `All ${skippedCount} entries already exist in your linked sheet.${nearbyNote}`,
         });
       } finally {
         setMerging(false);
@@ -1177,7 +1184,7 @@ export function ImportWorkflowSection({
 
       toast({
         title: "Data merged into your linked sheet!",
-        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${conflictNote}`,
+        description: `Added ${data.insertedRows} rows across ${data.dateCount} date${data.dateCount === 1 ? "" : "s"}.${skippedNote}${nearbyNote}${conflictNote}`,
       });
 
       mutate();
@@ -1196,6 +1203,8 @@ export function ImportWorkflowSection({
     }
   }, [
     clearImportedData,
+    importedFormatId,
+    importedFormatName,
     mutate,
     parsedData,
     router,
@@ -1221,10 +1230,16 @@ export function ImportWorkflowSection({
     const showCreateSheet = isAuthenticated && !hasLinkedSheet;
     const showMerge = isAuthenticated && !showCreateSheet && canMerge;
     const importAnalysis = showMerge
-      ? analyzeImportedEntries(parsedData || [], sheetParsedData)
+      ? analyzeImportedEntries(parsedData || [], sheetParsedData, {
+          formatId: importedFormatId,
+        })
       : null;
     const newEntries = importAnalysis?.newEntries || parsedData || [];
     const skippedCount = importAnalysis?.duplicateCount || 0;
+    const nearbyNote = describeNearbyDuplicates(
+      importAnalysis?.nearbyCount || 0,
+      importedFormatName,
+    );
     const conflictCount = importAnalysis?.conflictCount || 0;
     const isFullyDuplicate =
       importAnalysis?.status === "already_in_linked_sheet";
@@ -1305,10 +1320,10 @@ export function ImportWorkflowSection({
                       {isSheetComparisonPending
                         ? "Checking your linked Strength Journeys sheet for duplicates before merge."
                         : isFullyDuplicate
-                          ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.`
+                          ? `This file already matches your linked Strength Journeys sheet. All ${skippedCount} ${skippedCount === 1 ? "entry" : "entries"} are already there.${nearbyNote}`
                           : isPartialOverlap
-                            ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`
-                            : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`}
+                            ? `${newEntries.length} new ${newEntries.length === 1 ? "entry" : "entries"} can be merged into your linked Google Sheet. ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.${nearbyNote}${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`
+                            : `Merge this data into the Google Sheet you own.${skippedCount > 0 ? ` ${skippedCount} duplicate${skippedCount === 1 ? "" : "s"} will be skipped.` : ""}${nearbyNote}${conflictCount > 0 ? ` ${conflictCount} changed ${conflictCount === 1 ? "set" : "sets"} will be left untouched.` : ""}`}
                     </p>
                     {newEntries.length > 0 ? (
                       <>

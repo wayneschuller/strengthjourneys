@@ -53,7 +53,7 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { detectFormat, parseImportedRows } =
   await import("../src/lib/import/import-dispatcher.js");
-const { deduplicateImportedEntries } =
+const { deduplicateImportedEntries, describeNearbyDuplicates } =
   await import("../src/lib/import/dedupe.js");
 const { buildNextImportProfile } =
   await import("../src/lib/import/import-profile.js");
@@ -220,5 +220,101 @@ assert.deepEqual(
   decimalCommaEntries.map((entry) => [entry.weight, entry.unitType]),
   [[117.5, "kg"]],
 );
+
+// A coach's app dates a workout by its schedule, so the merge looks for the
+// same sets in the sheet up to three days either side. That is for sources
+// marked scheduledDates in import-sources.js, which today is TurnKey alone.
+const lift = (date, liftType, reps, weight) => ({
+  date,
+  liftType,
+  reps,
+  weight,
+  unitType: "kg",
+});
+const scheduledSquats = [
+  lift("2026-03-02", "Back Squat", 5, 100),
+  lift("2026-03-02", "Back Squat", 5, 100),
+  lift("2026-03-02", "Back Squat", 5, 100),
+];
+const loggedNextDay = [
+  lift("2026-03-03", "Back Squat", 5, 60),
+  lift("2026-03-03", "Back Squat", 5, 100),
+  lift("2026-03-03", "Back Squat", 5, 100),
+  lift("2026-03-03", "Back Squat", 5, 100),
+];
+
+const scheduledMerge = deduplicateImportedEntries(
+  scheduledSquats,
+  loggedNextDay,
+  { formatId: "turnkey" },
+);
+assert.equal(scheduledMerge.newEntries.length, 0);
+assert.equal(scheduledMerge.skippedCount, 3);
+assert.equal(scheduledMerge.nearbyCount, 3);
+assert.match(describeNearbyDuplicates(3, "TurnKey"), /TurnKey.*3 sets/);
+assert.equal(describeNearbyDuplicates(0, "TurnKey"), "");
+
+// The same sets from an app the lifter logs in themselves are a second
+// session: people repeat a lift at the same load within a few days.
+for (const formatId of ["hevy", "strong", undefined]) {
+  const lifterLogged = deduplicateImportedEntries(
+    scheduledSquats,
+    loggedNextDay,
+    { formatId },
+  );
+  assert.equal(lifterLogged.newEntries.length, 3, String(formatId));
+  assert.equal(lifterLogged.nearbyCount, 0, String(formatId));
+}
+
+// Three days is the reach, in either direction.
+const mergeAt = (sheetDate) =>
+  deduplicateImportedEntries(
+    scheduledSquats,
+    scheduledSquats.map((entry) => ({ ...entry, date: sheetDate })),
+    { formatId: "turnkey" },
+  );
+assert.equal(mergeAt("2026-02-27").nearbyCount, 3);
+assert.equal(mergeAt("2026-03-05").nearbyCount, 3);
+assert.equal(mergeAt("2026-02-26").nearbyCount, 0);
+assert.equal(mergeAt("2026-03-06").nearbyCount, 0);
+// On the same day it is a plain duplicate, with nothing to explain.
+assert.equal(mergeAt("2026-03-02").skippedCount, 3);
+assert.equal(mergeAt("2026-03-02").nearbyCount, 0);
+
+// Every set of the lift has to be there. Two of three proves little.
+const partlyLogged = deduplicateImportedEntries(
+  scheduledSquats,
+  loggedNextDay.slice(0, 3),
+  { formatId: "turnkey" },
+);
+assert.equal(partlyLogged.newEntries.length, 3);
+assert.equal(partlyLogged.nearbyCount, 0);
+
+// One logged session answers for one scheduled session, not two. The
+// workout scheduled either side of it is still new.
+const scheduledTwice = [
+  ...scheduledSquats,
+  ...scheduledSquats.map((entry) => ({ ...entry, date: "2026-03-04" })),
+];
+const loggedOnce = deduplicateImportedEntries(scheduledTwice, loggedNextDay, {
+  formatId: "turnkey",
+});
+assert.equal(loggedOnce.nearbyCount, 3);
+assert.equal(loggedOnce.newEntries.length, 3);
+assert.ok(loggedOnce.newEntries.every((entry) => entry.date === "2026-03-04"));
+
+// A session the sheet holds on its own day is matched there first, and is
+// not spent on the workout scheduled the day before it.
+const ownDayFirst = deduplicateImportedEntries(
+  [
+    ...scheduledSquats,
+    ...scheduledSquats.map((entry) => ({ ...entry, date: "2026-03-03" })),
+  ],
+  loggedNextDay,
+  { formatId: "turnkey" },
+);
+assert.equal(ownDayFirst.nearbyCount, 0);
+assert.equal(ownDayFirst.skippedCount, 3);
+assert.ok(ownDayFirst.newEntries.every((entry) => entry.date === "2026-03-02"));
 
 console.log("Importer and recurring-profile validation passed.");

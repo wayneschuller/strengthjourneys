@@ -24,6 +24,7 @@ import {
 } from "@/components/onboarding/google-sign-in";
 import { SheetSetupDialog } from "@/components/onboarding/sheet-setup-dialog";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -843,6 +844,7 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
     clearImportedData,
   } = useUserLiftingData();
   const { toast } = useToast();
+  const mayMergeOverlap = useMergeOverlapAsk();
   const [working, setWorking] = useState(false);
 
   const isAuthenticated = authStatus === "authenticated";
@@ -929,8 +931,15 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
       newEntries,
       duplicateCount: skippedCount,
       nearbyCount,
+      overlapCount,
       conflictCount,
     } = analyzeImportedEntries(parsedData, sheetParsedData, { formatId });
+    const canGoAhead = mayMergeOverlap({
+      overlapCount,
+      newCount: newEntries.length,
+      formatId,
+    });
+    if (!canGoAhead) return;
     const nearbyNote = describeNearbyDuplicates(nearbyCount, formatName);
 
     if (newEntries.length === 0) {
@@ -999,6 +1008,7 @@ function ImportedDataBanner({ formatId, formatName, entryCount, onClear }) {
     clearImportedData,
     formatId,
     formatName,
+    mayMergeOverlap,
     mutate,
     toast,
   ]);

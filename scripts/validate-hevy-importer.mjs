@@ -53,8 +53,11 @@ registerHooks({
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { detectFormat, parseImportedRows } =
   await import("../src/lib/import/import-dispatcher.js");
-const { deduplicateImportedEntries, describeNearbyDuplicates } =
-  await import("../src/lib/import/dedupe.js");
+const {
+  deduplicateImportedEntries,
+  describeNearbyDuplicates,
+  describeOverlappingSets,
+} = await import("../src/lib/import/dedupe.js");
 const { buildNextImportProfile } =
   await import("../src/lib/import/import-profile.js");
 
@@ -341,5 +344,56 @@ assert.equal(
   ).newEntries.length,
   1,
 );
+
+// Before a merge adds sets for a lift the sheet already has that day, the
+// lifter is asked. overlapCount is how many of the new sets that covers.
+const fiveSets = (date, weight) =>
+  Array.from({ length: 5 }, () => lift(date, "Back Squat", 5, weight));
+
+// The lifter typed Monday's squats in at 102.5. The file has them at 100.
+const typedInDifferently = deduplicateImportedEntries(
+  fiveSets("2026-03-02", 100),
+  fiveSets("2026-03-02", 102.5),
+  { formatId: "hevy" },
+);
+assert.equal(typedInDifferently.newEntries.length, 5);
+assert.equal(typedInDifferently.overlapCount, 5);
+assert.match(
+  describeOverlappingSets(5, 5, "hevy"),
+  /^All 5 of these sets .* on the same day\./,
+);
+assert.match(describeOverlappingSets(5, 12, "hevy"), /^5 of these 12 sets /);
+// A handful is an edited set or a second session, not worth a question.
+assert.equal(describeOverlappingSets(4, 12, "hevy"), "");
+assert.equal(describeOverlappingSets(0, 0, "hevy"), "");
+
+// An ordinary re-import adds whole new sessions and is never asked about,
+// though the same lift is in the sheet two days earlier.
+for (const formatId of ["hevy", "turnkey"]) {
+  const routine = deduplicateImportedEntries(
+    [...fiveSets("2026-03-02", 100), ...fiveSets("2026-03-04", 102.5)],
+    fiveSets("2026-03-02", 100),
+    { formatId },
+  );
+  assert.equal(routine.newEntries.length, 5, formatId);
+  assert.equal(routine.overlapCount, 0, formatId);
+}
+
+// A coach's app is asked about a nearby day too, because its dates are a
+// schedule. An app the lifter logs in is only ever asked about the same day.
+const typedInNextDay = fiveSets("2026-03-03", 102.5);
+assert.equal(
+  deduplicateImportedEntries(fiveSets("2026-03-02", 100), typedInNextDay, {
+    formatId: "turnkey",
+  }).overlapCount,
+  5,
+);
+assert.equal(
+  deduplicateImportedEntries(fiveSets("2026-03-02", 100), typedInNextDay, {
+    formatId: "hevy",
+  }).overlapCount,
+  0,
+);
+assert.match(describeOverlappingSets(5, 5, "turnkey"), /within 3 days/);
 
 console.log("Importer and recurring-profile validation passed.");

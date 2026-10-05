@@ -29,6 +29,7 @@ import {
 import { devLog } from "@/lib/processing-utils";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { SHEET_FLOW_ERROR_CODES } from "@/lib/sheet/sheet-flow-errors";
+import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -323,6 +324,7 @@ export function SheetSetupDialog() {
     mutate,
   } = useUserLiftingData();
   const { toast } = useToast();
+  const mayMergeOverlap = useMergeOverlapAsk();
 
   const [open, setOpen] = useState(false);
   // Once a signed-in lifter closes setup without a sheet (or disconnects one),
@@ -940,10 +942,21 @@ export function SheetSetupDialog() {
     setIsProvisionActionLoading(true);
     try {
       const importedEntries = parsedData;
-      const { newEntries, skippedCount, nearbyCount, conflictCount } =
-        deduplicateImportedEntries(importedEntries, sheetParsedData, {
-          formatId: importedFormatId,
-        });
+      const {
+        newEntries,
+        skippedCount,
+        nearbyCount,
+        overlapCount,
+        conflictCount,
+      } = deduplicateImportedEntries(importedEntries, sheetParsedData, {
+        formatId: importedFormatId,
+      });
+      const canGoAhead = mayMergeOverlap({
+        overlapCount,
+        newCount: newEntries.length,
+        formatId: importedFormatId,
+      });
+      if (!canGoAhead) return;
       const nearbyNote = describeNearbyDuplicates(
         nearbyCount,
         importedFormatName,
@@ -1021,6 +1034,7 @@ export function SheetSetupDialog() {
     importedFormatName,
     importedFormatId,
     isLoading,
+    mayMergeOverlap,
     mutate,
     parsedData,
     resetUiState,

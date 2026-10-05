@@ -131,7 +131,12 @@ authenticated users.
   (TurnKey, a coach's app) is also matched up to three days either side, one
   whole lift at a time, and the lifter is told how many sets that covered. Do
   not widen that to apps a lifter logs in themselves: on real histories it
-  called up to a third of genuine sets duplicates.
+  called up to a third of genuine sets duplicates. Names are compared with
+  case and punctuation set aside. When five or more of the sets left over
+  are for a lift the sheet already has that day, the lifter is asked before
+  anything is written: every merge button goes through `useMergeOverlapAsk`
+  (`src/hooks/use-merge-overlap-ask.js`), and a new one must too. An ordinary
+  re-import adds whole new sessions and is never asked.
 - **One reader of a sheet's header:** `detectSheetLayout` in
   `import/parsers/strength-journeys-parser.js` decides where a sheet keeps its
   columns: headings in any order, by any known name, and a missing required

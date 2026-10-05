@@ -37,6 +37,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { computeStrengthResults } from "@/lib/strength-circles/universe-percentiles";
 import { findBestE1RM } from "@/lib/processing-utils";
+import { useMergeOverlapAsk } from "@/hooks/use-merge-overlap-ask";
 import { useToast } from "@/hooks/use-toast";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -45,6 +46,7 @@ import {
   analyzeImportedEntries,
   deduplicateImportedEntries,
   describeNearbyDuplicates,
+  describeOverlappingSets,
 } from "@/lib/import/dedupe";
 import { postImportHistory } from "@/lib/import/import-history-client";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
@@ -978,6 +980,7 @@ export function ImportWorkflowSection({
   const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const { toast } = useToast();
+  const mayMergeOverlap = useMergeOverlapAsk();
   const {
     sheetInfo,
     hasLinkedSheet,
@@ -1113,10 +1116,21 @@ export function ImportWorkflowSection({
       return;
     }
 
-    const { newEntries, skippedCount, nearbyCount, conflictCount } =
-      deduplicateImportedEntries(parsedData, sheetParsedData, {
-        formatId: importedFormatId,
-      });
+    const {
+      newEntries,
+      skippedCount,
+      nearbyCount,
+      overlapCount,
+      conflictCount,
+    } = deduplicateImportedEntries(parsedData, sheetParsedData, {
+      formatId: importedFormatId,
+    });
+    const canGoAhead = mayMergeOverlap({
+      overlapCount,
+      newCount: newEntries.length,
+      formatId: importedFormatId,
+    });
+    if (!canGoAhead) return;
     const nearbyNote = describeNearbyDuplicates(
       nearbyCount,
       importedFormatName,
@@ -1205,6 +1219,7 @@ export function ImportWorkflowSection({
     clearImportedData,
     importedFormatId,
     importedFormatName,
+    mayMergeOverlap,
     mutate,
     parsedData,
     router,
@@ -1239,6 +1254,11 @@ export function ImportWorkflowSection({
     const nearbyNote = describeNearbyDuplicates(
       importAnalysis?.nearbyCount || 0,
       importedFormatName,
+    );
+    const overlapNote = describeOverlappingSets(
+      importAnalysis?.overlapCount || 0,
+      newEntries.length,
+      importedFormatId,
     );
     const conflictCount = importAnalysis?.conflictCount || 0;
     const isFullyDuplicate =
@@ -1305,6 +1325,12 @@ export function ImportWorkflowSection({
 
                 {showMerge && (
                   <div className="w-full space-y-3">
+                    {overlapNote && !isSheetComparisonPending && (
+                      <div className="mx-auto flex max-w-md items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50/50 p-3 text-left text-sm dark:border-amber-500/30 dark:bg-amber-500/5">
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                        <p>{overlapNote}</p>
+                      </div>
+                    )}
                     {conflictCount > 0 && (
                       <div className="mx-auto flex max-w-md items-start gap-2 rounded-md border border-amber-300/60 bg-amber-50/50 p-3 text-left text-sm dark:border-amber-500/30 dark:bg-amber-500/5">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400" />

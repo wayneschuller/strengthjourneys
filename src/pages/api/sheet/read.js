@@ -282,7 +282,7 @@ function logReadTimings({
   // Next answers 304 when the rows match the copy the browser holds.
   const rowsState =
     res.statusCode === 304
-      ? "rows unchanged"
+      ? "rows unchanged, so this fetch was unnecessary"
       : req.headers["if-none-match"]
         ? "rows changed"
         : "browser had no copy";

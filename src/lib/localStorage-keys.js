@@ -147,6 +147,10 @@ export const LOCAL_STORAGE_KEYS = {
   HOME_DASHBOARD_FIRST_VIEW_TRACKED: "SJ_homeDashboardFirstViewTracked",
   HOME_DASHBOARD_LAST_TRACKED_STAGE: "SJ_homeDashboardLastTrackedStage",
   HOME_DASHBOARD_IMPORT_NUDGE_DISMISSED: "SJ_homeDashboardImportNudgeDismissed",
+  // The import the repeat-import banner was dismissed after (its checked-at
+  // time, per linked sheet). The banner returns once a newer import replaces it.
+  HOME_DASHBOARD_REPEAT_IMPORT_DISMISSED:
+    "SJ_homeDashboardRepeatImportDismissed",
   // Last row count per linked sheet (use getSheetScopedStorageKey). A number only, so the home
   // dashboard's load pill has something to roll towards while the next sheet read is out.
   HOME_DASHBOARD_LAST_ROW_COUNT: "SJ_homeDashboardLastRowCount",

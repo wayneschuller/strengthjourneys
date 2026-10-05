@@ -132,6 +132,33 @@ export function buildNextImportProfile(
   };
 }
 
+// How long the home banner stays quiet after an import. A weekly importer
+// sees it a day or two before their next file is due.
+export const REPEAT_IMPORT_QUIET_DAYS = 5;
+
+// Whether to invite a lifter to bring in a newer file from their app. The
+// invitation is for someone whose sheet is fed by imports: once they log a
+// session here that is newer than anything they uploaded, the sheet is no
+// longer waiting on a file.
+export function isRepeatImportDue(
+  profile,
+  { sheetId, latestSheetDate, now = Date.now() } = {},
+) {
+  if (!profile?.lastSourceId) return false;
+  if (profile.lastSourceId === "strength-journeys") return false;
+  if (profile.lastSheetId && profile.lastSheetId !== sheetId) return false;
+  if (
+    latestSheetDate &&
+    profile.latestImportedWorkoutDate &&
+    latestSheetDate > profile.latestImportedWorkoutDate
+  ) {
+    return false;
+  }
+  const checkedAt = new Date(profile.lastImportCheckedAt).getTime();
+  if (!Number.isFinite(checkedAt)) return true;
+  return now - checkedAt >= REPEAT_IMPORT_QUIET_DAYS * 86_400_000;
+}
+
 function normalizeSheetId(value) {
   return typeof value === "string" && value.trim() ? value.trim() : null;
 }

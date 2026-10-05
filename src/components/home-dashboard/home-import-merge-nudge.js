@@ -23,10 +23,11 @@ import { gaTrackHomeImportNudge } from "@/lib/analytics/analytics";
 import { getDashboardStage } from "@/lib/home-dashboard/dashboard-stage";
 import {
   formatWorkoutFreshnessDate,
-  getLastImportSourcePhrase,
   getLatestImportedWorkoutDate,
+  getRepeatImportAppName,
   getRepeatImportHref,
 } from "@/lib/import/import-sources";
+import { isRepeatImportDue } from "@/lib/import/import-profile";
 import {
   getSheetScopedStorageKey,
   LOCAL_STORAGE_KEYS,
@@ -51,14 +52,42 @@ export function HomeImportMergeNudge() {
   const [isDismissed, setIsDismissed] = useLocalStorage(storageKey, false, {
     initializeWithValue: false,
   });
-  const shouldShowFreshness =
+  const freshnessStorageKey = useMemo(
+    () =>
+      getSheetScopedStorageKey(
+        LOCAL_STORAGE_KEYS.HOME_DASHBOARD_REPEAT_IMPORT_DISMISSED,
+        sheetInfo?.ssid,
+      ),
+    [sheetInfo?.ssid],
+  );
+  const [dismissedImportAt, setDismissedImportAt] = useLocalStorage(
+    freshnessStorageKey,
+    null,
+    { initializeWithValue: false },
+  );
+  const latestSheetDate = useMemo(
+    () => getLatestImportedWorkoutDate(parsedData || []),
+    [parsedData],
+  );
+  // A lifter who has imported before never sees the first-import nudge below,
+  // whether or not the repeat invitation is showing right now.
+  const hasImportedHere =
     dataSource === "sheet" &&
     Boolean(importProfile?.lastSourceId) &&
     (!importProfile?.lastSheetId ||
       importProfile.lastSheetId === sheetInfo?.ssid);
+  const importMarker = importProfile?.lastImportCheckedAt || "unknown";
+  const shouldShowFreshness =
+    hasImportedHere &&
+    Array.isArray(parsedData) &&
+    dismissedImportAt !== importMarker &&
+    isRepeatImportDue(importProfile, {
+      sheetId: sheetInfo?.ssid,
+      latestSheetDate,
+    });
   const shouldShow =
     dataSource === "sheet" &&
-    !shouldShowFreshness &&
+    !hasImportedHere &&
     Array.isArray(parsedData) &&
     rawRows != null &&
     !isDismissed &&
@@ -102,14 +131,10 @@ export function HomeImportMergeNudge() {
   ]);
 
   if (shouldShowFreshness) {
-    // The date is the newest session in the sheet itself. The profile only
-    // knows the newest date in an uploaded file, which falls behind as soon as
-    // the lifter logs a session here.
     const freshnessDate = formatWorkoutFreshnessDate(
-      getLatestImportedWorkoutDate(parsedData) ||
-        importProfile.latestImportedWorkoutDate,
+      latestSheetDate || importProfile.latestImportedWorkoutDate,
     );
-    const sourcePhrase = getLastImportSourcePhrase(importProfile);
+    const appName = getRepeatImportAppName(importProfile);
 
     return (
       <AppBanner tint="blue">
@@ -118,12 +143,14 @@ export function HomeImportMergeNudge() {
             <FileUp className="-mt-0.5 mr-1.5 inline-block h-4 w-4" />
             <span className="font-semibold">
               {freshnessDate
-                ? `Your log runs through ${freshnessDate}.`
+                ? `Your log is current to ${freshnessDate}.`
                 : "Keep your training timeline current."}
             </span>{" "}
             <span>
-              Your last import came from {sourcePhrase}. Upload a newer file
-              from there, or bring in any supported app or spreadsheet.
+              {freshnessDate ? "Trained since then? " : ""}
+              {appName
+                ? `Export a fresh file from ${appName} and merge in just the new sessions.`
+                : "Upload your latest file and merge in just the new sessions."}
             </span>
           </AppBannerMessage>
           <AppBannerActions className="flex-row flex-wrap">
@@ -143,8 +170,25 @@ export function HomeImportMergeNudge() {
                   });
                 }}
               >
-                Update Data
+                Import and Merge More Data
               </Link>
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className={bannerGhostButtonClassName({ tint: "blue" })}
+              onClick={() => {
+                setDismissedImportAt(importMarker);
+                gaTrackHomeImportNudge({
+                  action: "dismiss",
+                  surface: "dashboard_freshness",
+                  dashboardStage,
+                  sessionCount,
+                });
+              }}
+            >
+              <X className="h-3.5 w-3.5" />
+              Not Now
             </Button>
           </AppBannerActions>
         </AppBannerContent>

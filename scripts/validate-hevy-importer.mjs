@@ -58,7 +58,7 @@ const {
   describeNearbyDuplicates,
   describeOverlappingSets,
 } = await import("../src/lib/import/dedupe.js");
-const { buildNextImportProfile } =
+const { buildNextImportProfile, isRepeatImportDue } =
   await import("../src/lib/import/import-profile.js");
 
 // Synthetic rows in the publicly described Hevy export shape, not real
@@ -211,6 +211,45 @@ assert.equal(
   "2025-01-10",
 );
 assert.deepEqual(Object.keys(switchedSheetImport.profile.sources), ["wodify"]);
+
+// The home banner invites a newer file only from a lifter whose sheet is fed
+// by imports, and only once the last import is a few days old.
+const dueContext = { sheetId: "sheet-a", latestSheetDate: "2026-08-06" };
+const dayAfter = Date.parse("2026-08-15T12:00:00.000Z");
+const weekAfter = Date.parse("2026-08-21T12:00:00.000Z");
+assert.equal(
+  isRepeatImportDue(currentCheck.profile, { ...dueContext, now: dayAfter }),
+  false,
+);
+assert.equal(
+  isRepeatImportDue(currentCheck.profile, { ...dueContext, now: weekAfter }),
+  true,
+);
+// A session logged here after the last file means the sheet is not waiting.
+assert.equal(
+  isRepeatImportDue(currentCheck.profile, {
+    sheetId: "sheet-a",
+    latestSheetDate: "2026-08-20",
+    now: weekAfter,
+  }),
+  false,
+);
+assert.equal(
+  isRepeatImportDue(currentCheck.profile, {
+    ...dueContext,
+    sheetId: "sheet-b",
+    now: weekAfter,
+  }),
+  false,
+);
+assert.equal(
+  isRepeatImportDue(
+    { ...currentCheck.profile, lastSourceId: "strength-journeys" },
+    { ...dueContext, now: weekAfter },
+  ),
+  false,
+);
+assert.equal(isRepeatImportDue(null, dueContext), false);
 
 // An app that follows the phone's number format writes "117,5". Number()
 // reads that as NaN, which used to drop the set.

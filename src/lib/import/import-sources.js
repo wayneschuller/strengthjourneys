@@ -105,6 +105,15 @@ export function getLastImportSourcePhrase(profile) {
   return profile?.lastSourceName || "another app";
 }
 
+// The app a lifter tops up from, when the last import names one. Their own
+// Strength Journeys export and an unrecognised spreadsheet are not an app to
+// go back to for a fresh file, so those return null.
+export function getRepeatImportAppName(profile) {
+  const source = SOURCES_BY_ID.get(profile?.lastSourceId);
+  if (!source || source.id === "strength-journeys") return null;
+  return source.name;
+}
+
 export function formatWorkoutFreshnessDate(date, locale = undefined) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) return null;
   const [year, month, day] = date.split("-").map(Number);

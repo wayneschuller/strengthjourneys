@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { postImportHistory } from "@/lib/import/import-history-client";
+import { getRepeatImportAppName } from "@/lib/import/import-sources";
 import { IMPORT_APP_PAGES } from "@/lib/import/import-app-guides";
 
 import { getLiftArtwork } from "@/components/lift-artwork";
@@ -596,6 +597,7 @@ export default function ImportPage() {
   // mount, so the first render is the first-visit page. dataSource "restoring"
   // flips before paint for someone with a stored sheet, so the first-visit
   // heading and benefits row never flash for them.
+  const repeatImportAppName = getRepeatImportAppName(importProfile);
   const showReturningCopy =
     isOwnData(dataSource) ||
     importProfile?.lastSourceId ||
@@ -618,8 +620,12 @@ export default function ImportPage() {
           <PageHeaderDescription>
             {isOwnData(dataSource) || dataSource === "restoring" ? (
               <>
-                Choose a newer workout export and preview the changes before
-                merging them into the Google Sheet you already own.
+                Choose a newer{" "}
+                {repeatImportAppName
+                  ? `export from ${repeatImportAppName}`
+                  : "workout export"}{" "}
+                and preview the changes before merging them into the Google
+                Sheet you already own.
               </>
             ) : importProfile?.lastSourceId ? (
               <>

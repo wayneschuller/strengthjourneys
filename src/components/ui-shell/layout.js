@@ -86,6 +86,7 @@ export function Layout({ children }) {
     clearImportedData,
     parseError,
     sheetLayout,
+    mutate,
     parsedData,
     rawRows,
     hasCachedSheetData,
@@ -231,21 +232,51 @@ export function Layout({ children }) {
     });
   }, [parseError, toast]);
 
-  // The parser reads a sheet whose headers are damaged by working the columns
-  // out from their contents, so the lifter still sees their data. Say so once,
-  // with the cell to fix, because nothing else on screen would tell them.
+  // The parser reads a sheet whose headings are missing by working the columns
+  // out from their contents, so the lifter still sees their data. Rather than
+  // hand them a chore, put the headings back and then say what was done; with
+  // them in place the sheet can be logged to, merged into and linked again.
+  // Tried once per sheet and state: if the sheet cannot be written to, or the
+  // server reads it differently, fall back to telling them which cell to fix.
   useEffect(() => {
-    if (dataSource !== "sheet") return;
-    const notice = getInferredHeaderNotice(sheetLayout);
-    const signature = notice
-      ? `${sheetLayout.hasHeaderRow}:${sheetLayout.inferred.join(",")}`
-      : "";
+    if (dataSource !== "sheet" || !sheetInfo?.ssid) return;
+    const repair = sheetLayout?.repair ?? null;
+    const guidance = getInferredHeaderNotice(sheetLayout);
+    const signature =
+      repair || guidance
+        ? `${sheetInfo.ssid}:${JSON.stringify(repair)}:${guidance?.title ?? ""}`
+        : "";
     if (inferredHeadersShown.current === signature) return;
     inferredHeadersShown.current = signature;
-    if (!notice) return;
+    if (!signature) return;
 
-    toast({ ...notice, duration: 15000 });
-  }, [dataSource, sheetLayout, toast]);
+    const showGuidance = () => {
+      if (guidance) toast({ ...guidance, duration: 15000 });
+    };
+    if (!repair) {
+      showGuidance();
+      return;
+    }
+
+    fetch("/api/sheet/restore-header", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ssid: sheetInfo.ssid, expected: repair }),
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || !result.repaired) {
+          // "in-order" means another tab already did it; nothing to say.
+          if (result.reason !== "in-order") showGuidance();
+          return;
+        }
+        toast({ ...getHeaderRepairedNotice(result), duration: 20000 });
+        // Read the sheet again so the headings, and everything they unlock,
+        // take effect now.
+        mutate();
+      })
+      .catch(showGuidance);
+  }, [dataSource, sheetInfo?.ssid, sheetLayout, toast, mutate]);
 
   // Sign-in nudge — delayed prompt on data pages when unauthenticated
   useEffect(() => {
@@ -335,6 +366,45 @@ export function Layout({ children }) {
     </div>
   );
 }
+
+// Copy for the toast that follows the app putting headings back itself. It
+// names what changed and where, and the way to undo it.
+function getHeaderRepairedNotice({ insertedRow, headings }) {
+  const placed = headings.map(
+    ({ name, column }) => `${name} in ${String.fromCharCode(65 + column)}`,
+  );
+  const list =
+    placed.length === 1
+      ? placed[0]
+      : `${placed.slice(0, -1).join(", ")} and ${placed.at(-1)}`;
+  const undo =
+    "To see the sheet as it was, open File > Version history in Google Sheets.";
+  if (insertedRow) {
+    return {
+      title: "We added a header row to your sheet",
+      description: `Your sheet started straight in with your sets, so we labelled its columns: ${list}. Everything else is where it was, one row lower. ${undo}`,
+    };
+  }
+  return {
+    title:
+      headings.length === 1
+        ? `We put the ${headings[0].name} heading back in ${String.fromCharCode(65 + headings[0].column)}1`
+        : "We put the missing headings back in row 1",
+    description:
+      headings.length === 1
+        ? `The cell was blank, and the column beneath it holds your ${HEADING_CONTENTS[headings[0].name] ?? "data"}. ${undo}`
+        : `Row 1 was missing ${list}, worked out from what each column holds. ${undo}`,
+  };
+}
+
+const HEADING_CONTENTS = {
+  Date: "dates",
+  "Lift Type": "lift names",
+  Reps: "reps",
+  Weight: "weights",
+  Notes: "notes",
+  URL: "video links",
+};
 
 // Copy for the toast that follows a parse which had to infer columns, or
 // null when every header was where it should be.

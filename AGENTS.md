@@ -120,7 +120,9 @@ authenticated users.
   heading inferred from the column's contents. The parser, the link and
   recovery check (`readHeaderInfo`) and the import merge all call it, so a
   sheet the app can read is one it can link and merge into. Do not write a
-  second header check; extend this one. App exports (Hevy and the rest) are
+  second header check; extend this one. When required headings are missing,
+  the app puts them back itself (`api/sheet/restore-header.js`, called once
+  from the layout) and then tells the lifter in a toast. App exports (Hevy and the rest) are
   matched by exact signature in `import-dispatcher.js` and stay strict.
 - **Sheet writes** in `api/sheet/*` are *operation-oriented*, not
   REST-over-rows. Each file's header comment explains why it earns its own

@@ -50,7 +50,8 @@ const sheetLayouts = new WeakMap();
  * @param {import("./index").ParsedData} parsedData As returned by
  *   parseStrengthJourneysData (the same array, not a copy).
  * @returns {{hasHeaderRow: boolean, header: string[],
- *   columns: Object<string, number>, inferred: string[]} | null} `header` is
+ *   columns: Object<string, number>, inferred: string[],
+ *   repair: ReturnType<typeof planHeaderRepair>} | null} `header` is
  *   row 1 with recognised names normalised (empty when the sheet has no
  *   header row). `columns` maps Date, Lift Type, Reps, Weight, Notes, Label
  *   and URL to a 0-based column index, -1 when absent.
@@ -380,7 +381,12 @@ export function parseStrengthJourneysData(
     `${objectsArray.length} lifts`,
   );
 
-  sheetLayouts.set(objectsArray, layout);
+  // The repair is planned here, where the rows are, so whoever holds the
+  // parsed data can ask for it without the raw sheet.
+  sheetLayouts.set(objectsArray, {
+    ...layout,
+    repair: planHeaderRepair(layout, data),
+  });
 
   return objectsArray;
 }
@@ -457,6 +463,74 @@ export function detectSheetLayout(
       .filter(([name, index]) => index !== -1 && header[index] !== name)
       .map(([name]) => name),
   };
+}
+
+/**
+ * The headings a sheet is missing and where they belong, or null when row 1
+ * is already in order (or the columns could not be told apart at all).
+ *
+ * The app puts these in for the lifter (see api/sheet/restore-header.js)
+ * rather than asking them to: it has already had to work the columns out to
+ * show the data, and a sheet with its headings back can be logged to, merged
+ * into and linked like any other.
+ *
+ * Only ever a blank cell is filled, or a new row added above data that had no
+ * header row. A heading the lifter wrote is never replaced.
+ *
+ * Notes and URL are offered only when the sheet names nothing at all, since
+ * otherwise their absence is the lifter's choice. They are placed by what
+ * the columns hold: the one spare column of links is URL, and the one other
+ * spare column with anything in it is Notes. Two of either is left alone.
+ *
+ * @param {ReturnType<typeof detectSheetLayout>} layout
+ * @param {any[][]} data The rows the layout was read from.
+ * @returns {{insertRow: boolean, headings: {column: number, name: string}[]}
+ *   | null} `column` is 0-based.
+ */
+export function planHeaderRepair(layout, data) {
+  if (!hasRequiredColumns(layout)) return null;
+  const { hasHeaderRow, header, columns, firstDataRow } = layout;
+  const isBlank = (column) => !hasHeaderRow || !(header[column] ?? "");
+
+  const headings = [];
+  for (const name of REQUIRED_HEADERS) {
+    const column = columns[name];
+    if (header[column] !== name && isBlank(column)) {
+      headings.push({ column, name });
+    }
+  }
+
+  const namesNothing = !header.some((name) => KNOWN_HEADERS.includes(name));
+  if (namesNothing) {
+    const claimed = new Set(REQUIRED_HEADERS.map((name) => columns[name]));
+    const width = data.reduce((max, row) => Math.max(max, row.length), 0);
+    const linkColumns = [];
+    const textColumns = [];
+    for (let column = 0; column < width; column++) {
+      if (claimed.has(column) || !isBlank(column)) continue;
+      let filled = 0;
+      let links = 0;
+      for (let row = firstDataRow; row < data.length; row++) {
+        const text = String(data[row][column] ?? "").trim();
+        if (!text) continue;
+        filled++;
+        if (/^https?:\/\//i.test(text)) links++;
+      }
+      if (filled === 0) continue;
+      if (links / filled >= 0.8) linkColumns.push(column);
+      else textColumns.push(column);
+    }
+    if (textColumns.length === 1) {
+      headings.push({ column: textColumns[0], name: "Notes" });
+    }
+    if (linkColumns.length === 1) {
+      headings.push({ column: linkColumns[0], name: "URL" });
+    }
+  }
+
+  if (!headings.length) return null;
+  headings.sort((a, b) => a.column - b.column);
+  return { insertRow: !hasHeaderRow, headings };
 }
 
 /** True when a layout has a place for all four columns a set needs. */

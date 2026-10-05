@@ -810,6 +810,69 @@ assert.equal(
   "a first row that names nothing is not a header to write by",
 );
 
+// The repair the app makes to a sheet's first row: only the headings that
+// are missing, only into blank cells, and a new row only when there is none.
+const { planHeaderRepair } =
+  await import("../src/lib/import/parsers/strength-journeys-parser.js");
+const repairOf = (rows) =>
+  quietly(() => planHeaderRepair(detectSheetLayout(rows), rows));
+const filmedBody = sampleBody.map((row, i) =>
+  i === 0 ? [...row.slice(0, 5), "https://youtu.be/abc"] : row,
+);
+const allSix = ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"].map(
+  (name, column) => ({ column, name }),
+);
+assert.equal(repairOf([allSix.map(({ name }) => name), ...filmedBody]), null);
+assert.deepEqual(repairOf(filmedBody), { insertRow: true, headings: allSix });
+assert.deepEqual(repairOf([["", "", "", "", "", ""], ...filmedBody]), {
+  insertRow: false,
+  headings: allSix,
+});
+assert.deepEqual(
+  repairOf([
+    ["", "Lift Type", "Reps", "Weight", "Notes", "URL"],
+    ...filmedBody,
+  ]),
+  { insertRow: false, headings: [{ column: 0, name: "Date" }] },
+);
+assert.deepEqual(
+  repairOf([
+    ["Lift Type", "", "Weight", "Reps"],
+    ...sampleBody.map((row) => reorder(row, [1, 0, 3, 2])),
+  ]),
+  { insertRow: false, headings: [{ column: 1, name: "Date" }] },
+);
+// Two spare columns of text: no telling which is Notes, so neither is named.
+assert.deepEqual(
+  repairOf(filmedBody.map((row) => [...row, "meet"])).headings.map(
+    ({ name }) => name,
+  ),
+  ["Date", "Lift Type", "Reps", "Weight", "URL"],
+);
+// A heading the lifter wrote, known to us or not, is never touched, and a
+// sheet that only lacks optional headings is left as it is.
+assert.equal(
+  repairOf([["Date", "Lift Type", "Reps", "Weight", "RPE"], ...sampleBody]),
+  null,
+);
+assert.equal(
+  repairOf([["Date", "Lift Type", "Reps", "Weight"], ...filmedBody]),
+  null,
+);
+assert.equal(
+  repairOf([
+    ["Date", "Payee", "Amount"],
+    ["2026-03-02", "Grocer", "54.20"],
+  ]),
+  null,
+);
+// What the repair writes makes the sheet one the app reads without inference,
+// and writes to.
+const repairedRows = [allSix.map(({ name }) => name), ...filmedBody];
+const repairedLayout = quietly(() => detectSheetLayout(repairedRows));
+assert.deepEqual(repairedLayout.inferred, []);
+assert.ok(getSheetWriteColumns(repairedLayout));
+
 console.log("Strength Journeys parser checks passed.");
 
 function permutations(values) {

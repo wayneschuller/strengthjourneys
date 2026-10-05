@@ -146,6 +146,16 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
 
+    // Next answers 304 when the body matches the copy the browser holds, so
+    // the whole sheet was fetched from Google to learn nothing had changed.
+    // Logged in production too: how often this happens, and what it costs,
+    // decides whether to check Drive's modifiedTime before reading the rows.
+    if (res.statusCode === 304) {
+      console.log(
+        `[read-sheet] unchanged: rows=${data.values?.length ?? 0} sheets=${sheetsMs}ms drive=${driveMs}ms total=${totalMs}ms`,
+      );
+    }
+
     // Prompts the developer to offer personal support at key moments.
     // Runs after the response is sent so the user never waits for this.
     try {

@@ -123,10 +123,11 @@ const _hadSheetOnLoad = (() => {
   }
 })();
 
-// The sheet's Drive modifiedTime as this browser last read it, sent back with
-// each read so the server can log whether Drive saw a change when the rows
-// did. Diagnostic only: nothing is decided on it. After a reload the copy
-// saved with the sheet's details stands in.
+// The sheet's Drive modifiedTime as this browser last read it. It goes back
+// with every read: the server logs it against Drive's current value, and on
+// reads flagged below it may answer "unchanged" from Drive alone, without
+// fetching the rows from Google. After a reload the copy saved with the
+// sheet's details stands in, for the log only.
 const modifiedTimeByUrl = new Map();
 
 function getKnownModifiedTime(url) {
@@ -144,6 +145,20 @@ function getKnownModifiedTime(url) {
   return null;
 }
 
+// Drive's modifiedTime can trail a change to the rows, so it is only trusted
+// when this tab has nothing newer to learn: it has read the rows in full since
+// the page loaded and since the app last changed the sheet or asked for a
+// refresh. That leaves the reads SWR starts by itself, on focus and reconnect,
+// which is nearly all of them. Each demand for a full read takes a number, and
+// a full read settles every demand made before it began.
+let fullReadsOwed = 1;
+let fullReadsSettled = 0;
+
+/** The next sheet read must fetch the rows, whatever Drive says. */
+export function requireFullSheetRead() {
+  fullReadsOwed += 1;
+}
+
 /**
  * Generic JSON fetcher for useSWR.
  * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
@@ -153,19 +168,20 @@ const fetcher = async (...args) => {
   // of its own writes a snapshot was read after (see parsedDataReadAt).
   const readStartedAt = performance.now();
   const [url, init] = args;
+  const owedAtStart = fullReadsOwed;
   const knownModifiedTime = getKnownModifiedTime(url);
-  const res = await fetch(
-    url,
-    knownModifiedTime
-      ? {
-          ...init,
-          headers: {
-            ...init?.headers,
-            "X-Sheet-Modified-Time": knownModifiedTime,
-          },
-        }
-      : init,
-  );
+  const mayAnswerUnchanged =
+    fullReadsSettled === owedAtStart && modifiedTimeByUrl.has(url);
+  const sheetHeaders = {
+    ...(knownModifiedTime
+      ? { "X-Sheet-Modified-Time": knownModifiedTime }
+      : {}),
+    ...(mayAnswerUnchanged ? { "X-Sheet-Unchanged-Ok": "1" } : {}),
+  };
+  const res = await fetch(url, {
+    ...init,
+    headers: { ...init?.headers, ...sheetHeaders },
+  });
   const json = await res.json().catch(() => null);
 
   if (!res.ok) {
@@ -187,6 +203,9 @@ const fetcher = async (...args) => {
   }
   if (typeof json?.modifiedTime === "string") {
     modifiedTimeByUrl.set(url, json.modifiedTime);
+  }
+  if (!mayAnswerUnchanged) {
+    fullReadsSettled = Math.max(fullReadsSettled, owedAtStart);
   }
   return json;
 };
@@ -556,7 +575,13 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   // Layout.js reads fetchFailed (not isError) for the error toast.
   const MAX_RETRIES = 3;
 
-  const { data, error, isLoading, isValidating, mutate } = useSWR(
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating,
+    mutate: swrMutate,
+  } = useSWR(
     shouldFetch ? `/api/sheet/read?ssid=${storedSheetInfo.ssid}` : null,
     fetcher,
     {
@@ -591,6 +616,16 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         }
       },
     },
+  );
+
+  // Whoever calls mutate has a reason to think the sheet changed, or wants to
+  // be sure, so the read it starts fetches the rows whatever Drive says.
+  const mutate = useCallback(
+    (...args) => {
+      requireFullSheetRead();
+      return swrMutate(...args);
+    },
+    [swrMutate],
   );
 
   // When the read behind `parsedData` began. A later read that came back

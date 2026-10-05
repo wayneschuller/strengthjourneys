@@ -21,7 +21,10 @@ import {
 } from "react";
 import { useReadLocalStorage } from "usehooks-ts";
 
-import { getLatestSheetReadAt } from "@/hooks/use-userlift-data";
+import {
+  getLatestSheetReadAt,
+  requireFullSheetRead,
+} from "@/hooks/use-userlift-data";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { parseData } from "@/lib/import/import-dispatcher";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -66,6 +69,10 @@ const store = createLogSyncStore({
     const result = await request;
     // Wait for SWR to close the mutation before anything asks it to read.
     await tracked;
+    // A read that began while this write was in flight may have fetched the
+    // rows as they were before it, so it cannot count as the full read the
+    // write is owed.
+    requireFullSheetRead();
     const elapsed = performance.now() - startedAt;
     logSheetTimings(
       `${plan.method} ${plan.url} (${result.kind})`,

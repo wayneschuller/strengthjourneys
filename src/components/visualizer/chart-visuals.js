@@ -29,6 +29,12 @@ const AXIS_TEXT_COLOR = "var(--muted-foreground)";
 // stacked label upward by the right amount.
 export const LABEL_LINE_HEIGHT = 14;
 
+// Where a label anchored to the left end of a horizontal reference line sits:
+// inset from the plot edge, with its baseline lifted off the line. Shared so
+// TopPointMarkers can work out the space such a label takes up.
+export const EDGE_LABEL_INSET = 6;
+export const EDGE_LABEL_LIFT = 5;
+
 /**
  * Vertical fill gradient for an area series. Three stops instead of two: a
  * punchy band just under the line, then a quick fade to nothing at the baseline.
@@ -465,6 +471,11 @@ export function getResponsiveLabelCount(
  *   but once several series share a plot, same-coloured labels can't be
  *   traced back to their line. Pass the series' own colour there so a label
  *   matches its marker the same way the line and legend already do.
+ * @param {Array<{value: number, text: string}>} [props.edgeLabels] - Labels
+ *   the caller draws at the left end of horizontal reference lines (the
+ *   strength standards), placed with EDGE_LABEL_INSET and EDGE_LABEL_LIFT. A
+ *   session label that would land on one is left out; its marker still draws
+ *   and the tooltip still has the numbers.
  */
 export function TopPointMarkers({
   topPoints,
@@ -472,8 +483,31 @@ export function TopPointMarkers({
   getLines,
   labelOffsets,
   labelColor,
+  edgeLabels,
 }) {
+  const plotArea = usePlotArea();
+  const yScale = useYAxisScale();
+
   if (!topPoints?.length) return null;
+
+  // Screen-pixel boxes of the edge labels, estimated the same way the stagger
+  // below sizes a label, since SVG text can't be measured before it is drawn.
+  const edgeBoxes = plotArea
+    ? (edgeLabels ?? [])
+        .map(({ value, text }) => {
+          const lineY = yScale?.(value);
+          if (!Number.isFinite(lineY)) return null;
+          const left = plotArea.x + EDGE_LABEL_INSET;
+          const bottom = lineY - EDGE_LABEL_LIFT + 4;
+          return {
+            left,
+            right: left + String(text).length * LABEL_CHAR_WIDTH_PX,
+            top: bottom - LABEL_LINE_HEIGHT,
+            bottom,
+          };
+        })
+        .filter(Boolean)
+    : [];
 
   return (
     <>
@@ -503,30 +537,49 @@ export function TopPointMarkers({
             stroke={isWinner ? "var(--foreground)" : color}
             strokeWidth={isWinner ? 1.5 : 2}
             label={{
-              content: ({ viewBox }) => (
-                <ChartInlineLabel
-                  x={viewBox.x + viewBox.width / 2}
-                  // Stacked labels grow downward from the first line, so lift the
-                  // whole block to keep the last line clear of the marker.
-                  y={
-                    viewBox.y -
-                    (isWinner ? 12 : 10) -
-                    (lines.length - 1) * LABEL_LINE_HEIGHT -
-                    (labelOffsets?.[rank] ?? 0)
-                  }
-                  textAnchor="middle"
-                  // Foreground rather than the series colour, which is too dark
-                  // to read against the dark themes. Runners-up drop to muted to
-                  // keep the winner dominant. labelColor overrides both when the
-                  // caller needs labels traceable back to their series.
-                  color={
-                    labelColor ??
-                    (isWinner ? "var(--foreground)" : "var(--muted-foreground)")
-                  }
-                  fontWeight={isWinner ? 700 : 600}
-                  lines={lines}
-                />
-              ),
+              content: ({ viewBox }) => {
+                const cx = viewBox.x + viewBox.width / 2;
+                const lastBaseline =
+                  viewBox.y -
+                  (isWinner ? 12 : 10) -
+                  (labelOffsets?.[rank] ?? 0);
+                const halfWidth =
+                  (Math.max(...lines.map((line) => String(line).length)) *
+                    LABEL_CHAR_WIDTH_PX) /
+                  2;
+                const bottom = lastBaseline + 4;
+                const top = bottom - lines.length * LABEL_LINE_HEIGHT;
+                const onEdgeLabel = edgeBoxes.some(
+                  (box) =>
+                    cx + halfWidth > box.left - LABEL_GAP_PX &&
+                    cx - halfWidth < box.right + LABEL_GAP_PX &&
+                    bottom > box.top - LABEL_GAP_PX &&
+                    top < box.bottom + LABEL_GAP_PX,
+                );
+                if (onEdgeLabel) return null;
+
+                return (
+                  <ChartInlineLabel
+                    x={cx}
+                    // Stacked labels grow downward from the first line, so lift the
+                    // whole block to keep the last line clear of the marker.
+                    y={lastBaseline - (lines.length - 1) * LABEL_LINE_HEIGHT}
+                    textAnchor="middle"
+                    // Foreground rather than the series colour, which is too dark
+                    // to read against the dark themes. Runners-up drop to muted to
+                    // keep the winner dominant. labelColor overrides both when the
+                    // caller needs labels traceable back to their series.
+                    color={
+                      labelColor ??
+                      (isWinner
+                        ? "var(--foreground)"
+                        : "var(--muted-foreground)")
+                    }
+                    fontWeight={isWinner ? 700 : 600}
+                    lines={lines}
+                  />
+                );
+              },
             }}
           />
         );

@@ -28,6 +28,8 @@ import {
   ChartBandGradient,
   ChartGlowFilter,
   ChartInlineLabel,
+  EDGE_LABEL_INSET,
+  EDGE_LABEL_LIFT,
   TopPointMarkers,
   chartActiveDotProps,
   chartCursorProps,
@@ -265,6 +267,13 @@ export function VisualizerMini({ liftType }) {
   const visibleStandardCount =
     nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex + 1;
   const visibleStandards = orderedStandards.slice(0, visibleStandardCount);
+  // One switch for the lines, their labels and the room session labels leave
+  // for them, so the three can't disagree about whether standards are on.
+  const standardsShown =
+    Boolean(strengthRanges) && showStandards && width > 768;
+  const standardUnit = isMetric ? "kg" : "lb";
+  const standardLabelText = ({ key, val }) =>
+    `${strengthStandardLabels[key]} (${val}${standardUnit})`;
   // Bands: one per zone the user has passed through (not including the next target's zone)
   const visibleBandCount =
     nextStandardIndex === -1 ? orderedStandards.length : nextStandardIndex;
@@ -371,9 +380,7 @@ export function VisualizerMini({ liftType }) {
                 {/* Strength standard background bands — rendered first so they sit behind
                     the chart data. Only zones the user has passed through are shown;
                     the next unreached standard gets a line but no band beyond it. */}
-                {strengthRanges &&
-                  showStandards &&
-                  width > 768 &&
+                {standardsShown &&
                   Array.from({ length: visibleBandCount }, (_, i) => ({
                     y1: visibleStandards[i].val,
                     y2:
@@ -477,14 +484,21 @@ export function VisualizerMini({ liftType }) {
                   topPoints={topPoints}
                   color={liftColor}
                   getLines={e1rmMarkerLines(liftType)}
+                  // The standards own the left edge. A session label that would
+                  // sit on one is dropped; its marker stays.
+                  edgeLabels={
+                    standardsShown
+                      ? visibleStandards.map((standard) => ({
+                          value: standard.val,
+                          text: standardLabelText(standard),
+                        }))
+                      : undefined
+                  }
                 />
 
                 {/* Strength standards: color-coded lines for all reached levels + one next target. */}
-                {strengthRanges &&
-                  showStandards &&
-                  width > 768 &&
+                {standardsShown &&
                   visibleStandards.map(({ key, val }) => {
-                    const unitType = isMetric ? "kg" : "lb";
                     const color = strengthStandardColors[key];
                     return (
                       <ReferenceLine
@@ -500,12 +514,12 @@ export function VisualizerMini({ liftType }) {
                           // people actually came to look at.
                           content: ({ viewBox }) => (
                             <ChartInlineLabel
-                              x={viewBox.x + 6}
-                              y={viewBox.y - 5}
+                              x={viewBox.x + EDGE_LABEL_INSET}
+                              y={viewBox.y - EDGE_LABEL_LIFT}
                               color={color}
                               textAnchor="start"
                             >
-                              {`${strengthStandardLabels[key]} (${val}${unitType})`}
+                              {standardLabelText({ key, val })}
                             </ChartInlineLabel>
                           ),
                         }}

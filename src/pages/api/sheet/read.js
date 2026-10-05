@@ -115,11 +115,6 @@ export default async function handler(req, res) {
         startSheetsFetch(),
         drivePromise,
       ]);
-      if (driveMs > sheetsMs) {
-        devLog(
-          `read-sheet ANOMALY: Drive slower than Sheets (sheets=${sheetsMs}ms, drive=${driveMs}ms) - Drive metadata must not be the bottleneck; investigate Drive slowness.`,
-        );
-      }
     }
 
     const driveData = driveRes.ok ? await driveRes.json() : null;

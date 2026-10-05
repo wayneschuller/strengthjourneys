@@ -138,72 +138,47 @@ export function parseStrengthJourneysData(
       ? navigator.language
       : undefined;
 
-  const firstRowNames = (data[0] ?? []).map((name) =>
-    normalizeColumnName(String(name ?? "")),
-  );
-  // A date in the first row, with no recognized headers, identifies a sheet
-  // that starts directly with data. An empty first row is still a header row.
-  const hasHeaderRow =
-    firstRowNames.some((name) => KNOWN_HEADERS.includes(name)) ||
-    !(data[0] ?? []).some((value) => normalizeDateInput(value, localeHint));
-  const normalizedColumnNames = hasHeaderRow ? firstRowNames : [];
-  const firstDataRow = hasHeaderRow ? 1 : 0;
+  // Where the columns are is settled once, by the same function the link
+  // check and the import merge use (detectSheetLayout below).
+  const layout = detectSheetLayout(data, { localeHint, claimLabelledColumns });
+  const {
+    hasHeaderRow,
+    firstDataRow,
+    header: normalizedColumnNames,
+    columns,
+  } = layout;
   const repairLog = createParseRepairLog("Strength Journeys");
 
-  // Find indices for all columns
-  let dateColumnIndex = normalizedColumnNames.indexOf("Date");
-  let liftTypeColumnIndex = normalizedColumnNames.indexOf("Lift Type");
-  let repsColumnIndex = normalizedColumnNames.indexOf("Reps");
-  let weightColumnIndex = normalizedColumnNames.indexOf("Weight");
-  let notesColumnIndex = normalizedColumnNames.indexOf("Notes");
-  let labelColumnIndex = normalizedColumnNames.indexOf("Label");
-  let urlColumnIndex = normalizedColumnNames.indexOf("URL");
-
-  // Complete named headers bypass inference entirely. Recovered columns are
-  // local to this parse; never change the sheet or assume a column position.
-  const columns = inferRequiredColumns(
-    data,
-    {
-      Date: dateColumnIndex,
-      "Lift Type": liftTypeColumnIndex,
-      Reps: repsColumnIndex,
-      Weight: weightColumnIndex,
-    },
-    localeHint,
-    normalizedColumnNames,
-    firstDataRow,
-    claimLabelledColumns,
-  );
-  const inferredColumns = [];
-  for (const [name, index] of Object.entries(columns)) {
-    if (index !== -1 && normalizedColumnNames[index] !== name) {
-      inferredColumns.push(name);
-      const evidence = {
-        Date: "date values",
-        "Lift Type": "known lift names",
-        Reps: "whole-number values paired with weights",
-        Weight: "load values paired with rep counts",
-      };
-      const ownHeader = String(normalizedColumnNames[index] ?? "").trim();
-      const reason = !hasHeaderRow
-        ? "the sheet starts with data instead of a header row"
+  for (const name of layout.inferred) {
+    const index = columns[name];
+    const evidence = {
+      Date: "date values",
+      "Lift Type": "known lift names",
+      Reps: "whole-number values paired with weights",
+      Weight: "load values paired with rep counts",
+    };
+    const ownHeader = normalizedColumnNames[index] ?? "";
+    const reason = !hasHeaderRow
+      ? "the sheet starts with data instead of a header row"
+      : ownHeader
+        ? `its header "${ownHeader}" is not one we know`
+        : "its header is blank";
+    repairLog.issue(
+      `Inferred ${name} from the ${evidence[name]} in column ${index + 1} because ${reason}.`,
+      !hasHeaderRow
+        ? `Insert a header row above your first set and put "${name}" in column ${index + 1}.`
         : ownHeader
-          ? `its header "${ownHeader}" is not one we know`
-          : "its header is blank";
-      repairLog.issue(
-        `Inferred ${name} from the ${evidence[name]} in column ${index + 1} because ${reason}.`,
-        !hasHeaderRow
-          ? `Insert a header row above your first set and put "${name}" in column ${index + 1}.`
-          : ownHeader
-            ? `Rename the first-row header of column ${index + 1} to "${name}".`
-            : `Restore "${name}" in the first-row header of column ${index + 1} in your Google Sheet.`,
-      );
-    }
+          ? `Rename the first-row header of column ${index + 1} to "${name}".`
+          : `Restore "${name}" in the first-row header of column ${index + 1} in your Google Sheet.`,
+    );
   }
-  dateColumnIndex = columns.Date;
-  liftTypeColumnIndex = columns["Lift Type"];
-  repsColumnIndex = columns.Reps;
-  weightColumnIndex = columns.Weight;
+  const dateColumnIndex = columns.Date;
+  const liftTypeColumnIndex = columns["Lift Type"];
+  const repsColumnIndex = columns.Reps;
+  const weightColumnIndex = columns.Weight;
+  const notesColumnIndex = columns.Notes;
+  const labelColumnIndex = columns.Label;
+  const urlColumnIndex = columns.URL;
 
   // Check only required columns
   if (
@@ -405,22 +380,88 @@ export function parseStrengthJourneysData(
     `${objectsArray.length} lifts`,
   );
 
-  sheetLayouts.set(objectsArray, {
-    hasHeaderRow,
-    header: normalizedColumnNames.map((name) => String(name ?? "").trim()),
-    columns: {
-      Date: dateColumnIndex,
-      "Lift Type": liftTypeColumnIndex,
-      Reps: repsColumnIndex,
-      Weight: weightColumnIndex,
-      Notes: notesColumnIndex,
-      Label: labelColumnIndex,
-      URL: urlColumnIndex,
-    },
-    inferred: inferredColumns,
-  });
+  sheetLayouts.set(objectsArray, layout);
 
   return objectsArray;
+}
+
+/**
+ * Work out where a sheet keeps its columns, without parsing its rows.
+ *
+ * This is the one reader of a sheet's header. The parser uses it on every
+ * read; the link and recovery check uses it on the top of a candidate sheet;
+ * the import merge uses it on the sheet it is about to write into. So a sheet
+ * the app can read is, by construction, one it can link and merge into.
+ *
+ * Headings are matched by name wherever they sit, with the usual synonyms and
+ * decoration ("Exercise", "Weight (kg)"). A required column whose heading is
+ * missing is worked out from the column contents when the evidence is clear.
+ * Fully named headers cost nothing beyond the lookup.
+ *
+ * @param {any[][]} data Raw rows, header first (or data first, when there is
+ *   no header row). A sample from the top of a sheet is enough to link by.
+ * @param {object} [options]
+ * @param {string} [options.localeHint] For ambiguous day/month dates.
+ * @param {boolean} [options.claimLabelledColumns=false] See
+ *   parseStrengthJourneysData.
+ * @returns {{hasHeaderRow: boolean, firstDataRow: number, header: string[],
+ *   columns: Object<string, number>, inferred: string[]}} `columns` maps
+ *   Date, Lift Type, Reps, Weight, Notes, Label and URL to a 0-based column,
+ *   -1 when it could not be found. `inferred` names the required columns that
+ *   were worked out rather than read from a heading.
+ */
+export function detectSheetLayout(
+  data,
+  { localeHint, claimLabelledColumns = false } = {},
+) {
+  const firstRowNames = (data[0] ?? []).map((name) =>
+    String(normalizeColumnName(String(name ?? ""))).trim(),
+  );
+  // A date in the first row, with no recognized headers, identifies a sheet
+  // that starts directly with data. An empty first row is still a header row.
+  const hasHeaderRow =
+    firstRowNames.some((name) => KNOWN_HEADERS.includes(name)) ||
+    !(data[0] ?? []).some((value) =>
+      normalizeDateInput(String(value ?? ""), localeHint),
+    );
+  const header = hasHeaderRow ? firstRowNames : [];
+  const firstDataRow = hasHeaderRow ? 1 : 0;
+
+  // Complete named headers bypass inference entirely. Recovered columns are
+  // local to this reading; never change the sheet or assume a position.
+  const required = inferRequiredColumns(
+    data,
+    {
+      Date: header.indexOf("Date"),
+      "Lift Type": header.indexOf("Lift Type"),
+      Reps: header.indexOf("Reps"),
+      Weight: header.indexOf("Weight"),
+    },
+    localeHint,
+    header,
+    firstDataRow,
+    claimLabelledColumns,
+  );
+
+  return {
+    hasHeaderRow,
+    firstDataRow,
+    header,
+    columns: {
+      ...required,
+      Notes: header.indexOf("Notes"),
+      Label: header.indexOf("Label"),
+      URL: header.indexOf("URL"),
+    },
+    inferred: Object.entries(required)
+      .filter(([name, index]) => index !== -1 && header[index] !== name)
+      .map(([name]) => name),
+  };
+}
+
+/** True when a layout has a place for all four columns a set needs. */
+export function hasRequiredColumns(layout) {
+  return REQUIRED_HEADERS.every((name) => layout?.columns?.[name] >= 0);
 }
 
 // Resolve sparse Date/Lift Type columns first, then consider Reps and Weight

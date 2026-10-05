@@ -114,6 +114,14 @@ authenticated users.
   point, with two functions — `parseData(rows)` for Google Sheets (Strength
   Journeys format only, read/write) and `parseImportedFile(file)` for
   drag-and-drop CSV/XLSX (any format, view-only).
+- **One reader of a sheet's header:** `detectSheetLayout` in
+  `import/parsers/strength-journeys-parser.js` decides where a sheet keeps its
+  columns: headings in any order, by any known name, and a missing required
+  heading inferred from the column's contents. The parser, the link and
+  recovery check (`readHeaderInfo`) and the import merge all call it, so a
+  sheet the app can read is one it can link and merge into. Do not write a
+  second header check; extend this one. App exports (Hevy and the rest) are
+  matched by exact signature in `import-dispatcher.js` and stay strict.
 - **Sheet writes** in `api/sheet/*` are *operation-oriented*, not
   REST-over-rows. Each file's header comment explains why it earns its own
   operation — read it before adding a new one.

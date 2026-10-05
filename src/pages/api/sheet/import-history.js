@@ -17,6 +17,10 @@ import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
 import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/processing-utils";
 import { isValidLiftWeight } from "@/lib/import/parsers/parser-utilities";
+import {
+  detectSheetLayout,
+  getSheetWriteColumns,
+} from "@/lib/import/parsers/strength-journeys-parser";
 import { placeRowValues, resolveWriteColumns } from "@/lib/sheet/sheet-row-ops";
 import {
   buildVisibleImportProvenance,
@@ -362,13 +366,25 @@ export default async function handler(req, res) {
 
     // The import is written in our own shape (date and lift on anchor rows,
     // one set per row) but into the lifter's sheet, so each value goes to
-    // that sheet's own column for it, wherever its header row puts it. A
-    // sheet whose first row does not name the required columns gives us
-    // nowhere to put them.
-    const layout = resolveWriteColumns(req.body?.columns ?? null, sheetRows[0]);
+    // that sheet's own column for it. The whole sheet is already in hand, so
+    // its layout is worked out here by the same detection the reader uses:
+    // headings in any order, by any name we know, and a missing heading
+    // inferred from the column beneath it. What cannot be merged into is a
+    // sheet with no header row at all, since the placement below counts rows
+    // from one.
+    const sheetLayout = detectSheetLayout(sheetRows);
+    const detectedColumns = getSheetWriteColumns(sheetLayout);
+    const layout = detectedColumns
+      ? resolveWriteColumns(detectedColumns, sheetRows[0])
+      : {
+          ok: false,
+          message: sheetLayout.hasHeaderRow
+            ? "its Date, Lift Type, Reps and Weight columns could not be told apart"
+            : "it has no header row",
+        };
     if (!layout.ok) {
       return res.status(409).json({
-        error: `This import could not be merged because ${layout.message}. Label the first row of your sheet with Date, Lift Type, Reps and Weight over their columns, then try again.`,
+        error: `This import could not be merged into your sheet because ${layout.message}. Label its first row with Date, Lift Type, Reps and Weight over their columns, then try again.`,
         errorCode: "SHEET_LAYOUT_UNSUPPORTED",
       });
     }

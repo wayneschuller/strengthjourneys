@@ -681,6 +681,135 @@ await assert.rejects(
   /Unrecognized file format/,
 );
 
+// One reading of a sheet's layout serves the parser, the link check and the
+// import merge. What the link check accepts (hasRequiredColumns) and where a
+// write may go (getSheetWriteColumns, then resolveWriteColumns against row 1)
+// must agree with what the parser can read.
+const { detectSheetLayout, getSheetWriteColumns, hasRequiredColumns } =
+  await import("../src/lib/import/parsers/strength-journeys-parser.js");
+const { resolveWriteColumns } =
+  await import("../src/lib/sheet/sheet-row-ops.js");
+const sampleBody = [
+  ["2026-03-02", "Deadlift", "5", "140kg", "09:00 ", ""],
+  ["", "", "3", "160kg", "", ""],
+  ["2026-03-01", "Back Squat", "5", "100kg", "", ""],
+  ["", "", "5", "100kg", "", ""],
+];
+const reorder = (row, order) => order.map((from) => row[from] ?? "");
+const layoutCases = [
+  {
+    name: "standard",
+    rows: [
+      ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"],
+      ...sampleBody,
+    ],
+    linkable: true,
+    write: { date: 0, liftType: 1, reps: 2, weight: 3, notes: 4, url: 5 },
+  },
+  {
+    name: "synonyms and decoration",
+    rows: [
+      ["Workout Date", "Exercise", "Repetitions", "Load (kg)", "Comments"],
+      ...sampleBody,
+    ],
+    linkable: true,
+    write: { date: 0, liftType: 1, reps: 2, weight: 3, notes: 4, url: null },
+  },
+  {
+    name: "own column order",
+    rows: [
+      ["Lift Type", "Notes", "Date", "RPE", "Weight", "Reps", "URL"],
+      ...sampleBody.map((row) => [
+        row[1],
+        row[4],
+        row[0],
+        "",
+        row[3],
+        row[2],
+        row[5],
+      ]),
+    ],
+    linkable: true,
+    write: { date: 2, liftType: 0, reps: 5, weight: 4, notes: 1, url: 6 },
+  },
+  {
+    name: "Date header deleted",
+    rows: [["", "Lift Type", "Reps", "Weight", "Notes", "URL"], ...sampleBody],
+    linkable: true,
+    write: { date: 0, liftType: 1, reps: 2, weight: 3, notes: 4, url: 5 },
+  },
+  {
+    name: "own order with a heading deleted",
+    rows: [
+      ["Lift Type", "", "Weight", "Reps"],
+      ...sampleBody.map((row) => reorder(row, [1, 0, 3, 2])),
+    ],
+    linkable: true,
+    write: { date: 1, liftType: 0, reps: 3, weight: 2, notes: null, url: null },
+  },
+  {
+    // Readable and linkable, but with nothing in row 1 to check a write by.
+    name: "no header row",
+    rows: sampleBody,
+    linkable: true,
+    write: null,
+  },
+  {
+    name: "header only, no sets yet",
+    rows: [["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"]],
+    linkable: true,
+    write: { date: 0, liftType: 1, reps: 2, weight: 3, notes: 4, url: 5 },
+  },
+  {
+    name: "not a lifting log",
+    rows: [
+      ["Date", "Payee", "Amount"],
+      ["2026-03-02", "Grocer", "54.20"],
+      ["2026-03-03", "Rent", "900"],
+    ],
+    linkable: false,
+    write: null,
+  },
+];
+for (const { name, rows, linkable, write } of layoutCases) {
+  const layout = quietly(() => detectSheetLayout(rows));
+  assert.equal(hasRequiredColumns(layout), linkable, `${name}: linkable`);
+  const columns = linkable ? getSheetWriteColumns(layout) : null;
+  assert.deepEqual(columns, write, `${name}: write columns`);
+  if (columns) {
+    // The server's own check of that map against row 1 must agree.
+    assert.deepEqual(
+      resolveWriteColumns(columns, rows[0]),
+      { ok: true, columns },
+      `${name}: server accepts the map`,
+    );
+  }
+  // And whatever links, parses.
+  if (linkable && rows.length > 1) {
+    assert.ok(
+      quietly(() => parseStrengthJourneysData(rows)).length > 0,
+      `${name}: parses`,
+    );
+  }
+}
+// A map that no longer matches row 1 is refused, whichever way it is wrong.
+const standardHeader = ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"];
+for (const stale of [
+  { date: 0, liftType: 1, reps: 3, weight: 2, notes: 4, url: 5 },
+  { date: 0, liftType: 1, reps: 2, weight: 3, notes: null, url: 5 },
+  { date: 0, liftType: 1, reps: 2, weight: 2, notes: 4, url: 5 },
+]) {
+  assert.equal(resolveWriteColumns(stale, standardHeader).ok, false);
+}
+assert.equal(
+  resolveWriteColumns(
+    { date: 0, liftType: 1, reps: 2, weight: 3, notes: 4, url: 5 },
+    ["", "", "", "", "", ""],
+  ).ok,
+  false,
+  "a first row that names nothing is not a header to write by",
+);
+
 console.log("Strength Journeys parser checks passed.");
 
 function permutations(values) {

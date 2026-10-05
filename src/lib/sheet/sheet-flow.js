@@ -3,10 +3,13 @@ import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { normalizeDateInput } from "@/lib/date-utils";
 import {
-  normalizeColumnName,
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
 } from "@/lib/import/parsers/parser-utilities";
+import {
+  detectSheetLayout,
+  hasRequiredColumns,
+} from "@/lib/import/parsers/strength-journeys-parser";
 import { devLog } from "@/lib/processing-utils";
 import { getUserKvKey, mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
@@ -20,7 +23,9 @@ const METADATA_SCAN_ROW_CAP = 30000;
 const BIG_FOUR_LIFTS = STANDARD_BIG_FOUR_LIFT_TYPES;
 const BIG_FOUR_LIFTS_SET = new Set(BIG_FOUR_LIFTS);
 const PREVIEW_E1RM_TIE_TOLERANCE_RATIO = 0.01;
-const REQUIRED_HEADER_CORE = ["date", "lift type", "reps", "weight"];
+// How much of a sheet the link check reads. Named headers need only row 1;
+// the rest is evidence for working out a column whose heading is missing.
+const HEADER_SAMPLE_ROWS = 200;
 const BOOTSTRAP_HEADERS = [
   "Date",
   "Lift Type",
@@ -349,9 +354,18 @@ export async function listRecentSpreadsheetCandidates(headers) {
   return ranked;
 }
 
-export async function readHeaderInfo(ssid, headers) {
+/**
+ * Is this spreadsheet a lifting log we can read, and where are its columns?
+ *
+ * Linking and recovery ask this of every candidate sheet. The answer comes
+ * from detectSheetLayout, the same detection every read of a linked sheet
+ * uses, so a sheet the app can show is one it can link: headings in any
+ * order, under any name we know, and a missing heading worked out from the
+ * rows beneath it. Only the top of the sheet is read.
+ */
+export async function readHeaderInfo(ssid, headers, locale) {
   const response = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:Z1?dateTimeRenderOption=FORMATTED_STRING`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:Z${HEADER_SAMPLE_ROWS}?dateTimeRenderOption=FORMATTED_STRING`,
     { method: "GET", headers },
   );
   if (!response.ok) {
@@ -364,21 +378,21 @@ export async function readHeaderInfo(ssid, headers) {
   }
 
   const json = await response.json().catch(() => ({}));
-  const row = Array.isArray(json?.values?.[0]) ? json.values[0] : [];
-  const normalized = row.map(normalizeHeader);
-  const canonical = row.map(normalizeColumnName);
+  const rows = Array.isArray(json?.values) ? json.values : [];
+  const row = Array.isArray(rows[0]) ? rows[0] : [];
+  const layout = detectSheetLayout(rows, { localeHint: locale });
 
   return {
-    valid: REQUIRED_HEADER_CORE.every((required) =>
-      normalized.includes(required),
-    ),
+    valid: hasRequiredColumns(layout),
     status: response.status,
     sampleHeaders: row.slice(0, 8),
     headerCount: row.length,
-    dateColumnIndex: normalized.indexOf("date"),
-    repsColumnIndex: normalized.indexOf("reps"),
-    weightColumnIndex: normalized.indexOf("weight"),
-    liftTypeColumnIndex: normalized.indexOf("lift type"),
+    dateColumnIndex: layout.columns.Date,
+    repsColumnIndex: layout.columns.Reps,
+    weightColumnIndex: layout.columns.Weight,
+    liftTypeColumnIndex: layout.columns["Lift Type"],
+    hasHeaderRow: layout.hasHeaderRow,
+    inferredHeaders: layout.inferred,
   };
 }
 
@@ -442,8 +456,8 @@ function shouldReplacePreviewSet(current, candidate) {
   return false;
 }
 
-// readHeaderInfo only ever inspects A1:Z1, so a hinted column index cannot
-// exceed 25 and a single letter is always enough here.
+// readHeaderInfo only ever inspects columns A to Z, so a hinted column index
+// cannot exceed 25 and a single letter is always enough here.
 function columnIndexToLetter(index) {
   const clamped = Math.min(25, Math.max(0, index));
   return String.fromCharCode(65 + clamped);
@@ -851,7 +865,7 @@ export async function validateAndFetchSelectedSheet(ssid, headers, debug) {
   });
   if (!headerInfo.valid) {
     throw new Error(
-      "Selected sheet does not match required columns (Date, Lift Type, Reps, Weight).",
+      "We could not find Date, Lift Type, Reps and Weight columns in the selected sheet.",
     );
   }
   const metadata = await fetchDriveMetadata(ssid, headers);

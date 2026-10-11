@@ -536,6 +536,16 @@ export default function LogSessionPage({
         : "";
     if (!startLift) return;
 
+    // Arriving from another page, the first render still has the demo's
+    // anchor date as today (yesterday in AU/Asia/Pacific) and has not read the
+    // URL's date. Adding now and again once the real date lands would put the
+    // lift on both days, so wait for the date the lifter is on.
+    const settledDate =
+      typeof router.query.date === "string"
+        ? router.query.date
+        : formatDateToYmdLocal(new Date());
+    if (sessionDate !== settledDate) return;
+
     const requestKey = `${sessionDate}:${startLift}`;
     if (autoStartedLiftRef.current === requestKey) return;
     autoStartedLiftRef.current = requestKey;

@@ -24,6 +24,10 @@
  * Each row arrives as six logical values and is written into the sheet's own
  * columns for them, checked against row 1 (see resolveWriteColumns), so a
  * sheet laid out the lifter's own way gets its sets in the right places.
+ *
+ * Post-response side effect: counts the inserted rows against today's date on
+ * the lifter's KV record (`sheetWriteDays`), so a funnel review can tell
+ * lifters who log here from lifters who only view. See recordSheetWrite.
  */
 
 import { getServerSession } from "next-auth/next";
@@ -37,6 +41,7 @@ import {
   startFirstSheetIdLookup,
   verifyRowSnapshot,
 } from "@/lib/sheet/sheet-row-ops";
+import { getUserKvKey, mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 
 // ─── Design principle: the sheet is a first-class artefact ──────────────────
@@ -336,15 +341,53 @@ export default async function handler(req, res) {
     }
 
     const firstNewRow = insertAfter + 1;
-    return res.status(200).json({
+    res.status(200).json({
       insertedRows: rows.length,
       firstRowIndex: firstNewRow,
     });
+
+    // The set is in the sheet and the lifter has their answer. Counting it
+    // comes after, so KV can never slow or fail a logged set.
+    await recordSheetWrite({ session, insertedRows: rows.length });
   } catch (err) {
     console.error("[sheet/insert-row] unexpected error:", err);
     return res
       .status(500)
       .json({ error: err.message || "Internal server error" });
+  }
+}
+
+// Keeps a per-day count of rows this route added, the logging twin of
+// `sheetReadDays` in read.js. A retry answered as `alreadyApplied` is not
+// counted, because the send that landed was.
+//
+// Privacy boundary: dates and counts only, the same rule the read route
+// keeps. Never store which lift, the weight, the reps, notes, or anything
+// else that was written to the sheet.
+async function recordSheetWrite({ session, insertedRows }) {
+  try {
+    const kvKey = getUserKvKey(session?.user?.email);
+    if (!kvKey) return;
+    const todayKey = new Date().toISOString().slice(0, 10);
+
+    await mergeUserRecord(kvKey, (latest) => {
+      const sheetWriteDays =
+        latest.sheetWriteDays && typeof latest.sheetWriteDays === "object"
+          ? latest.sheetWriteDays
+          : {};
+      const currentDayWrites = Number.isFinite(sheetWriteDays[todayKey])
+        ? sheetWriteDays[todayKey]
+        : 0;
+
+      return {
+        sheetWriteDays: {
+          ...sheetWriteDays,
+          [todayKey]: currentDayWrites + insertedRows,
+        },
+      };
+    });
+  } catch (err) {
+    console.error("[sheet/insert-row] write count failed:", err);
   }
 }
 

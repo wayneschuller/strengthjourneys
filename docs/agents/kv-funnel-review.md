@@ -25,8 +25,8 @@ Core KV sources and fields:
   `signInCount`, `firstSignInPage`, `firstSignInCta`, `lastSignInPage`,
   `lastSignInCta`, `lastRequiredDriveScopeGranted`, `connectedAt`,
   `activationPromptedAt`, `connectionMethod`, `provisioningMethod`,
-  `lastSeenAt`, `lastSheetReadAt`, `sheetReadDays`, `returnPromptedAt`, and
-  `provisionedSheetId`
+  `lastSeenAt`, `lastSheetReadAt`, `sheetReadDays`, `sheetWriteDays`,
+  `returnPromptedAt`, and `provisionedSheetId`
 
 Recommended funnel definitions:
 
@@ -37,6 +37,11 @@ Recommended funnel definitions:
 - Activation: `connectedAt` and/or `provisionedSheetId` present
 - Real app usage: successful sheet reads via `lastSheetReadAt` or
   `sheetReadDays`
+- Logging: sets added through the app, per UTC day, in `sheetWriteDays`
+  (`{ "YYYY-MM-DD": rows }`, written by `src/pages/api/sheet/insert-row.js`).
+  Data begins 2026-10-11; a lifter with no field before then is unmeasured,
+  not a non-logger. Imports are counted separately in `importProfile`, and
+  rows typed straight into the sheet are invisible here
 - Returning user: an existing activated user with `lastSeenAt` or
   `lastSheetReadAt` in the review window, plus stronger evidence from
   multi-day `sheetReadDays`, `returnPromptedAt`, manual replies, support

@@ -25,5 +25,66 @@
       "liftType": "Back Squat",
       "ratio": 0.9
     }
+  },
+  "guide": {
+    "seoTitle": "Safety Bar Squat Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Safety Bar Squat Guide & Progress Tracker",
+    "description": "Learn the safety bar squat: how the bar sits, hand position and staying upright in plain English, a coaching video, answers to common questions, and free safety bar squat progress tracking with rep PRs and tonnage.",
+    "keywords": "safety bar squat, safety squat bar, SSB squat, how to use a safety squat bar, safety bar squat vs back squat, safety squat bar weight, safety bar squat progress tracker",
+    "introduction": {
+      "title": "What the Safety Squat Bar Is For",
+      "paragraphs": [
+        "A safety squat bar has a padded yoke that sits across your upper back and two handles that point forward in front of your shoulders. You hold the handles at chest height, so your shoulders, elbows and wrists stay relaxed while you squat.",
+        "The bar is cambered, which places the weight a little in front of you and tries to tip your chest forward. Holding yourself upright against that makes the upper back and the quads work hard, and many lifters find it builds a squat that stays tall under a straight bar.",
+        "Pull the handles down toward your chest, brace, and squat to the same depth as your regular squat. Most lifters handle **around 90 percent of their back squat** with a safety bar once they are used to it.",
+        "Log your safety bar squats and this page tracks your rep PRs and tonnage, ready to read beside your [back squat](/progress-guide/squat)."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Safety Bar Squat Articles",
+      "links": [
+        {
+          "title": "How To: Safety Squat Bar + Programming Tips",
+          "url": "https://barbell-logic.com/how-to-safety-squat-bar/",
+          "author": "Barbell Logic"
+        },
+        {
+          "title": "Safety Bar Squats: Unlock Strength by Targeting the Anterior Chain",
+          "url": "https://www.westside-barbell.com/a/blog/safety-bar-squats",
+          "author": "Westside Barbell"
+        },
+        {
+          "title": "Why Every Athlete Can Benefit from the Safety Squat Bar",
+          "url": "https://www.roguefitness.com/theindex/movement-library/why-every-athlete-can-benefit-from-the-safety-squat-bar",
+          "author": "Rogue Fitness"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How much does a safety squat bar weigh?",
+        "answer": "It depends on the bar. Many weigh more than a standard 45 lb barbell, often 60 to 70 lb. Check the maker's listing or weigh yours once, then log the true total so your numbers stay honest."
+      },
+      {
+        "question": "Is a safety bar squat harder than a back squat?",
+        "answer": "Most lifters find it harder at the same weight, because the bar pulls the chest forward and the upper back has to hold you upright. Around 90 percent of your back squat is a common place to land."
+      },
+      {
+        "question": "Who is the safety squat bar good for?",
+        "answer": "Anyone who wants to squat heavy with relaxed arms. It suits lifters with tight or sore shoulders, elbows or wrists, lifters who bench or press a lot, and anyone who wants extra upper back and quad work from their squat."
+      },
+      {
+        "question": "Where should the pad sit and how do I hold the handles?",
+        "answer": "Rest the pad across your upper back and traps, not on your neck. Hold the handles around chest height and pull them down gently to keep the pad snug and your upper back tight."
+      },
+      {
+        "question": "Does the safety bar squat carry over to the back squat?",
+        "answer": "It carries over well for most lifters, because it strengthens the upper back and the legs in the same movement. Keep some straight bar squatting in your week so the skill stays sharp. The [squat guide](/progress-guide/squat) covers the main lift."
+      },
+      {
+        "question": "How often should I use the safety squat bar?",
+        "answer": "Once a week works well as a second squat day, and it can stand in for the straight bar for a stretch when your shoulders want a rest. Sets of 3 to 8 reps suit it."
+      }
+    ]
   }
 }

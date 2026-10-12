@@ -28,5 +28,66 @@
       "liftType": "Deadlift",
       "ratio": 0.9
     }
+  },
+  "guide": {
+    "seoTitle": "Sumo Deadlift Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Sumo Deadlift Guide & Progress Tracker",
+    "description": "Learn the sumo deadlift: stance width, hip position and how to start the pull in plain English, a coaching video, answers to common questions, and free sumo deadlift progress tracking with rep PRs and tonnage.",
+    "keywords": "sumo deadlift, how to sumo deadlift, sumo deadlift form, sumo vs conventional deadlift, sumo deadlift stance, sumo deadlift benefits, sumo deadlift progress tracker",
+    "introduction": {
+      "title": "How the Sumo Deadlift Differs",
+      "paragraphs": [
+        "The sumo deadlift is a deadlift with a wide stance and your hands inside your knees. Your feet turn out, your hips sit close to the bar, and your torso stays more upright than in a conventional pull.",
+        "That position shares the work differently. The quads and hips do more, the lower back does a little less, and the bar travels a shorter distance. Some lifters are built for it and pull their best lifts this way. Others are stronger conventional. Both are honest deadlifts.",
+        "Stand wide enough that your **shins are close to vertical** when you grip the bar, turn your toes out, and push your knees out over them. Pull the slack out of the bar, then think of pushing the floor apart as you stand up.",
+        "Log your sumo pulls and this page charts your rep PRs and tonnage, ready to read beside your [deadlift](/progress-guide/deadlift), so you can see which stance is moving."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Sumo Deadlift Articles",
+      "links": [
+        {
+          "title": "Sumo Deadlift, the Whats, Hows, and Whys",
+          "url": "https://barbell-logic.com/how-to-sumo-deadlift/",
+          "author": "Barbell Logic"
+        },
+        {
+          "title": "Sumo vs Conventional Deadlift: How Should You Deadlift?",
+          "url": "https://www.strongerbyscience.com/should-you-deadlift-conventional-or-sumo/",
+          "author": "Greg Nuckols, Stronger by Science"
+        },
+        {
+          "title": "7-Step Guide to Learning the Sumo Deadlift",
+          "url": "https://elitefts.com/blogs/training/7-step-guide-to-learning-the-sumo-deadlift",
+          "author": "Matt Ladewski, EliteFTS"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "Is sumo or conventional deadlift stronger?",
+        "answer": "It depends on your build. Hip structure, leg length and torso length all play a part, and most lifters find one stance clearly more comfortable. Give each a fair run of a couple of months and let your logged numbers decide."
+      },
+      {
+        "question": "How wide should my sumo stance be?",
+        "answer": "Wide enough that your shins are close to vertical when you look from the front, with your knees tracking over your toes. Start moderate and widen a little at a time. Your hips will tell you when you have gone far enough."
+      },
+      {
+        "question": "Is the sumo deadlift easier on the lower back?",
+        "answer": "The more upright torso asks less of the lower back and more of the hips and quads. Many lifters rotate between stances for exactly that reason. It still rewards a flat back and a hard brace."
+      },
+      {
+        "question": "Is the sumo deadlift allowed in powerlifting?",
+        "answer": "Yes. Sumo is a legal deadlift in powerlifting competition and plenty of records have been pulled that way. The bar still goes from the floor to a full lockout."
+      },
+      {
+        "question": "Why is the sumo deadlift slow off the floor?",
+        "answer": "That is normal. Sumo is usually hardest at the start and quick once the bar passes the knees. Take the slack out, stay patient, and keep pushing the floor apart until the bar breaks."
+      },
+      {
+        "question": "How often should I train the sumo deadlift?",
+        "answer": "Once or twice a week works for most lifters. You can make it your main pull, or train it beside your conventional [deadlift](/progress-guide/deadlift) as a second pulling day."
+      }
+    ]
   }
 }

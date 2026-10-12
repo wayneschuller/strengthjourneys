@@ -24,5 +24,66 @@
       "liftType": "Back Squat",
       "ratio": 0.85
     }
+  },
+  "guide": {
+    "seoTitle": "Box Squat Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Box Squat Guide & Progress Tracker",
+    "description": "Learn the box squat: box height, sitting back and driving up in plain English, a coaching video, answers to common questions, and free box squat progress tracking with rep PRs and tonnage.",
+    "keywords": "box squat, how to box squat, box squat height, box squat vs back squat, box squat benefits, box squat form, box squat progress tracker",
+    "introduction": {
+      "title": "What the Box Squat Teaches",
+      "paragraphs": [
+        "A box squat is a back squat taken down to a box or bench set behind you. You sit back until your hips touch the box, stay tight for a moment, then drive back up. The box gives every rep the same depth, so you always know exactly where the bottom is.",
+        "Reaching back for a box teaches you to lead with your hips and keep your shins closer to vertical, which puts more of the work on the glutes, hamstrings and lower back. The stop on the box takes the bounce out of the bottom, so you build strength from a standing start.",
+        "Set the box so the crease of your hip lands **level with or just below the top of your knee**. Touch down under control and stay braced. Some lifters touch lightly and go, others settle on the box for a full second. Pick one style and log it the same way each time.",
+        "Log your box squats and this page charts your rep PRs and tonnage, ready to read beside your [back squat](/progress-guide/squat), so you can watch the two rise together."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Box Squat Articles",
+      "links": [
+        {
+          "title": "Box Squats: How We Do Them vs. Westside",
+          "url": "https://barbell-logic.com/how-to-do-box-squats/",
+          "author": "Barbell Logic"
+        },
+        {
+          "title": "Box Squats: How to Box Squat Correctly",
+          "url": "https://www.westside-barbell.com/blogs/the-blog/how-to-execute-a-proper-box-squat",
+          "author": "Westside Barbell"
+        },
+        {
+          "title": "Tutorial: Box Squats for New Lifters",
+          "url": "https://elitefts.com/blogs/training/tutorial-box-squats-for-new-lifters",
+          "author": "Julia Anto, EliteFTS"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How high should the box be for box squats?",
+        "answer": "For most lifters the best height puts the hip crease level with or just below the top of the knee, the same depth as a full squat. A higher box lets you handle more weight and gets you used to heavy loads. A lower box makes the start of each rep harder."
+      },
+      {
+        "question": "Should I sit on the box or just touch it?",
+        "answer": "Both styles work. A light touch keeps the rep close to a regular squat. Settling on the box for a moment while staying braced trains the drive out of the bottom from a stop. Choose one and stay consistent so your numbers are easy to compare."
+      },
+      {
+        "question": "Do box squats improve my back squat?",
+        "answer": "They do for many lifters. The box gives you consistent depth, practice sitting back, and a strong start out of the bottom. They work best alongside regular squats, with the [back squat](/progress-guide/squat) staying the main event."
+      },
+      {
+        "question": "How much should I box squat compared to my back squat?",
+        "answer": "As a rough guide, a box squat to parallel with a clear stop lands around 85 percent of your back squat. A high box will let you lift more than that. Log the box height in your notes so you compare like with like."
+      },
+      {
+        "question": "Are box squats good for beginners?",
+        "answer": "They are a great teaching tool. The box gives you a target to reach for, shows you where depth is, and builds confidence sitting back under the bar. Start light and learn to stay tight on the box before adding weight."
+      },
+      {
+        "question": "How often should I box squat?",
+        "answer": "Once a week suits most lifters, often as a second squat day. Sets of 2 to 5 reps are common, because every rep starts from a stop and deserves a fresh brace."
+      }
+    ]
   }
 }

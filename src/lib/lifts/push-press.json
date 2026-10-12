@@ -35,5 +35,61 @@
       "ratio": 1.2,
       "note": "Leg drive lets most lifters push press about a fifth more than they press."
     }
+  },
+  "guide": {
+    "seoTitle": "Push Press Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Push Press Guide & Progress Tracker",
+    "description": "Learn the push press: the dip, the leg drive and the lockout in plain English, a coaching video, answers to common questions, and free push press progress tracking with rep PRs and tonnage.",
+    "keywords": "push press, how to push press, push press form, push press vs strict press, push press vs push jerk, push press benefits, push press progress tracker",
+    "introduction": {
+      "title": "What the Push Press Builds",
+      "paragraphs": [
+        "The push press is an overhead press that starts with your legs. With the bar on the front of your shoulders, you dip a few inches at the knees, drive up hard, and let that drive launch the bar so your arms can finish the press to lockout.",
+        "The leg drive lets you put more weight overhead than you can press strictly, usually about a fifth more. That builds power from the ground up, strong shoulders and triceps at lockout, and confidence holding heavy weight overhead.",
+        "Keep your torso upright and your heels down in the dip, and reverse it fast. The bar should **leave your shoulders from the leg drive** before your arms take over. Sets of 3 to 5 reps suit most lifters.",
+        "Log your push presses and this page charts your rep PRs and tonnage, ready to read beside your [strict press](/progress-guide/strict-press)."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Push Press Articles",
+      "links": [
+        {
+          "title": "The Push Press",
+          "url": "https://www.crossfit.com/essentials/the-push-press",
+          "author": "CrossFit"
+        },
+        {
+          "title": "How to Push Press: Gym Shorts",
+          "url": "https://barbell-logic.com/how-to-push-press-gym-shorts/",
+          "author": "Barbell Logic"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is the difference between a push press and a strict press?",
+        "answer": "A strict press uses only the upper body, with the knees locked from start to finish. A push press adds a short dip and drive from the legs to get the bar moving. See the [strict press guide](/progress-guide/strict-press) for the stricter lift."
+      },
+      {
+        "question": "How much more can I push press than strict press?",
+        "answer": "Most lifters push press about 20 percent more than they strict press. The better your timing between the leg drive and the press, the bigger that gap can be."
+      },
+      {
+        "question": "What is the difference between a push press and a push jerk?",
+        "answer": "In a push press your legs straighten once and stay straight while your arms finish the lift. In a [push jerk](/progress-guide/push-jerk) you bend your knees a second time to drop under the bar and catch it on locked arms."
+      },
+      {
+        "question": "How deep should the dip be?",
+        "answer": "Shallow, only a few inches. A short, quick dip with an upright torso sends the bar straight up. A deep, slow dip turns it into a squat and takes the snap out of the drive."
+      },
+      {
+        "question": "Does the push press help my strict press?",
+        "answer": "It helps many lifters, because it gets you used to heavier weight overhead and strengthens the top half of the press. Train both and watch them rise together."
+      },
+      {
+        "question": "How often should I push press?",
+        "answer": "Once a week works well, either after your strict press or on a separate overhead day."
+      }
+    ]
   }
 }

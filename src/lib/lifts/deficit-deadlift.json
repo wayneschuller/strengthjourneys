@@ -24,5 +24,66 @@
       "liftType": "Deadlift",
       "ratio": 0.85
     }
+  },
+  "guide": {
+    "seoTitle": "Deficit Deadlift Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Deficit Deadlift Guide & Progress Tracker",
+    "description": "Learn the deficit deadlift: platform height, setup and the pull off the floor in plain English, a coaching video, answers to common questions, and free deficit deadlift progress tracking with rep PRs and tonnage.",
+    "keywords": "deficit deadlift, how to deficit deadlift, deficit deadlift height, deficit deadlift benefits, deficit deadlift vs deadlift, deficit deadlift form, deficit deadlift progress tracker",
+    "introduction": {
+      "title": "What the Deficit Deadlift Builds",
+      "paragraphs": [
+        "A deficit deadlift is a deadlift done standing on a low platform or a plate, so the bar starts lower against your shins. You bend a little further to reach it, and the bar travels a little further to lockout.",
+        "The extra distance all comes at the bottom, which is where it helps. Your legs work harder to start the bar moving and your back holds its position for longer, so the lift builds a strong, confident start off the floor.",
+        "Stand on something stable **one to two inches high**. Set up exactly as you would for a regular deadlift, with a flat back and the bar over the middle of your foot, and push the floor away. Sets of 3 to 5 reps suit it well.",
+        "Log your deficit deadlifts and this page tracks your rep PRs and tonnage, ready to read beside your [deadlift](/progress-guide/deadlift)."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Deficit Deadlift Articles",
+      "links": [
+        {
+          "title": "How to Deficit Deadlift: Increase Your Deadlift",
+          "url": "https://barbell-logic.com/how-to-deficit-deadlift/",
+          "author": "Barbell Logic"
+        },
+        {
+          "title": "Snatch-Grip and Deficit Deadlifts: Increasing the Range of Motion of the Deadlift",
+          "url": "https://startingstrength.com/article/snatch-grip-and-deficit-deadlifts-increasing-the-range-of-motion-of-the-deadlift",
+          "author": "Michael Jones"
+        },
+        {
+          "title": "Boost Your Workout with Deficit Deadlifts: A Detailed Guide",
+          "url": "https://www.westside-barbell.com/a/blog/introduction-to-deficit-deadlifts",
+          "author": "Westside Barbell"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "How high should the deficit be?",
+        "answer": "One to two inches is plenty for most lifters. That is enough to lengthen the pull while keeping your start position close to your regular deadlift. Choose a height that lets you keep a flat back."
+      },
+      {
+        "question": "What should I stand on for deficit deadlifts?",
+        "answer": "A bumper plate, a low wooden platform or a rubber mat all work. It needs to be flat, stable and wide enough for your normal stance."
+      },
+      {
+        "question": "Do deficit deadlifts help my deadlift off the floor?",
+        "answer": "Yes, that is their main job. The longer start builds leg drive and a tight back position at the bottom. When you return to the floor, the [deadlift](/progress-guide/deadlift) start feels shorter and stronger."
+      },
+      {
+        "question": "How much should I deficit deadlift compared to my deadlift?",
+        "answer": "As a rough guide, expect around 85 percent of your regular deadlift from a one to two inch deficit. The gap narrows as the position becomes familiar."
+      },
+      {
+        "question": "Who should do deficit deadlifts?",
+        "answer": "Lifters with a steady regular deadlift who want a stronger start. Good hamstring mobility helps, because the lower start asks you to reach further with a flat back."
+      },
+      {
+        "question": "How often should I do deficit deadlifts?",
+        "answer": "Once a week is plenty, usually in place of a second deadlift session or as lighter work after your main pulls."
+      }
+    ]
   }
 }

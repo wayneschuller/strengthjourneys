@@ -25,5 +25,66 @@
       "liftType": "Bench Press",
       "ratio": 0.8
     }
+  },
+  "guide": {
+    "seoTitle": "Incline Bench Press Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Incline Bench Press Guide & Progress Tracker",
+    "description": "Learn the incline bench press: bench angle, where the bar touches and bar path in plain English, a coaching video, answers to common questions, and free incline bench press progress tracking with rep PRs and tonnage.",
+    "keywords": "incline bench press, incline bench, how to incline bench press, incline bench angle, incline bench vs flat bench, incline bench press form, incline bench press progress tracker",
+    "introduction": {
+      "title": "What the Incline Bench Press Builds",
+      "paragraphs": [
+        "The incline bench press is a bench press on a bench tilted back, usually somewhere between 30 and 45 degrees. The angle puts it halfway between the flat bench and the overhead press, so it trains the upper chest and the front of the shoulders together with the triceps.",
+        "That makes it a natural second pressing lift. It adds pressing volume at a fresh angle, and strength built here tends to show up in both your [bench press](/progress-guide/bench-press) and your [strict press](/progress-guide/strict-press).",
+        "Set your shoulder blades back and down, plant your feet, and lower the bar to your **upper chest, just below the collarbones**. Press it back up until it sits over your shoulders. Sets of 5 to 8 reps suit most lifters.",
+        "Log your incline bench and this page tracks your rep PRs and tonnage, so you can see it climb alongside your other presses."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Incline Bench Press Articles",
+      "links": [
+        {
+          "title": "Gym Shorts: How to Incline Bench Press, Quickly",
+          "url": "https://barbell-logic.com/the-incline-bench-press-gym-shorts-how-to/",
+          "author": "Barbell Logic"
+        },
+        {
+          "title": "How to Bench Press: The Definitive Guide",
+          "url": "https://www.strongerbyscience.com/how-to-bench/",
+          "author": "Stronger by Science"
+        },
+        {
+          "title": "The 7 Best Bench Press Alternatives to Build Your Chest",
+          "url": "https://www.barbellmedicine.com/blog/the-best-bench-press-alternatives/",
+          "author": "Barbell Medicine"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What angle should I set the bench for incline bench press?",
+        "answer": "Between 30 and 45 degrees suits most lifters. A lower incline feels closer to a flat bench and favors the chest. A steeper one brings in more shoulder. Pick an angle and keep using it so your progress is easy to read."
+      },
+      {
+        "question": "How much should I incline bench compared to my flat bench?",
+        "answer": "As a rough guide, most lifters incline bench around 80 percent of their flat bench. The steeper the bench, the lighter the weight tends to be."
+      },
+      {
+        "question": "Where should the bar touch on an incline bench press?",
+        "answer": "High on the chest, just below the collarbones. That is higher than on a flat bench, and it lets the bar travel almost straight up and down over your shoulders."
+      },
+      {
+        "question": "Does incline bench press help my flat bench?",
+        "answer": "It helps many lifters, because it builds the shoulders and upper chest that drive the bar off the chest. Use it as extra pressing work beside your main [bench press](/progress-guide/bench-press) sessions."
+      },
+      {
+        "question": "Should my grip be the same as on the flat bench?",
+        "answer": "Start with the same grip you bench with. Some lifters bring their hands in a finger width so the forearms stay vertical at the bottom. Either way, keep your wrists stacked over your elbows."
+      },
+      {
+        "question": "How often should I incline bench press?",
+        "answer": "Once a week works well for most lifters, either after your main bench work or on a separate pressing day."
+      }
+    ]
   }
 }

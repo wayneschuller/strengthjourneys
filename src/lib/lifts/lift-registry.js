@@ -94,6 +94,7 @@ import rackPull from "@/lib/lifts/rack-pull.json";
 import closeGripBenchPress from "@/lib/lifts/close-grip-bench-press.json";
 import barbellCurl from "@/lib/lifts/barbell-curl.json";
 import pushPress from "@/lib/lifts/push-press.json";
+import pushJerk from "@/lib/lifts/push-jerk.json";
 import pauseSquat from "@/lib/lifts/pause-squat.json";
 import boxSquat from "@/lib/lifts/box-squat.json";
 import safetyBarSquat from "@/lib/lifts/safety-bar-squat.json";
@@ -124,6 +125,7 @@ export const CURATED_LIFTS = [
   closeGripBenchPress,
   barbellCurl,
   pushPress,
+  pushJerk,
   pauseSquat,
   boxSquat,
   safetyBarSquat,

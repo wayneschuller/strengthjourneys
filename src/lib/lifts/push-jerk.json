@@ -1,0 +1,86 @@
+{
+  "liftType": "Push Jerk",
+  "slug": "push-jerk",
+  "parentLift": {
+    "liftType": "Strict Press",
+    "tonnageRatio": 0.6,
+    "note": "The legs launch the bar and the lifter drops under it, so it counts at six tenths of a press."
+  },
+  "tagline": "Drive the bar up, then drop under and catch it.",
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=VrHNJXoSyXw",
+      "title": "The Push Jerk",
+      "channel": "CrossFit"
+    }
+  ],
+  "coaching": {
+    "summary": "With the bar on the front of your shoulders, dip and drive up hard with the legs, then bend your knees again to drop under the bar, catch it on locked arms, and stand up.",
+    "cues": [
+      "Dip straight down a few inches with the torso upright and heels planted.",
+      "Drive up to full extension before the arms do anything.",
+      "Punch yourself under the bar, catch it on locked arms, then stand tall."
+    ],
+    "standardsRef": {
+      "liftType": "Strict Press",
+      "ratio": 1.3,
+      "note": "A rough guide: catching the bar on bent legs lets most lifters jerk about a third more than they press."
+    }
+  },
+  "guide": {
+    "seoTitle": "Push Jerk Guide: Technique, Video & Progress Tracking",
+    "pageTitle": "Push Jerk Guide & Progress Tracker",
+    "description": "Learn the push jerk: the dip, the drive and the catch in plain English, a coaching video, answers to common questions, and free push jerk progress tracking with rep PRs and tonnage.",
+    "keywords": "push jerk, how to push jerk, push jerk form, push jerk vs push press, push jerk vs split jerk, power jerk, push jerk progress tracker",
+    "introduction": {
+      "title": "What the Push Jerk Builds",
+      "paragraphs": [
+        "The push jerk is the fastest way to put a heavy bar overhead with your feet under you. You dip and drive with your legs as you would for a push press, then bend your knees a second time to drop under the bar and catch it on locked arms before standing up.",
+        "Because you move yourself under the bar instead of pressing it all the way, you can lift more than in a push press. It builds explosive leg drive, quick feet and hands, and a strong, steady lockout.",
+        "Finish the leg drive before you move your arms, then think of **pushing yourself down** under the bar. Catch it with your elbows locked and the bar over the middle of your foot. Sets of 1 to 3 reps keep every rep sharp.",
+        "Log your push jerks and this page tracks your rep PRs and tonnage, ready to read beside your [strict press](/progress-guide/strict-press) and [push press](/progress-guide/push-press)."
+      ]
+    },
+    "resources": {
+      "title": "Third Party Push Jerk Articles",
+      "links": [
+        {
+          "title": "The Push Jerk",
+          "url": "https://www.crossfit.com/essentials/the-push-jerk",
+          "author": "CrossFit"
+        },
+        {
+          "title": "What Is a Jerk?",
+          "url": "https://www.crossfit.com/essentials/foundational-movement-jerk-what-is-a-jerk",
+          "author": "CrossFit"
+        }
+      ]
+    },
+    "faqItems": [
+      {
+        "question": "What is the difference between a push jerk and a push press?",
+        "answer": "In a [push press](/progress-guide/push-press) your legs straighten once and your arms press the bar the rest of the way. In a push jerk you bend your knees a second time and catch the bar on arms that are already locked."
+      },
+      {
+        "question": "Is a push jerk the same as a power jerk?",
+        "answer": "Coaches use the names differently. Many treat them as the same lift. Others keep push jerk for a catch with the feet staying planted, and power jerk for one where the feet lift and land a little wider. Log yours under one name so your history stays together."
+      },
+      {
+        "question": "What is the difference between a push jerk and a split jerk?",
+        "answer": "They share the same dip and drive. In a push jerk you catch the bar with your feet side by side in a shallow squat. In a split jerk one foot goes forward and one back, which lets you drop lower and usually lift more."
+      },
+      {
+        "question": "How much more can I push jerk than strict press?",
+        "answer": "As a rough guide, many lifters push jerk about 30 percent more than they strict press, and a little more than they push press. Timing matters more than strength here, so the number grows as the movement gets smoother."
+      },
+      {
+        "question": "What should I learn before the push jerk?",
+        "answer": "Learn the [strict press](/progress-guide/strict-press) first, then the push press, then the push jerk. Each one adds a single new skill: first the lockout, then the leg drive, then the drop under the bar."
+      },
+      {
+        "question": "How often should I train the push jerk?",
+        "answer": "Once or twice a week suits most lifters. Keep the sets short, 1 to 3 reps, and rest long enough that every rep is fast."
+      }
+    ]
+  }
+}

@@ -485,7 +485,7 @@ export function TheLongGameCard({
                   showMonthlyToggle ||
                   showStreaksToggle) && (
                   <div className="mb-2 flex justify-end">
-                    <div className="border-border/40 flex flex-row rounded border p-px text-[10px]">
+                    <div className="border-border/40 flex flex-row rounded-sm border p-px text-[10px]">
                       {[
                         { key: "daily", label: "Daily" },
                         ...(showWeeklyToggle
@@ -500,7 +500,7 @@ export function TheLongGameCard({
                       ].map(({ key, label }) => (
                         <button
                           key={key}
-                          className={`rounded px-1.5 py-px transition-colors ${
+                          className={`rounded-sm px-1.5 py-px transition-colors ${
                             effectiveViewMode === key
                               ? "bg-muted text-foreground/90 font-medium"
                               : "text-muted-foreground/40 hover:text-muted-foreground/70"

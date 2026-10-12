@@ -65,7 +65,7 @@ export function SidePanelSelectLiftsButton({
               <TooltipTrigger asChild>
                 <div>
                   {isIconMode && (
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="icon" aria-label={srLabel}>
                       <Dumbbell strokeWidth={1.25} />
                     </Button>
                   )}

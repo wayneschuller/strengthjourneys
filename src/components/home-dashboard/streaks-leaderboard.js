@@ -300,7 +300,7 @@ export function StreaksLeaderboard({
           <button
             type="button"
             onClick={() => setShowAll((previous) => !previous)}
-            className="text-muted-foreground/70 hover:text-foreground focus-visible:ring-ring rounded pt-1 text-center text-[10px] transition-colors focus-visible:ring-2 focus-visible:outline-none"
+            className="text-muted-foreground/70 hover:text-foreground focus-visible:ring-ring rounded-sm pt-1 text-center text-[10px] transition-colors focus-visible:ring-2 focus-visible:outline-none"
           >
             {showAll
               ? "Show fewer"
@@ -507,7 +507,7 @@ function StreakBar({
     <RowTag
       {...rowInteractionProps}
       className={cn(
-        "flex w-full items-center gap-2 rounded text-left",
+        "flex w-full items-center gap-2 rounded-sm text-left",
         isSharing
           ? "cursor-default"
           : "focus-visible:ring-ring cursor-pointer focus-visible:ring-2 focus-visible:outline-none",
@@ -797,7 +797,7 @@ function StreakDetail({
           <Link
             key={meet.date}
             href={getMeetLogHref(meet)}
-            className="block rounded hover:underline"
+            className="block rounded-sm hover:underline"
             aria-label={`${meet.name ?? "Meet day"}, open ${meet.date} in the log`}
           >
             <MeetTooltipLine meet={meet} />

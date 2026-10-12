@@ -256,7 +256,7 @@ export function SessionExerciseBlock({
                           href={workout.URL}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded-sm p-0.5 transition-transform hover:scale-110"
                           aria-label="Video"
                         >
                           <PlayCircle className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
@@ -455,7 +455,7 @@ export function SessionExerciseBlock({
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded p-0.5 transition-transform hover:scale-110"
+                          className="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex rounded-sm p-0.5 transition-transform hover:scale-110"
                           aria-label="Video"
                         >
                           <PlayCircle className="h-4 w-4 sm:h-3 sm:w-3" />

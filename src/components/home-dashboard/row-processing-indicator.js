@@ -332,7 +332,7 @@ export function DataSheetStatus({
           onClick={() => mutate()}
           disabled={isValidating}
           title="Sync now"
-          className="text-muted-foreground hover:bg-muted hover:text-foreground rounded p-1 disabled:cursor-not-allowed disabled:opacity-50"
+          className="text-muted-foreground hover:bg-muted hover:text-foreground rounded-sm p-1 disabled:cursor-not-allowed disabled:opacity-50"
           aria-label="Sync now"
         >
           {isValidating ? (

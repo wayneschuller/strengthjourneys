@@ -422,6 +422,7 @@ export function MostRecentSessionCard({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label="Previous session"
                       onClick={prevDate}
                       disabled={isFirstDate}
                     >
@@ -438,6 +439,7 @@ export function MostRecentSessionCard({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label="Next session"
                       onClick={nextDate}
                       disabled={isLastDate}
                     >

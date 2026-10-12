@@ -165,7 +165,7 @@ export default function NotFound() {
         {requestedPath && (
           <p className="text-muted-foreground/80 max-w-full truncate text-sm">
             You asked for{" "}
-            <code className="bg-muted rounded px-1.5 py-0.5 font-mono">
+            <code className="bg-muted rounded-sm px-1.5 py-0.5 font-mono">
               {requestedPath}
             </code>
           </p>

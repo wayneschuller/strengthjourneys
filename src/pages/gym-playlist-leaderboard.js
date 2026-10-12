@@ -901,6 +901,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       <Button
         variant="outline"
         size="icon"
+        aria-label="Previous page"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
       >
@@ -919,6 +920,7 @@ const Pagination = ({ currentPage, totalPages, onPageChange }) => {
       <Button
         variant="outline"
         size="icon"
+        aria-label="Next page"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
       >

@@ -1677,7 +1677,7 @@ function AlgorithmRangeBars({
                               setOpenPopoverKey(null);
                             }}
                             className={cn(
-                              "hover:bg-muted flex items-center gap-3 rounded px-2 py-1.5 text-left text-xs transition-colors",
+                              "hover:bg-muted flex items-center gap-3 rounded-sm px-2 py-1.5 text-left text-xs transition-colors",
                               isSelected ? "font-semibold" : "",
                             )}
                           >

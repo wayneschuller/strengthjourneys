@@ -723,7 +723,7 @@ function HighlightRow({ highlight }) {
   const videoSource = url ? getVideoSourceMeta(url) : null;
 
   return (
-    <div className="even:bg-muted/40 hover:bg-muted/70 flex items-center rounded transition-colors">
+    <div className="even:bg-muted/40 hover:bg-muted/70 flex items-center rounded-sm transition-colors">
       <Link
         href={getLogHref(date)}
         className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-3 gap-y-0.5 px-2 py-1 text-sm"

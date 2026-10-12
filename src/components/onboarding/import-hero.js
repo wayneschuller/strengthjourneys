@@ -464,7 +464,7 @@ function AboutYouSentence({
               type="button"
               aria-pressed={sex === value}
               onClick={() => save({ sex: value })}
-              className={`rounded px-2.5 py-0.5 text-lg font-semibold transition-colors ${
+              className={`rounded-sm px-2.5 py-0.5 text-lg font-semibold transition-colors ${
                 sex === value
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"

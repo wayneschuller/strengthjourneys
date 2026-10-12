@@ -228,7 +228,7 @@ export function StarterLongGameState({
                   cta="today"
                   dashboardStage={dashboardStage}
                   sessionCount={sessionCount}
-                  className="focus-visible:ring-ring group flex flex-col items-center gap-2 rounded transition-colors focus-visible:ring-2 focus-visible:outline-none"
+                  className="focus-visible:ring-ring group flex flex-col items-center gap-2 rounded-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
                 >
                   <span className="sr-only">
                     {isLit ? "Add to today's session" : "Log today's session"}

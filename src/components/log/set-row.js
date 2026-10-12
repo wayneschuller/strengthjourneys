@@ -377,7 +377,7 @@ export function SetRow({
             {editingReps && !isReadOnly ? (
               <input
                 type="number"
-                className="border-primary w-10 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+                className="border-primary w-10 rounded-sm border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
                 value={draftReps}
                 onChange={(e) => setDraftReps(e.target.value)}
                 onBlur={commitReps}
@@ -404,7 +404,7 @@ export function SetRow({
               </div>
             ) : (
               <button
-                className="hover:bg-muted/60 w-full rounded py-0.5 text-right text-xl font-semibold tabular-nums"
+                className="hover:bg-muted/60 w-full rounded-sm py-0.5 text-right text-xl font-semibold tabular-nums"
                 onClick={() => {
                   cancelledEditRef.current = false;
                   setEditingReps(true);
@@ -432,7 +432,7 @@ export function SetRow({
               <input
                 type="text"
                 inputMode="decimal"
-                className="border-primary w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+                className="border-primary w-20 rounded-sm border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
                 value={draftWeight}
                 onChange={(e) => setDraftWeight(e.target.value)}
                 onBlur={commitWeight}
@@ -460,7 +460,7 @@ export function SetRow({
               </div>
             ) : (
               <button
-                className="hover:bg-muted/60 rounded py-0.5 text-left text-xl font-semibold tabular-nums"
+                className="hover:bg-muted/60 rounded-sm py-0.5 text-left text-xl font-semibold tabular-nums"
                 onClick={() => {
                   cancelledEditRef.current = false;
                   setEditingWeight(true);
@@ -621,7 +621,7 @@ export function SetRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded p-1 transition-colors disabled:cursor-not-allowed md:opacity-0 md:group-hover:opacity-100 disabled:md:opacity-35"
+                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded-sm p-1 transition-colors disabled:cursor-not-allowed md:opacity-0 md:group-hover:opacity-100 disabled:md:opacity-35"
                         onClick={onDelete}
                         disabled={isDeleteDisabled}
                         aria-label="Delete set"
@@ -693,7 +693,7 @@ export function SetRow({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <button
-                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded p-1 transition-colors disabled:cursor-not-allowed"
+                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
                         onClick={onDelete}
                         disabled={isDeleteDisabled}
                         aria-label="Delete set"

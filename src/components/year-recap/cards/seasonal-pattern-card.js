@@ -75,7 +75,7 @@ export function SeasonalPatternCard({ year, isDemo, isActive = true }) {
               title={`${m.month}: ${m.sessionCount} sessions`}
             >
               <motion.div
-                className="w-full min-w-[4px] rounded-t"
+                className="w-full min-w-[4px] rounded-t-sm"
                 style={{
                   backgroundColor: `var(--chart-${(i % 5) + 1})`,
                   height: `${Math.max(4, (m.sessionCount / maxCount) * 80)}%`,

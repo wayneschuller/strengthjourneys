@@ -400,6 +400,7 @@ export function UserSheetIcon() {
             <Button
               variant="outline"
               size="icon"
+              aria-label={`Open ${sheetInfo.filename}`}
               onClick={() => {
                 devLog(sheetInfo.url);
                 window.open(sheetInfo.url);

@@ -100,7 +100,7 @@ export function FeatureRequestCard({ id, page }) {
                   type="checkbox"
                   checked={includeEmail}
                   onChange={(event) => setIncludeEmail(event.target.checked)}
-                  className="rounded"
+                  className="rounded-sm"
                 />
                 Include my email so we can follow up
               </label>

@@ -204,7 +204,7 @@ export function DailyTrainingHeatmapTooltip({ value }) {
         <div className="flex flex-col gap-1">
           {bestPrs.map((pr, i) => (
             <div key={i} className="flex items-center gap-1.5">
-              <span className="shrink-0 rounded bg-amber-500/20 px-1 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+              <span className="shrink-0 rounded-sm bg-amber-500/20 px-1 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
                 PR
               </span>
               <LiftTypeIndicator liftType={pr.liftType} />

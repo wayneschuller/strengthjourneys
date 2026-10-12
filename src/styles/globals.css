@@ -56,6 +56,11 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  /* Larger steps scale with the theme radius, so a square theme stays square.
+     At the default 0.5rem these equal Tailwind's stock 12px, 16px and 24px. */
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 3);
   /* Container */
   --container-padding: 0.5rem;
   --container-padding-sm: 2rem;

@@ -234,7 +234,7 @@ export function StandardsSlider({
   // authenticated user data (PR/E1RM) hydrates and expands min/max bounds.
   if (isOwnData(dataSource) && isUserDataLoading) {
     return (
-      <div className="bg-muted/30 h-[7.5rem] w-full animate-pulse rounded" />
+      <div className="bg-muted/30 h-[7.5rem] w-full animate-pulse rounded-sm" />
     );
   }
 
@@ -698,7 +698,7 @@ export function StandardsSlider({
                   >
                     <TooltipTrigger asChild>
                       <span
-                        className={`absolute -bottom-6 left-1/2 -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap shadow ${
+                        className={`absolute -bottom-6 left-1/2 -translate-x-1/2 rounded-sm px-1.5 py-0.5 text-[10px] font-medium whitespace-nowrap shadow ${
                           hasDominant && dominantNotch?.isNewPR
                             ? "bg-yellow-400 text-yellow-950 group-hover:bg-yellow-300"
                             : hasDominant

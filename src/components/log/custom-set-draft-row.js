@@ -116,7 +116,7 @@ export function CustomSetDraftRow({
             type="text"
             inputMode="numeric"
             aria-label="Reps"
-            className="border-primary w-12 rounded border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+            className="border-primary w-12 rounded-sm border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
             value={draftReps}
             disabled={disabled}
             placeholder="5"
@@ -140,7 +140,7 @@ export function CustomSetDraftRow({
             inputMode="decimal"
             aria-label="Weight"
             aria-describedby={isSuspectWeight ? weightHintId : undefined}
-            className={`w-20 rounded border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none ${
+            className={`w-20 rounded-sm border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none ${
               isSuspectWeight ? "border-amber-500" : "border-primary"
             }`}
             value={draftWeight}
@@ -192,7 +192,7 @@ export function CustomSetDraftRow({
           <button
             type="button"
             disabled={disabled}
-            className="text-muted-foreground/60 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            className="text-muted-foreground/60 hover:text-foreground rounded-sm p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             onClick={onCancel}
             aria-label="Cancel custom set"
           >
@@ -201,7 +201,7 @@ export function CustomSetDraftRow({
           <button
             type="button"
             disabled={!canSubmit}
-            className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded p-1 transition-colors disabled:cursor-not-allowed"
+            className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
             onClick={commitDraft}
             aria-label="Add custom set"
           >
@@ -228,7 +228,7 @@ export function CustomSetDraftRow({
         <button
           type="button"
           disabled={disabled}
-          className="text-muted-foreground/60 hover:text-foreground rounded p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="text-muted-foreground/60 hover:text-foreground rounded-sm p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onCancel}
           aria-label="Cancel custom set"
         >
@@ -237,7 +237,7 @@ export function CustomSetDraftRow({
         <button
           type="button"
           disabled={!canSubmit}
-          className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded p-1 transition-colors disabled:cursor-not-allowed"
+          className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
           onClick={commitDraft}
           aria-label="Add custom set"
         >

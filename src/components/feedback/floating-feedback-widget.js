@@ -607,7 +607,7 @@ export function FeedbackWidget({ labels = {} }) {
                       type="checkbox"
                       checked={includeEmail}
                       onChange={(e) => setIncludeEmail(e.target.checked)}
-                      className="rounded"
+                      className="rounded-sm"
                     />
                     Include my email so you can follow up
                   </label>

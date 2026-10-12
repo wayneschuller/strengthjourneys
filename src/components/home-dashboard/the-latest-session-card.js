@@ -353,6 +353,7 @@ export function TheLatestSessionCard({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
+                    aria-label="Previous session"
                     onClick={prevDate}
                     disabled={isValidating || isFirstDate || !hasLoggedSessions}
                   >
@@ -369,6 +370,7 @@ export function TheLatestSessionCard({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
+                    aria-label="Next session"
                     onClick={nextDate}
                     disabled={isValidating || isLastDate || !hasLoggedSessions}
                   >

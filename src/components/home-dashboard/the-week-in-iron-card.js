@@ -694,6 +694,7 @@ export function TheWeekInIronCard({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label="Previous week"
                       onClick={viewPreviousWeek}
                       disabled={safeWeekOffset >= maxWeekOffset}
                     >
@@ -710,6 +711,7 @@ export function TheWeekInIronCard({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label="Next week"
                       onClick={viewNextWeek}
                       disabled={safeWeekOffset === 0}
                     >

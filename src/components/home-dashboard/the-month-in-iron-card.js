@@ -427,6 +427,7 @@ export function TheMonthInIronCard({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label="Previous month"
                       onClick={viewPreviousMonth}
                       disabled={safeMonthOffset >= maxMonthOffset}
                     >
@@ -445,6 +446,7 @@ export function TheMonthInIronCard({
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8"
+                      aria-label="Next month"
                       onClick={viewNextMonth}
                       disabled={safeMonthOffset === 0}
                     >
@@ -2527,7 +2529,7 @@ function BigFourCriteriaTable({
             }}
           >
             <div
-              className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealStrengthBg}`}
+              className={`rounded-sm px-1.5 py-0.5 text-right transition-colors duration-500 ${revealStrengthBg}`}
             >
               <TooltipProvider>
                 <Tooltip>
@@ -2617,7 +2619,7 @@ function BigFourCriteriaTable({
               />
             ) : (
               <div
-                className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}
+                className={`rounded-sm px-1.5 py-0.5 text-left transition-colors duration-500 ${revealStrengthBg}`}
               >
                 <TooltipProvider>
                   <Tooltip>
@@ -2675,7 +2677,7 @@ function BigFourCriteriaTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div
-                    className={`rounded px-1.5 py-0.5 text-right transition-colors duration-500 ${revealTonnageBg}`}
+                    className={`rounded-sm px-1.5 py-0.5 text-right transition-colors duration-500 ${revealTonnageBg}`}
                   >
                     <div
                       className={`text-xs transition-colors duration-500 ${revealTonnageColor}`}
@@ -2710,7 +2712,7 @@ function BigFourCriteriaTable({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <div
-                      className={`rounded px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}
+                      className={`rounded-sm px-1.5 py-0.5 text-left transition-colors duration-500 ${revealTonnageBg}`}
                     >
                       <div
                         className={`flex items-center gap-1 text-xs font-semibold transition-colors duration-500 ${revealTonnageColor}`}
@@ -2822,7 +2824,7 @@ function UpNextCell({ bestSet, prevMonthName }) {
   const { isMetric } = useAthleteBio();
   const display = bestSet ? getDisplayWeight(bestSet, isMetric) : null;
   return (
-    <div className="bg-muted/20 row-span-2 flex flex-col justify-center rounded px-1.5 py-1 text-left">
+    <div className="bg-muted/20 row-span-2 flex flex-col justify-center rounded-sm px-1.5 py-1 text-left">
       <p className="text-foreground text-xs font-semibold">Up next</p>
       {display && (
         <p className="text-muted-foreground text-[11px] leading-snug">

@@ -775,7 +775,7 @@ function NotchedMilestoneSlider({
                     <button
                       type="button"
                       className={cn(
-                        "focus-visible:ring-ring absolute -translate-x-1/2 rounded px-1.5 py-0.5 text-[10px] leading-none font-medium whitespace-nowrap shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2",
+                        "focus-visible:ring-ring absolute -translate-x-1/2 rounded-sm px-1.5 py-0.5 text-[10px] leading-none font-medium whitespace-nowrap shadow-sm transition-colors hover:brightness-110 focus:outline-none focus-visible:ring-2",
                         pillClass,
                       )}
                       style={{

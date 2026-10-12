@@ -281,7 +281,7 @@ function FeaturedArticleTile({ article, isLead = false }) {
               ? "(max-width: 768px) 100vw, (max-width: 1024px) 100vw, 66vw"
               : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           }
-          priority={isLead}
+          isLcp={isLead}
         />
         <div
           aria-hidden="true"
@@ -334,14 +334,19 @@ function FeaturedArticleTile({ article, isLead = false }) {
 // Fill-mode cover image cropped to its box, keeping the article's coverFocus
 // point in frame. Alt text stays descriptive so the covers keep their
 // image-search relevance.
-function ArticleCoverImage({ article, sizes, priority = false }) {
+//
+// The lead tile is the largest thing painted on /articles, so it is fetched
+// eagerly at high priority. Next 16 deprecated `priority`, which no longer
+// sets the fetch priority.
+function ArticleCoverImage({ article, sizes, isLcp = false }) {
   return (
     <Image
       src={article.cover}
       alt={article.coverAlt || `${article.title} article image`}
       fill
       sizes={sizes}
-      priority={priority}
+      loading={isLcp ? "eager" : undefined}
+      fetchPriority={isLcp ? "high" : undefined}
       className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
       style={
         article.coverFocus ? { objectPosition: article.coverFocus } : undefined

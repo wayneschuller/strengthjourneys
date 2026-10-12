@@ -112,9 +112,12 @@ export default function App({ Component, pageProps, session }) {
         </ThemeProvider>
       </MotionConfig>
       <Analytics />
+      {/* The Google tag is the heaviest script on a signed-out page, so it
+          loads once the browser is idle. The small snippet below still runs
+          early and queues the first page view and any events until then. */}
       <Script
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-        strategy="afterInteractive"
+        strategy="lazyOnload"
       />
       <Script id="google-analytics" strategy="afterInteractive">
         {`

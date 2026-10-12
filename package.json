@@ -84,7 +84,7 @@
     "obscenity": "^0.4.3",
     "react": "^19.3.0",
     "react-calendar-heatmap": "^1.10.0",
-    "react-color": "^2.19.3",
+    "react-colorful": "^5.8.1",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.3.0",
     "recharts": "^3.9.2",

@@ -1,21 +1,14 @@
-import { createContext, useContext, useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import { createContext, useContext, useId, useState, useEffect } from "react";
+import { HexColorPicker } from "react-colorful";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog } from "@/lib/processing-utils";
-
-// This file's provider wraps every page, and the picker library is large, so
-// the slider is fetched when a lifter first opens the colour popover. The
-// placeholder holds the slider's height so the popover does not jump.
-const SliderPicker = dynamic(
-  () => import("react-color").then((module) => module.SliderPicker),
-  { ssr: false, loading: () => <div className="h-[54px]" /> },
-);
 
 // Default lift colors
 // Color palette inspired from:
@@ -183,20 +176,8 @@ export const useLiftColors = () => {
 
 // Color picker component
 export function LiftColorPicker({ liftType }) {
-  // const { color, setColor, resetColor, isLightColor } = useLiftColors();
   const { getColor, setColor, resetColor } = useLiftColors();
   const color = getColor(liftType);
-
-  const handleColorChange = (newColor) => {
-    // Validate the color before setting it
-    if (isValidHexColor(newColor.hex)) {
-      setColor(liftType, newColor.hex);
-    } else {
-      devLog(
-        `Invalid color selected for ${liftType}: "${newColor.hex}". Not updating color.`,
-      );
-    }
-  };
 
   return (
     <Popover>
@@ -212,20 +193,65 @@ export function LiftColorPicker({ liftType }) {
           Change {liftType} Color
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[380px]">
-        <div className="flex flex-col gap-4">
-          <SliderPicker color={color} onChangeComplete={handleColorChange} />
-          <Button
-            variant="outline"
-            onClick={() => {
-              resetColor(liftType);
-            }}
-          >
-            Reset to Default
-          </Button>
-        </div>
+      <PopoverContent className="w-64">
+        <LiftColorFields
+          color={color}
+          onPick={(hex) => setColor(liftType, hex)}
+          onReset={() => resetColor(liftType)}
+        />
       </PopoverContent>
     </Popover>
+  );
+}
+
+// The picker and the hex field edit the same color, applied as it changes so
+// the charts behind the popover show each pick straight away.
+function LiftColorFields({ color, onPick, onReset }) {
+  const hexId = useId();
+  // What is typed is kept apart from the color, so a half-typed code can sit
+  // in the field without being applied or overwritten.
+  const [hexText, setHexText] = useState(color);
+  const [shownColor, setShownColor] = useState(color);
+  if (color !== shownColor) {
+    setShownColor(color);
+    setHexText(color);
+  }
+
+  const handleHexChange = (event) => {
+    const typed = event.target.value.trim();
+    setHexText(typed);
+    const hex = typed.startsWith("#") ? typed : `#${typed}`;
+    // Only a full six-digit code is applied; "#abc" is usually someone on the
+    // way to typing "#abcdef".
+    if (hex.length === 7 && isValidHexColor(hex)) onPick(hex);
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <HexColorPicker
+        color={color}
+        onChange={onPick}
+        style={{ width: "100%" }}
+      />
+      <div className="flex items-center gap-2">
+        <Label htmlFor={hexId}>Hex</Label>
+        <Input
+          id={hexId}
+          value={hexText}
+          onChange={handleHexChange}
+          // Leaving the field with something unfinished puts the color back.
+          onBlur={() => setHexText(color)}
+          maxLength={7}
+          spellCheck={false}
+          autoCapitalize="off"
+          autoComplete="off"
+          className="font-mono"
+        />
+      </div>
+      <Button variant="outline" onClick={onReset}>
+        Reset to Default
+      </Button>
+    </div>
   );
 }
 

@@ -31,6 +31,7 @@
       "note": "Mobility caps this well below the back squat for most people starting out."
     }
   },
+  "relatedLifts": ["Power Snatch", "Front Squat", "Back Squat"],
   "guide": {
     "seoTitle": "Overhead Squat Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Overhead Squat Guide & Progress Tracker",

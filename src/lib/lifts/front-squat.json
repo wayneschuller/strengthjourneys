@@ -29,6 +29,7 @@
       "ratio": 0.85
     }
   },
+  "relatedLifts": ["Back Squat", "Overhead Squat", "Power Clean"],
   "guide": {
     "seoTitle": "Front Squat Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Front Squat Guide & Progress Tracker",

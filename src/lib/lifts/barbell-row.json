@@ -26,6 +26,12 @@
       "ratio": 0.8
     }
   },
+  "relatedLifts": [
+    "Deadlift",
+    "Romanian Deadlift",
+    "Barbell Curl",
+    "Bench Press"
+  ],
   "guide": {
     "seoTitle": "Barbell Row Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Barbell Row Guide & Progress Tracker",

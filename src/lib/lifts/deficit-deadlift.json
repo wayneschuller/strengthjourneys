@@ -24,5 +24,6 @@
       "liftType": "Deadlift",
       "ratio": 0.85
     }
-  }
+  },
+  "relatedLifts": ["Deadlift", "Romanian Deadlift", "Rack Pull"]
 }

@@ -16,6 +16,7 @@
  */
 
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
@@ -39,6 +40,7 @@ import {
   CURATED_LIFTS,
   SITE_URL,
   getCuratedLiftBySlug,
+  getRelatedGuideLifts,
   getStrengthLevelsPath,
   isLiftGuideIndexable,
   slugifyLiftType,
@@ -102,7 +104,9 @@ export async function getStaticProps({ params }) {
     ) {
       return { notFound: true };
     }
-    return { props: { lift: null, slug, relatedArticles: [] } };
+    return {
+      props: { lift: null, slug, relatedArticles: [], relatedLifts: [] },
+    };
   }
 
   // Articles are tagged with the Big Four only, so a variant or accessory lift
@@ -118,8 +122,17 @@ export async function getStaticProps({ params }) {
       .map((liftType) => getRelatedArticles(liftType))
       .find((articles) => articles.length > 0) ?? [];
 
+  // Only what a tile shows, so a guide does not carry its neighbours' whole
+  // registry entries in its page data.
+  const relatedLifts = getRelatedGuideLifts(lift).map((related) => ({
+    liftType: related.liftType,
+    slug: related.slug,
+    tagline: related.tagline ?? null,
+    artSrc: related.artwork?.src ?? null,
+  }));
+
   return {
-    props: { lift, slug: lift.slug, relatedArticles },
+    props: { lift, slug: lift.slug, relatedArticles, relatedLifts },
   };
 }
 
@@ -128,17 +141,29 @@ export async function getStaticProps({ params }) {
  * @param {Object|null} props.lift - The registry entry, or null for an uncurated lift.
  * @param {string} props.slug - The URL slug.
  * @param {Array} props.relatedArticles - Articles tagged with this lift.
+ * @param {Array} props.relatedLifts - Tile data for the guides this one links to.
  */
-export default function LiftProgressGuide({ lift, slug, relatedArticles }) {
+export default function LiftProgressGuide({
+  lift,
+  slug,
+  relatedArticles,
+  relatedLifts,
+}) {
   if (!lift) return <UncuratedLiftGuide slug={slug} />;
-  return <CuratedLiftGuide lift={lift} relatedArticles={relatedArticles} />;
+  return (
+    <CuratedLiftGuide
+      lift={lift}
+      relatedArticles={relatedArticles}
+      relatedLifts={relatedLifts}
+    />
+  );
 }
 
 /**
  * SEO wrapper for a registry lift. Keep the main component separate: if it
  * breaks server rendering, the static metadata tags still ship.
  */
-function CuratedLiftGuide({ lift, relatedArticles }) {
+function CuratedLiftGuide({ lift, relatedArticles, relatedLifts }) {
   const page = readGuideLift(lift);
   const { liftType, coaching, faqItems } = page;
   const canonicalURL = `${SITE_URL}/progress-guide/${page.slug}`;
@@ -224,7 +249,11 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
           page.keywords ? [{ name: "keywords", content: page.keywords }] : []
         }
       />
-      <CuratedLiftGuideMain page={page} relatedArticles={relatedArticles} />
+      <CuratedLiftGuideMain
+        page={page}
+        relatedArticles={relatedArticles}
+        relatedLifts={relatedLifts ?? []}
+      />
     </>
   );
 }
@@ -234,7 +263,7 @@ function CuratedLiftGuide({ lift, relatedArticles }) {
  * same blocks so they cannot drift apart, and every block scroll-reveals so a
  * long page reads as chapters rather than one flat column of cards.
  */
-function CuratedLiftGuideMain({ page, relatedArticles }) {
+function CuratedLiftGuideMain({ page, relatedArticles, relatedLifts }) {
   const { dataSource, liftTypes } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const {
@@ -286,6 +315,10 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
     videos.length > 0 && { href: "#video-guides", label: "Videos" },
     showAnalysis && { href: "#lift-prs", label: "Rep PRs" },
     faqItems.length > 0 && { href: "#lift-faq", label: "FAQ" },
+    relatedLifts.length > 0 && {
+      href: "#related-lifts",
+      label: "Related Lifts",
+    },
     relatedArticles?.length > 0 && {
       href: "#related-articles",
       label: "Related Articles",
@@ -451,6 +484,12 @@ function CuratedLiftGuideMain({ page, relatedArticles }) {
               </div>
             </SectionReveal>
           </>
+        )}
+
+        {relatedLifts.length > 0 && (
+          <SectionReveal as="section" id="related-lifts">
+            <RelatedLiftsCard liftType={liftType} relatedLifts={relatedLifts} />
+          </SectionReveal>
         )}
       </div>
       <SectionReveal as="section" id="related-articles" className="mt-6">
@@ -670,6 +709,71 @@ function TechniqueCard({ liftType, coaching }) {
           </ol>
         </CardContent>
       )}
+    </Card>
+  );
+}
+
+/**
+ * Links across to the guides of the lifts that train alongside this one.
+ *
+ * GSC review 2026-10-12: nine of the secondary guides had been discovered but
+ * never crawled, and the Lift Explorer grid was the only page linking to each.
+ * These tiles give every guide links in from its neighbours. They are plain
+ * server-rendered links, so a crawler follows them without running the page.
+ */
+function RelatedLiftsCard({ liftType, relatedLifts }) {
+  const { getColor } = useLiftColors();
+
+  return (
+    <Card>
+      <CardHeader>
+        <h2 className="text-2xl leading-none font-semibold tracking-tight">
+          Lifts that go with the {liftType}
+        </h2>
+      </CardHeader>
+      <CardContent>
+        <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {relatedLifts.map((related) => (
+            <li key={related.slug}>
+              <Link
+                href={`/progress-guide/${related.slug}`}
+                prefetch={false}
+                className="group bg-card hover:bg-accent/30 focus-visible:ring-ring relative flex h-full flex-col overflow-hidden rounded-xl border shadow-sm transition-colors outline-none focus-visible:ring-2"
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-x-0 top-0 h-1"
+                  style={{ backgroundColor: getColor(related.liftType) }}
+                />
+                {related.artSrc && (
+                  <div className="flex items-end justify-center px-3 pt-4 pb-1">
+                    <Image
+                      src={related.artSrc}
+                      alt={`${related.liftType} diagram`}
+                      width={1000}
+                      height={600}
+                      // Lift artwork is always served straight from public/;
+                      // see the rendering note in components/lift-artwork.js.
+                      unoptimized
+                      className="h-16 w-auto max-w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:h-20"
+                    />
+                  </div>
+                )}
+                <div className="flex flex-1 flex-col gap-0.5 border-t px-3 py-2">
+                  <span className="text-sm leading-tight font-medium group-hover:underline">
+                    {related.liftType} guide
+                  </span>
+                  {related.tagline && (
+                    <span className="text-muted-foreground text-xs">
+                      {related.tagline}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
     </Card>
   );
 }

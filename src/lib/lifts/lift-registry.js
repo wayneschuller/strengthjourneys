@@ -44,6 +44,11 @@
  *                   standardsRef { liftType, ratio, note? } is a rough ratio
  *                   to a big four lift for first-time target weights on the
  *                   log. Not a published standard.
+ *   relatedLifts    Lift names a lifter training this one would also want
+ *                   to read about, closest first, three or four of them. The
+ *                   guide links each one that has a guide of its own, so
+ *                   every guide has links in from its neighbours and not only
+ *                   from the Lift Explorer.
  *
  *  Page blocks: each page reads only its own block. Both start with the same
  *  four page fields: seoTitle (<title>), pageTitle (H1), description (meta),
@@ -240,6 +245,24 @@ export function getLiftLogVideo(liftType) {
  */
 export function isLiftGuideIndexable(lift) {
   return Boolean(lift?.guide);
+}
+
+/**
+ * The lifts a guide links across to: the lift's relatedLifts that have an
+ * indexable guide, in the order written. A name that is misspelt, repeated,
+ * the lift itself or not written up yet is skipped, so a lift can be listed
+ * before its guide exists and starts showing the day the guide is written.
+ * @param {Object} lift - A registry entry.
+ * @returns {Array<Object>} Registry entries.
+ */
+export function getRelatedGuideLifts(lift) {
+  const names = Array.isArray(lift?.relatedLifts) ? lift.relatedLifts : [];
+  const related = new Set();
+  for (const name of names) {
+    const other = getCuratedLift(name);
+    if (other && other !== getCuratedLift(lift.liftType)) related.add(other);
+  }
+  return [...related].filter(isLiftGuideIndexable);
 }
 
 /**

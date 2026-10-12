@@ -35,5 +35,6 @@
       "ratio": 1.2,
       "note": "Leg drive lets most lifters push press about a fifth more than they press."
     }
-  }
+  },
+  "relatedLifts": ["Strict Press", "Power Clean", "Power Snatch"]
 }

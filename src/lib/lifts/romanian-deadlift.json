@@ -35,6 +35,7 @@
       "ratio": 0.7
     }
   },
+  "relatedLifts": ["Deadlift", "Rack Pull", "Hip Thrust", "Barbell Row"],
   "guide": {
     "seoTitle": "Romanian Deadlift Guide: RDL Technique, Video & Progress Tracking",
     "pageTitle": "Romanian Deadlift Guide & Progress Tracker",

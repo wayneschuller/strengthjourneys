@@ -30,6 +30,7 @@
       "ratio": 0.85
     }
   },
+  "relatedLifts": ["Power Clean", "Overhead Squat", "Deadlift"],
   "guide": {
     "seoTitle": "Power Snatch Guide: Technique, Video & Progress Tracking",
     "pageTitle": "Power Snatch Guide & Progress Tracker",

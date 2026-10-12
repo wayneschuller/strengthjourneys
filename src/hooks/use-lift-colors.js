@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { SliderPicker } from "react-color";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -8,6 +8,14 @@ import {
 } from "@/components/ui/popover";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
+
+// This file's provider wraps every page, and the picker library is large, so
+// the slider is fetched when a lifter first opens the colour popover. The
+// placeholder holds the slider's height so the popover does not jump.
+const SliderPicker = dynamic(
+  () => import("react-color").then((module) => module.SliderPicker),
+  { ssr: false, loading: () => <div className="h-[54px]" /> },
+);
 
 // Default lift colors
 // Color palette inspired from:

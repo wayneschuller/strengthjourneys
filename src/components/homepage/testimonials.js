@@ -77,12 +77,14 @@ function TestimonialCard({ testimony }) {
   );
 }
 
+// Real comments from lifters, lightly paraphrased, first names only.
 const testimonialData = [
   {
-    name: "Hong",
-    description: "31, lifter.",
-    comment: "I finally crushed my PRs with accurate insights!",
-    icon: ThumbsUp,
+    name: "Emily",
+    description: "Lifter chasing plate milestones.",
+    comment:
+      "I thought I'd accidentally signed up for a free trial of something. The analytics and visualizations are so much better than what you get with Hevy and Strong, even as a paid user.",
+    icon: Trophy,
   },
   {
     name: "Manny",
@@ -92,10 +94,11 @@ const testimonialData = [
     icon: Award,
   },
   {
-    name: "Alex P",
-    description: "21, guy on Telegram.",
-    comment: "This is sick. I love simple clean stuff like this.",
-    icon: Star,
+    name: "Paul",
+    description: "Big four lifter.",
+    comment:
+      "Great job on the website. I like the calculators, they're good for setting targets.",
+    icon: CheckCircle,
   },
   {
     name: "Stacey",
@@ -105,10 +108,11 @@ const testimonialData = [
     avatarUrl: "/avatars/avatar_stacey.jpg",
   },
   {
-    name: "Brian",
-    description: "40, lifter.",
-    comment: "The instant visualizer is incredibly motivating.",
-    icon: ThumbsUp,
+    name: "Jason",
+    description: "Lifter and runner.",
+    comment:
+      "I'm enjoying the app, and I've noticed all the work going into it. It's great!",
+    icon: Smile,
   },
   {
     name: "Mac",
@@ -118,15 +122,42 @@ const testimonialData = [
     icon: Heart,
   },
   {
-    name: "John",
-    description: "37, ex-runner.",
-    comment: "I've never seen my strength progress so clearly.",
-    icon: Gift,
+    name: "Chris",
+    description: "54, returning lifter.",
+    comment:
+      "An amazing resource for any level of lifter. The site has a very professional, well-organized look that inspires confidence. I look forward to logging my lifts here for a long time.",
+    icon: Star,
+  },
+  {
+    name: "Alex P",
+    description: "21, guy on Telegram.",
+    comment: "This is sick. I love simple clean stuff like this.",
+    icon: Star,
+  },
+  {
+    name: "Hadi",
+    description: "Lifter, introduced by a coach.",
+    comment:
+      "I really liked this site from the start. My coach showed it to us to track our progress and see our milestones. I especially like the 1,000 lb total.",
+    icon: Sun,
   },
   {
     name: "Jerry S.",
     description: "32, powerlifter.",
     comment: "I trust putting my data into Google Sheets over other apps.",
     avatarUrl: "/avatars/avatar_jerry.jpg",
+  },
+  {
+    name: "Michael",
+    description: "CrossFit athlete.",
+    comment:
+      "Our CrossFit gym switched apps and I wanted a way to clearly see my history. This is pretty good at that.",
+    icon: MessageCircle,
+  },
+  {
+    name: "Poet",
+    description: "Lifter.",
+    comment: "I like that your service is free to use.",
+    icon: Gift,
   },
 ];

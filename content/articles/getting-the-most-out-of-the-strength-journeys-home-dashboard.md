@@ -2,7 +2,7 @@
 title: "Getting the Most out of the Strength Journeys Home Dashboard"
 description: "The Strength Journeys Home Dashboard turns your linked Google Sheet into weekly, monthly, and long-term training feedback. Available to signed-in users."
 publishedAt: "2026-06-11T21:35:00.000Z"
-updatedAt: "2026-06-11T22:13:14.000Z"
+updatedAt: "2026-10-12T10:31:22.000Z"
 categories:
   - "Home Dashboard"
   - "Personal Record Analyzer"
@@ -28,17 +28,20 @@ At the top of the dashboard, Strength Journeys shows whether your Google Sheet i
 
 If you trained somewhere else first, use [Import Data](https://www.strengthjourneys.xyz/import) to bring in exports from apps or spreadsheets and merge that history into one timeline.
 
-## The quick read: five small signals
+## The story of the day
 
-For established users, the row of compact cards gives you a fast read before you scroll into deeper tools.
+Next to your greeting, the dashboard tells you one thing about your own lifting. It is a single line, and it arrives a few seconds after the three main cards so they get your attention first.
 
-- Journey Length shows how long your log has been running, plus total reps and sets.
-- Classic Lift pulls out a memorable Big Four lift from your history, with bodyweight and [strength-standard](https://www.strengthjourneys.xyz/strength-levels) context when your athlete bio is set.
-- Session Momentum compares your last 90 days with the previous 90-day block.
-- [Lifetime Tonnage](https://www.strengthjourneys.xyz/tonnage) totals how much weight you have moved and the average tonnage per session.
-- Weekly Consistency shows your current streak, your best streak, and whether this week is still alive.
+Every visit brings the next story in the rotation, so coming back to the dashboard is worth it. The story might be:
 
-[![Strength Journeys Home Dashboard quick-read cards for journey length, classic lift, session momentum, lifetime tonnage, and weekly consistency.](/articles/getting-the-most-out-of-the-strength-journeys-home-dashboard/image-1.webp "The quick-read cards give signed-in users a compact summary of their lifting history before they scroll into deeper dashboard views.")](https://www.strengthjourneys.xyz/)
+- A classic lift from your history, with a link to that day in your log and a play button when the set has a video.
+- An anniversary: a PR you set on this day, a meet you lifted in, or the birthday of your log.
+- A recent PR, your PR count for the year, or a milestone that is within reach.
+- How long your journey has been running, with total reps and sets.
+- Your session momentum over the last 90 days.
+- Your [lifetime tonnage](https://www.strengthjourneys.xyz/tonnage) and your best sets of the year so far.
+
+Each one opens with a short label such as "Remember this?" or "On this day" so you know why it is showing. The story starts appearing once you have about twenty sessions logged, and the longer your log, the more memories it has to draw on.
 
 ## The Week in Iron
 

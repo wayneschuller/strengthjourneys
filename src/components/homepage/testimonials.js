@@ -33,23 +33,20 @@ export function Testimonials({}) {
 
 // Internal card that leads with the quoted comment, then the avatar, name, and description.
 function TestimonialCard({ testimony }) {
-  // Cards size to their quote, so short ones read as small punchy tiles between the wide ones.
-  const isShort = testimony.comment.length < 70;
+  const tier = getQuoteTier(testimony.comment);
 
   return (
-    <figure className="bg-card text-card-foreground hover:border-primary/40 flex w-max max-w-72 min-w-52 flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors sm:max-w-[26rem]">
+    <figure
+      className={cn(
+        "bg-card text-card-foreground hover:border-primary/40 flex w-max min-w-52 flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors",
+        tier.card,
+      )}
+    >
       <Quote
         className="text-primary/30 size-6 shrink-0 fill-current"
         aria-hidden="true"
       />
-      <blockquote
-        className={cn(
-          "text-pretty",
-          isShort
-            ? "text-xl leading-snug font-medium"
-            : "text-base leading-relaxed",
-        )}
-      >
+      <blockquote className={cn("text-pretty", tier.quote)}>
         {testimony.comment}
       </blockquote>
       <figcaption className="mt-auto flex items-center gap-3 border-t pt-4">
@@ -68,6 +65,40 @@ function TestimonialCard({ testimony }) {
       </figcaption>
     </figure>
   );
+}
+
+// The shorter the quote, the louder the type and the squarer the tile, so the
+// rows mix headline-sized one-liners with quieter long reads.
+const QUOTE_TIERS = [
+  {
+    maxLength: 20,
+    quote: "text-4xl leading-none font-bold tracking-tight sm:text-5xl",
+    card: "max-w-64",
+  },
+  {
+    maxLength: 60,
+    quote: "text-2xl leading-tight font-semibold tracking-tight sm:text-3xl",
+    card: "max-w-72 sm:max-w-80",
+  },
+  {
+    maxLength: 90,
+    quote: "text-xl leading-snug font-medium",
+    card: "max-w-72 sm:max-w-80",
+  },
+  {
+    maxLength: 120,
+    quote: "text-lg leading-snug",
+    card: "max-w-72 sm:max-w-96",
+  },
+  {
+    maxLength: Infinity,
+    quote: "text-sm leading-relaxed sm:text-base",
+    card: "max-w-72 sm:max-w-[26rem]",
+  },
+];
+
+function getQuoteTier(comment) {
+  return QUOTE_TIERS.find((tier) => comment.length <= tier.maxLength);
 }
 
 // Real comments from lifters, lightly paraphrased, first names only.

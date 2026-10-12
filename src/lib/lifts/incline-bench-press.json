@@ -25,6 +25,5 @@
       "liftType": "Bench Press",
       "ratio": 0.8
     }
-  },
-  "relatedLifts": ["Bench Press", "Strict Press", "Close Grip Bench Press"]
+  }
 }

@@ -40,7 +40,7 @@ import {
   CURATED_LIFTS,
   SITE_URL,
   getCuratedLiftBySlug,
-  getRelatedGuideLifts,
+  getLiftVariationGuides,
   getStrengthLevelsPath,
   isLiftGuideIndexable,
   slugifyLiftType,
@@ -105,7 +105,7 @@ export async function getStaticProps({ params }) {
       return { notFound: true };
     }
     return {
-      props: { lift: null, slug, relatedArticles: [], relatedLifts: [] },
+      props: { lift: null, slug, relatedArticles: [], variations: null },
     };
   }
 
@@ -124,15 +124,19 @@ export async function getStaticProps({ params }) {
 
   // Only what a tile shows, so a guide does not carry its neighbours' whole
   // registry entries in its page data.
-  const relatedLifts = getRelatedGuideLifts(lift).map((related) => ({
-    liftType: related.liftType,
-    slug: related.slug,
-    tagline: related.tagline ?? null,
-    artSrc: related.artwork?.src ?? null,
-  }));
+  const family = getLiftVariationGuides(lift);
+  const variations = family && {
+    parentLiftType: family.parent.liftType,
+    lifts: family.lifts.map((related) => ({
+      liftType: related.liftType,
+      slug: related.slug,
+      tagline: related.tagline ?? null,
+      artSrc: related.artwork?.src ?? null,
+    })),
+  };
 
   return {
-    props: { lift, slug: lift.slug, relatedArticles, relatedLifts },
+    props: { lift, slug: lift.slug, relatedArticles, variations },
   };
 }
 
@@ -141,20 +145,20 @@ export async function getStaticProps({ params }) {
  * @param {Object|null} props.lift - The registry entry, or null for an uncurated lift.
  * @param {string} props.slug - The URL slug.
  * @param {Array} props.relatedArticles - Articles tagged with this lift.
- * @param {Array} props.relatedLifts - Tile data for the guides this one links to.
+ * @param {Object|null} props.variations - The lift's family: its parent's name and tile data for each guide.
  */
 export default function LiftProgressGuide({
   lift,
   slug,
   relatedArticles,
-  relatedLifts,
+  variations,
 }) {
   if (!lift) return <UncuratedLiftGuide slug={slug} />;
   return (
     <CuratedLiftGuide
       lift={lift}
       relatedArticles={relatedArticles}
-      relatedLifts={relatedLifts}
+      variations={variations}
     />
   );
 }
@@ -163,7 +167,7 @@ export default function LiftProgressGuide({
  * SEO wrapper for a registry lift. Keep the main component separate: if it
  * breaks server rendering, the static metadata tags still ship.
  */
-function CuratedLiftGuide({ lift, relatedArticles, relatedLifts }) {
+function CuratedLiftGuide({ lift, relatedArticles, variations }) {
   const page = readGuideLift(lift);
   const { liftType, coaching, faqItems } = page;
   const canonicalURL = `${SITE_URL}/progress-guide/${page.slug}`;
@@ -252,7 +256,7 @@ function CuratedLiftGuide({ lift, relatedArticles, relatedLifts }) {
       <CuratedLiftGuideMain
         page={page}
         relatedArticles={relatedArticles}
-        relatedLifts={relatedLifts ?? []}
+        variations={variations}
       />
     </>
   );
@@ -263,7 +267,7 @@ function CuratedLiftGuide({ lift, relatedArticles, relatedLifts }) {
  * same blocks so they cannot drift apart, and every block scroll-reveals so a
  * long page reads as chapters rather than one flat column of cards.
  */
-function CuratedLiftGuideMain({ page, relatedArticles, relatedLifts }) {
+function CuratedLiftGuideMain({ page, relatedArticles, variations }) {
   const { dataSource, liftTypes } = useUserLiftingData();
   const { getColor } = useLiftColors();
   const {
@@ -315,10 +319,7 @@ function CuratedLiftGuideMain({ page, relatedArticles, relatedLifts }) {
     videos.length > 0 && { href: "#video-guides", label: "Videos" },
     showAnalysis && { href: "#lift-prs", label: "Rep PRs" },
     faqItems.length > 0 && { href: "#lift-faq", label: "FAQ" },
-    relatedLifts.length > 0 && {
-      href: "#related-lifts",
-      label: "Related Lifts",
-    },
+    variations && { href: "#variations", label: "Variations" },
     relatedArticles?.length > 0 && {
       href: "#related-articles",
       label: "Related Articles",
@@ -486,9 +487,9 @@ function CuratedLiftGuideMain({ page, relatedArticles, relatedLifts }) {
           </>
         )}
 
-        {relatedLifts.length > 0 && (
-          <SectionReveal as="section" id="related-lifts">
-            <RelatedLiftsCard liftType={liftType} relatedLifts={relatedLifts} />
+        {variations && (
+          <SectionReveal as="section" id="variations">
+            <VariationsCard liftType={liftType} variations={variations} />
           </SectionReveal>
         )}
       </div>
@@ -714,26 +715,29 @@ function TechniqueCard({ liftType, coaching }) {
 }
 
 /**
- * Links across to the guides of the lifts that train alongside this one.
+ * Links between a big four lift's guide and the guides of its variations.
  *
  * GSC review 2026-10-12: nine of the secondary guides had been discovered but
  * never crawled, and the Lift Explorer grid was the only page linking to each.
- * These tiles give every guide links in from its neighbours. They are plain
- * server-rendered links, so a crawler follows them without running the page.
+ * These tiles link a lift's family together. They are plain server-rendered
+ * links, so a crawler follows them without running the page.
  */
-function RelatedLiftsCard({ liftType, relatedLifts }) {
+function VariationsCard({ liftType, variations }) {
   const { getColor } = useLiftColors();
+  const { parentLiftType, lifts } = variations;
 
   return (
     <Card>
       <CardHeader>
         <h2 className="text-2xl leading-none font-semibold tracking-tight">
-          Lifts that go with the {liftType}
+          {parentLiftType === liftType
+            ? `${liftType} variations`
+            : `The ${parentLiftType} and its variations`}
         </h2>
       </CardHeader>
       <CardContent>
         <ul className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {relatedLifts.map((related) => (
+          {lifts.map((related) => (
             <li key={related.slug}>
               <Link
                 href={`/progress-guide/${related.slug}`}

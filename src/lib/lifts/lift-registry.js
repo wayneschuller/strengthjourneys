@@ -27,6 +27,8 @@
  *                   the share of its tonnage that counts: 1 for a full lift,
  *                   less when the variation moves more weight for less work
  *                   (a rack pull is 0.5). Unrelated to standardsRef.
+ *                   It also makes the lift one of the parent's variations,
+ *                   which the guides link between.
  *
  *  Short copy
  *   tagline               One line under the name on hubs and dashboard cards.
@@ -44,11 +46,6 @@
  *                   standardsRef { liftType, ratio, note? } is a rough ratio
  *                   to a big four lift for first-time target weights on the
  *                   log. Not a published standard.
- *   relatedLifts    Lift names a lifter training this one would also want
- *                   to read about, closest first, three or four of them. The
- *                   guide links each one that has a guide of its own, so
- *                   every guide has links in from its neighbours and not only
- *                   from the Lift Explorer.
  *
  *  Page blocks: each page reads only its own block. Both start with the same
  *  four page fields: seoTitle (<title>), pageTitle (H1), description (meta),
@@ -248,21 +245,25 @@ export function isLiftGuideIndexable(lift) {
 }
 
 /**
- * The lifts a guide links across to: the lift's relatedLifts that have an
- * indexable guide, in the order written. A name that is misspelt, repeated,
- * the lift itself or not written up yet is skipped, so a lift can be listed
- * before its guide exists and starts showing the day the guide is written.
+ * A lift's family for its guide's variations tiles: the big four lift at the
+ * head of it, and every other member that has an indexable guide. The family
+ * is the parent plus everything naming it as parentLift, so a variation links
+ * to its parent and its siblings, and the parent to all of them. A variation
+ * joins the day its guide is written. Null when there is nobody to link to.
  * @param {Object} lift - A registry entry.
- * @returns {Array<Object>} Registry entries.
+ * @returns {{parent: Object, lifts: Array<Object>}|null} Registry entries.
  */
-export function getRelatedGuideLifts(lift) {
-  const names = Array.isArray(lift?.relatedLifts) ? lift.relatedLifts : [];
-  const related = new Set();
-  for (const name of names) {
-    const other = getCuratedLift(name);
-    if (other && other !== getCuratedLift(lift.liftType)) related.add(other);
-  }
-  return [...related].filter(isLiftGuideIndexable);
+export function getLiftVariationGuides(lift) {
+  const self = getCuratedLift(lift?.liftType);
+  if (!self) return null;
+  const parent = getCuratedLift(readParentLift(self)?.liftType) ?? self;
+  const lifts = [
+    parent,
+    ...CURATED_LIFTS.filter(
+      (other) => readParentLift(other)?.liftType === parent.liftType,
+    ),
+  ].filter((other) => other !== self && isLiftGuideIndexable(other));
+  return lifts.length > 0 ? { parent, lifts } : null;
 }
 
 /**

@@ -24,6 +24,5 @@
       "liftType": "Back Squat",
       "ratio": 0.85
     }
-  },
-  "relatedLifts": ["Back Squat", "Front Squat", "Hip Thrust"]
+  }
 }

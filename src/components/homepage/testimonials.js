@@ -1,20 +1,6 @@
-import { cn } from "@/lib/utils";
-import { devLog } from "@/lib/processing-utils";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
-import {
-  ThumbsUp,
-  Star,
-  Heart,
-  Smile,
-  CheckCircle,
-  Trophy,
-  Gift,
-  Sun,
-  MessageCircle,
-  Award,
-} from "lucide-react";
+import { Quote } from "lucide-react";
 
 /**
  * Dual-row marquee carousel displaying user testimonial cards.
@@ -25,54 +11,50 @@ export function Testimonials({}) {
   const secondRow = testimonialData.slice(testimonialData.length / 2);
 
   return (
-    <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
-      {/* <div className="grid auto-cols-fr grid-flow-col grid-rows-2 gap-4"> */}
-      <Marquee pauseOnHover className="[--duration:20s]">
-        {firstRow.map((testimony, index) => (
-          <TestimonialCard key={index} testimony={testimony} />
-        ))}
-      </Marquee>
-      <Marquee reverse pauseOnHover className="[--duration:20s]">
-        {secondRow.map((testimony, index) => (
-          <TestimonialCard key={index} testimony={testimony} />
-        ))}
-      </Marquee>
-      <div className="from-card pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r" />
-      <div className="from-card pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l" />
-      {/* <div>Please tell us what you think.</div> */}
-    </div>
+    <section className="mt-10">
+      <h2 className="text-xl font-semibold">💬 What Lifters Say</h2>
+      {/* The mask fades both edges without needing to know the page background. */}
+      <div className="relative mt-4 flex w-full flex-col overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_6%,black_94%,transparent)]">
+        <Marquee pauseOnHover repeat={3} className="[--duration:70s]">
+          {firstRow.map((testimony) => (
+            <TestimonialCard key={testimony.name} testimony={testimony} />
+          ))}
+        </Marquee>
+        <Marquee reverse pauseOnHover repeat={3} className="[--duration:80s]">
+          {secondRow.map((testimony) => (
+            <TestimonialCard key={testimony.name} testimony={testimony} />
+          ))}
+        </Marquee>
+      </div>
+    </section>
   );
 }
 
-// Internal card that displays a single testimonial with avatar, name, description, and quoted comment.
+// Internal card that leads with the quoted comment, then the avatar, name, and description.
 function TestimonialCard({ testimony }) {
-  // devLog(testimony);
   return (
-    <figure
-      className={cn(
-        "max-w-[25rem] justify-center rounded-2xl border-2 p-4 align-middle",
-      )}
-    >
-      <div className="flex flex-row gap-2">
-        <div className="flex flex-col items-center justify-start">
-          <Avatar>
-            <AvatarImage src={testimony.avatarUrl} alt={`${testimony.name}`} />
-            {testimony.icon && (
-              <AvatarFallback className="text-secondary-foreground">
-                {<testimony.icon />}
-              </AvatarFallback>
-            )}
-            {/* <AvatarFallback></AvatarFallback> */}
-          </Avatar>
-        </div>
-        <div className="flex-1">
-          <figcaption className="text-lg">{testimony.name}</figcaption>
+    <figure className="bg-card text-card-foreground hover:border-primary/40 flex w-72 flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors sm:w-96">
+      <Quote
+        className="text-primary/30 size-6 shrink-0 fill-current"
+        aria-hidden="true"
+      />
+      <blockquote className="text-base leading-relaxed text-pretty">
+        {testimony.comment}
+      </blockquote>
+      <figcaption className="mt-auto flex items-center gap-3 border-t pt-4">
+        <Avatar className="size-10">
+          <AvatarImage src={testimony.avatarUrl} alt="" />
+          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+            {testimony.name.charAt(0)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0">
+          <div className="leading-tight font-medium">{testimony.name}</div>
           <div className="text-muted-foreground text-sm">
             {testimony.description}
           </div>
-          <blockquote className="text-pretty">{testimony.comment}</blockquote>
         </div>
-      </div>
+      </figcaption>
     </figure>
   );
 }
@@ -84,27 +66,23 @@ const testimonialData = [
     description: "Lifter chasing plate milestones.",
     comment:
       "I thought I'd accidentally signed up for a free trial of something. The analytics and visualizations are so much better than what you get with Hevy and Strong, even as a paid user.",
-    icon: Trophy,
   },
   {
     name: "Manny",
     description: "Online commenter, 25.",
     comment:
       "Just wanted to say this is such a cool site! exactly what I was looking for and very well put together.",
-    icon: Award,
   },
   {
     name: "Paul",
     description: "Big four lifter.",
     comment:
       "Great job on the website. I like the calculators, they're good for setting targets.",
-    icon: CheckCircle,
   },
   {
     name: "Stacey",
     description: "32, gym enthusiast.",
     comment: "I feel like I'm getting rewarded for going to the gym.",
-    icon: ThumbsUp,
     avatarUrl: "/avatars/avatar_stacey.jpg",
   },
   {
@@ -112,34 +90,29 @@ const testimonialData = [
     description: "Lifter and runner.",
     comment:
       "I'm enjoying the app, and I've noticed all the work going into it. It's great!",
-    icon: Smile,
   },
   {
     name: "Mac",
     description: "23, novice.",
     comment: "Love this.",
     avatarUrl: "/avatars/avatar_mac.jpg",
-    icon: Heart,
   },
   {
     name: "Chris",
     description: "54, returning lifter.",
     comment:
       "An amazing resource for any level of lifter. The site has a very professional, well-organized look that inspires confidence. I look forward to logging my lifts here for a long time.",
-    icon: Star,
   },
   {
     name: "Alex P",
     description: "21, guy on Telegram.",
     comment: "This is sick. I love simple clean stuff like this.",
-    icon: Star,
   },
   {
     name: "Hadi",
     description: "Lifter, introduced by a coach.",
     comment:
       "I really liked this site from the start. My coach showed it to us to track our progress and see our milestones. I especially like the 1,000 lb total.",
-    icon: Sun,
   },
   {
     name: "Jerry S.",
@@ -152,12 +125,10 @@ const testimonialData = [
     description: "CrossFit athlete.",
     comment:
       "Our CrossFit gym switched apps and I wanted a way to clearly see my history. This is pretty good at that.",
-    icon: MessageCircle,
   },
   {
     name: "Poet",
     description: "Lifter.",
     comment: "I like that your service is free to use.",
-    icon: Gift,
   },
 ];

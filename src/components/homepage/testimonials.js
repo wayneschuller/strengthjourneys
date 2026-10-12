@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Marquee from "@/components/magicui/marquee";
 import { Quote } from "lucide-react";
@@ -32,13 +33,23 @@ export function Testimonials({}) {
 
 // Internal card that leads with the quoted comment, then the avatar, name, and description.
 function TestimonialCard({ testimony }) {
+  // Cards size to their quote, so short ones read as small punchy tiles between the wide ones.
+  const isShort = testimony.comment.length < 70;
+
   return (
-    <figure className="bg-card text-card-foreground hover:border-primary/40 flex w-72 flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors sm:w-96">
+    <figure className="bg-card text-card-foreground hover:border-primary/40 flex w-max max-w-72 min-w-52 flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors sm:max-w-[26rem]">
       <Quote
         className="text-primary/30 size-6 shrink-0 fill-current"
         aria-hidden="true"
       />
-      <blockquote className="text-base leading-relaxed text-pretty">
+      <blockquote
+        className={cn(
+          "text-pretty",
+          isShort
+            ? "text-xl leading-snug font-medium"
+            : "text-base leading-relaxed",
+        )}
+      >
         {testimony.comment}
       </blockquote>
       <figcaption className="mt-auto flex items-center gap-3 border-t pt-4">

@@ -256,7 +256,7 @@ export function NavBar() {
   );
 }
 
-// FIXME: use the featurePages array in index.js?
+// FIXME: use the featurePages array in lib/feature-pages.js?
 
 const LOGO_WIDTH = 118;
 

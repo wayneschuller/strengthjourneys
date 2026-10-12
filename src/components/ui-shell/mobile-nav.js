@@ -19,7 +19,7 @@ import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getLogoForTheme, getLogoHeight } from "@/lib/theme-logos";
 import { getRepeatImportHref } from "@/lib/import/import-sources";
 import { cn } from "@/lib/utils";
-import { featurePages } from "@/pages";
+import { featurePages } from "@/lib/feature-pages";
 import { FreshPill } from "@/components/ui/fresh-pill";
 
 import {

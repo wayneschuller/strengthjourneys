@@ -22,7 +22,7 @@ import {
   GoogleSignInButton,
   GoogleSignInToastAction,
 } from "@/components/onboarding/google-sign-in";
-import { SheetSetupDialog } from "@/components/onboarding/sheet-setup-dialog";
+import { SheetSetupDialogLoader } from "@/components/onboarding/sheet-setup-dialog-loader";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useImportMerge } from "@/hooks/use-import-merge";
 import { useToast } from "@/hooks/use-toast";
@@ -339,7 +339,7 @@ export function Layout({ children }) {
         {router.pathname === "/" && <HomeImportMergeNudge />}
         <SheetConnectionNotice />
         <ThemeRewardUnlockBanner suppress={dataSource === "import"} />
-        <SheetSetupDialog />
+        <SheetSetupDialogLoader />
         <main
           className={cn(
             "mx-0",

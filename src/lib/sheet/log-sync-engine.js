@@ -20,6 +20,13 @@
  * - Rows keep a stable local `_key` across snapshots and index shifts, so an
  *   open input never remounts under the lifter.
  *
+ * - The outbox survives the tab. What is still owed is saved as intents
+ *   named by content, not position ("the row reading 5 x 100kg should read
+ *   5 x 105kg"), because positions mean nothing to a later page. A new page
+ *   holds them as `recover` ops, drawn but not sent, until a read it started
+ *   itself shows what the sheet now holds; each then becomes the insert, edit
+ *   or delete still needed, or nothing if it already landed.
+ *
  * Priorities, in order: never write to the wrong row (the server re-checks the
  * row's content before every write), never drop an accepted change without
  * saying so, then keep the lifter moving. Nothing here touches React, the
@@ -31,6 +38,8 @@ const QUEUED = "queued";
 const SENDING = "sending";
 const UNCERTAIN = "uncertain";
 const DONE = "done";
+// A change saved by an earlier page, waiting for a read to say what is owed.
+const RECOVERING = "recovering";
 
 const SEPARATOR = "\u001f";
 const EMPTY_ROWS = Object.freeze([]);
@@ -49,6 +58,9 @@ const MAX_CONFLICTS = 2;
 // arrived" and send the change again.
 export const SETTLE_MS = 3000;
 const MAX_TRACKED_DATES = 30;
+// A closed tab's last request can still be finishing (it is sent keepalive).
+// Only a read begun this long after it left may conclude it never arrived.
+export const RECOVERY_SETTLE_MS = 60000;
 
 export function createEngineState(ssid = null) {
   return {
@@ -192,6 +204,19 @@ export function enqueueEdit(state, { date, key, patch, now }) {
   }
   if (!Object.keys(clean).length) return state;
 
+  // A row an earlier page's saved change is drawn on: the change joins what
+  // it owes, so the row is settled once, by content, when a read arrives.
+  if (entry.recoveredBy != null) {
+    return {
+      ...state,
+      ops: state.ops.map((op) =>
+        op.id === entry.recoveredBy && op.fields
+          ? { ...op, fields: { ...op.fields, ...clean } }
+          : op,
+      ),
+    };
+  }
+
   // The newest unsent write for this row takes the change: a waiting edit, or
   // the row's own insert when that has not gone out yet. Anything already in
   // flight is left alone and a new edit follows it.
@@ -199,6 +224,12 @@ export function enqueueEdit(state, { date, key, patch, now }) {
   for (let i = ops.length - 1; i >= 0; i -= 1) {
     const op = ops[i];
     if (op.key !== key || op.date !== date) continue;
+    // A set an earlier page saved: the change becomes part of what it owes.
+    if (op.kind === "recover") {
+      if (!op.fields) break;
+      ops[i] = { ...op, fields: { ...op.fields, ...clean } };
+      return { ...state, ops };
+    }
     if (op.status !== QUEUED) break;
     if (op.kind === "edit") {
       ops[i] = {
@@ -232,9 +263,34 @@ export function enqueueEdit(state, { date, key, patch, now }) {
 /** Queue a row delete. A set that never reached the sheet is just forgotten. */
 export function enqueueDelete(state, { date, key }) {
   const view = fold(state, state.ops, { date, includeUnconfirmed: true });
-  if (!view.some((entry) => entry.key === key)) return state;
+  const entry = view.find((candidate) => candidate.key === key);
+  if (!entry) return state;
+  if (entry.recoveredBy != null) {
+    return {
+      ...state,
+      ops: state.ops.map((op) =>
+        op.id === entry.recoveredBy ? { ...op, fields: null } : op,
+      ),
+    };
+  }
 
   const touchesRow = (op) => op.key === key && op.date === date;
+  const recovered = state.ops.find(
+    (op) => op.kind === "recover" && touchesRow(op),
+  );
+  if (recovered) {
+    // Never sent and never landed: forget it. Otherwise it may be in the
+    // sheet, and the read that settles it will remove it there.
+    if (!recovered.believed && !recovered.probe) {
+      return { ...state, ops: state.ops.filter((op) => !touchesRow(op)) };
+    }
+    return {
+      ...state,
+      ops: state.ops.map((op) =>
+        op === recovered ? { ...op, fields: null } : op,
+      ),
+    };
+  }
   const insert = state.ops.find((op) => op.kind === "insert" && touchesRow(op));
   if (insert && insert.status === QUEUED) {
     return { ...state, ops: state.ops.filter((op) => !touchesRow(op)) };
@@ -476,13 +532,14 @@ export function planRequest(state, op) {
   return { kind: "drop", reason: "unknown" };
 }
 
-export function markSending(state, opId, plan) {
+export function markSending(state, opId, plan, now = null) {
   return updateOp(state, opId, (op) => ({
     ...op,
     status: SENDING,
     attempts: op.attempts + 1,
     sent: plan.meta,
     expect: plan.expect,
+    sentAt: now,
   }));
 }
 
@@ -683,14 +740,32 @@ export function applySnapshot(state, snapshot, viewDate) {
   // and any with changes in play.
   const keys = new Map();
   const lostKeys = new Set();
+  // The key of the row each earlier page's saved change is drawn on, carried
+  // to this snapshot like any other row's. From here on the change follows
+  // that key, not a count among identical rows that this read may shift.
+  const recoverTargets = new Map();
   const dates = new Set([...state.keyDates, ...ops.map((op) => op.date)]);
   if (viewDate) dates.add(viewDate);
   for (const date of dates) {
-    const expected = fold(state, retired, { date });
     const fresh = rowsForDate(rows, date);
-    const matches = matchRows(expected, fresh);
+    const expected = expectFromRecovered(
+      state,
+      fold(state, retired, { date }),
+      date,
+      fresh,
+      (opId) => recoverTargets.set(opId, null),
+    );
+    // Row numbers in the copy saved on the phone are from before whatever
+    // the closed tab wrote after it, so coming from that copy only content
+    // can say which row is which.
+    const matches = matchRows(expected, fresh, {
+      byPosition: state.base.readAt !== null,
+    });
     for (const entry of expected) {
       const row = matches.get(entry);
+      if (entry.recoveredBy != null) {
+        recoverTargets.set(entry.recoveredBy, row ? entry.key : null);
+      }
       if (!row) {
         lostKeys.add(`${date}${SEPARATOR}${entry.key}`);
       } else if (
@@ -710,7 +785,13 @@ export function applySnapshot(state, snapshot, viewDate) {
     base: { rows, readAt, columns: snapshot?.columns ?? null },
     keys,
     keyDates: dates,
-    ops: kept,
+    ops: recoverTargets.size
+      ? kept.map((op) =>
+          recoverTargets.has(op.id)
+            ? { ...op, targetKey: recoverTargets.get(op.id) }
+            : op,
+        )
+      : kept,
     hold,
   };
   next.events = [];
@@ -721,7 +802,350 @@ export function applySnapshot(state, snapshot, viewDate) {
     if (!next.ops.some((other) => other.id === op.id)) continue;
     next = failOp(next, op, "row-changed");
   }
+
+  // 5. Changes saved by an earlier page are settled by a read this page
+  // began after taking them over.
+  next = resolveRecovered(next, readAt);
   return { ...next, events: [...state.events, ...events, ...next.events] };
+}
+
+// --- Surviving the tab ---------------------------------------------------------
+
+/**
+ * Everything the lifter changed that the last read does not show yet, as
+ * plain data a later page can act on. Each intent names a row by content:
+ * `origin` is the row as the last read had it (what a page opening on the
+ * copy saved with that read will find), `believed` as the sheet holds it now
+ * by our account (null for a set not in it yet), `wanted` as the lifter left
+ * it (null once deleted). `probe` marks the one change that was in flight: it
+ * may or may not have landed, and the count says how to tell. Changes already
+ * confirmed are included too, so a page opening offline still shows them.
+ *
+ * A session delete still in play is not saved, and its date's changes with
+ * it: replaying a delete later, on a sheet that may have moved on, is not a
+ * risk worth taking for a rare action. It is held here as before.
+ *
+ * @param {(now: number) => number} toWall Converts the engine clock to epoch ms.
+ */
+export function getRecoverableIntents(state, toWall = (time) => time) {
+  const intents = [];
+  if (!state.ops.length) return intents;
+  const heldDates = new Set(
+    state.ops
+      .filter((op) => op.kind === "deleteSession" && op.status !== DONE)
+      .map((op) => op.date),
+  );
+  const confirmedOps = state.ops.filter((op) => op.status === DONE);
+  const head = state.ops.find((op) => op.status !== DONE);
+  const inFlight =
+    head && (head.status === SENDING || head.status === UNCERTAIN)
+      ? head
+      : null;
+  const seen = new Set();
+
+  for (const op of state.ops) {
+    if (op.kind === "deleteSession") continue;
+    if (heldDates.has(op.date)) continue;
+    if (op.kind === "recover") {
+      seen.add(`${op.date}${SEPARATOR}${op.key}`);
+      intents.push({
+        date: op.date,
+        liftType: op.liftType,
+        isNewSet: op.key !== null,
+        origin: op.origin ?? null,
+        originOrdinal: op.originOrdinal ?? 0,
+        originHash: op.originHash ?? null,
+        baseCount: op.baseCount ?? 0,
+        believed: op.believed,
+        ordinal: op.ordinal ?? 0,
+        wanted: op.fields,
+        probe: op.probe,
+        settleAfter: op.settleAfter ?? null,
+      });
+      continue;
+    }
+    const id = `${op.date}${SEPARATOR}${op.key}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+
+    const isNewSet = state.ops.some(
+      (other) =>
+        other.kind === "insert" &&
+        other.key === op.key &&
+        other.date === op.date,
+    );
+    const baseSession = fold(state, [], { date: op.date });
+    const originEntry = isNewSet ? null : findEntry(baseSession, op.key);
+    const confirmedSession = fold(state, confirmedOps, { date: op.date });
+    const believedEntry = findEntry(confirmedSession, op.key);
+    const wantedEntry = findEntry(
+      fold(state, state.ops, { date: op.date, includeUnconfirmed: true }),
+      op.key,
+    );
+    const origin = originEntry ? entryFields(originEntry) : null;
+    const believed = believedEntry ? entryFields(believedEntry) : null;
+    const wanted = wantedEntry ? entryFields(wantedEntry) : null;
+    const liftType =
+      (believedEntry ?? wantedEntry ?? originEntry)?.row.liftType ??
+      op.liftType ??
+      null;
+    // Which of several identical rows this is, counted down the session, so
+    // a later page changes the same one of three equal sets.
+    const ordinalIn = (session, target) =>
+      target
+        ? session
+            .filter(
+              (entry) => rowSignature(entry.row) === rowSignature(target.row),
+            )
+            .indexOf(target)
+        : 0;
+    const ordinal = ordinalIn(confirmedSession, believedEntry);
+    const originOrdinal = ordinalIn(baseSession, originEntry);
+    // Which read `origin` and its count belong to. The copy saved on the
+    // phone can be a different read (one that reached the phone but not this
+    // page), and then only `believed` can be counted on.
+    const originHash = originEntry ? sessionHash(baseSession) : null;
+    // For a set already in the sheet: how many rows like it the last read
+    // had, so a page can tell when a newer read shows this one too.
+    const baseCount =
+      isNewSet && believedEntry
+        ? baseSession.filter(
+            (entry) =>
+              rowSignature(entry.row) === rowSignature(believedEntry.row),
+          ).length
+        : 0;
+
+    let probe = null;
+    let settleAfter = null;
+    if (inFlight && inFlight.key === op.key && inFlight.date === op.date) {
+      const session = fold(state, confirmedOps, { date: op.date });
+      const afterEntry = findEntry(
+        fold(state, [...confirmedOps, confirmOp(inFlight, inFlight.sent)], {
+          date: op.date,
+        }),
+        op.key,
+      );
+      const after = afterEntry ? entryFields(afterEntry) : null;
+      const counted = after ?? believed;
+      probe = {
+        after,
+        count: counted
+          ? session.filter(
+              (entry) =>
+                rowSignature(entry.row) === fieldsSignature(counted, liftType),
+            ).length
+          : 0,
+      };
+      settleAfter =
+        inFlight.sentAt == null
+          ? null
+          : toWall(inFlight.sentAt) + RECOVERY_SETTLE_MS;
+    }
+
+    if (
+      !probe &&
+      !isNewSet &&
+      sameFields(origin, believed) &&
+      sameFields(believed, wanted)
+    ) {
+      continue;
+    }
+    if (!origin && !believed && !wanted && !probe) continue;
+    intents.push({
+      date: op.date,
+      liftType,
+      isNewSet,
+      origin,
+      originOrdinal,
+      originHash,
+      baseCount,
+      believed,
+      ordinal,
+      wanted,
+      probe,
+      settleAfter,
+    });
+  }
+  return intents;
+}
+
+/**
+ * Take over intents saved by an earlier page. They go in ahead of anything
+ * not yet sent, so the sheet receives the lifter's changes in the order they
+ * were made, and they hold the queue until a read begun at or after
+ * `notBefore` (this engine's clock) settles them.
+ *
+ * @param {(epochMs: number) => number} fromWall Converts epoch ms to the engine clock.
+ */
+export function restoreIntents(state, intents, { notBefore, fromWall }) {
+  if (!intents?.length) return state;
+  let nextId = state.nextId;
+  const restored = intents.map((intent) => {
+    const id = nextId;
+    nextId += 1;
+    const settle =
+      intent.probe && intent.settleAfter != null
+        ? fromWall(intent.settleAfter)
+        : -Infinity;
+    return {
+      id,
+      kind: "recover",
+      date: intent.date,
+      key:
+        intent.isNewSet || (!intent.believed && !intent.origin)
+          ? `n${id}`
+          : null,
+      liftType: intent.liftType,
+      origin: intent.origin ?? null,
+      originOrdinal: intent.originOrdinal ?? 0,
+      originHash: intent.originHash ?? null,
+      baseCount: intent.baseCount ?? 0,
+      believed: intent.believed ?? null,
+      ordinal: intent.ordinal ?? 0,
+      fields: intent.wanted ?? null,
+      probe: intent.probe ?? null,
+      settleAfter: intent.settleAfter ?? null,
+      notBefore: Math.max(notBefore, settle),
+      status: RECOVERING,
+      attempts: 0,
+      conflicts: 0,
+    };
+  });
+  const at = state.ops.findIndex((op) => op.status !== DONE);
+  const ops = state.ops.slice();
+  ops.splice(at === -1 ? ops.length : at, 0, ...restored);
+  return { ...state, nextId, ops };
+}
+
+/**
+ * When the queue is held by saved changes waiting for a read, the time that
+ * read must begin at or after. Null when nothing is waiting.
+ */
+export function getRecoveryReadDue(state) {
+  let due = null;
+  for (const op of state.ops) {
+    if (op.kind !== "recover") continue;
+    if (due === null || op.notBefore > due) due = op.notBefore;
+  }
+  return due;
+}
+
+/** True while a change is held that a later page could not take over. */
+export function hasUnrecoverableChanges(state) {
+  return state.ops.some(
+    (op) => op.kind === "deleteSession" && op.status !== DONE,
+  );
+}
+
+function resolveRecovered(state, readAt) {
+  if (readAt === null || !Array.isArray(state.base.rows)) return state;
+  if (!state.ops.some((op) => op.kind === "recover" && op.notBefore <= readAt))
+    return state;
+  const keys = new Map(state.keys);
+  // Rows already spoken for in this pass, so two intents never take the
+  // same one of several identical rows.
+  const claimed = new Set();
+  const ops = [];
+  const failed = [];
+
+  for (const op of state.ops) {
+    if (op.kind !== "recover" || op.notBefore > readAt) {
+      ops.push(op);
+      continue;
+    }
+    const session = rowsForDate(state.base.rows, op.date);
+    // The `ordinal`-th row reading like this, or failing that the first
+    // one no other intent has taken.
+    const claim = (fields, ordinal = 0) => {
+      const signature = fieldsSignature(fields, op.liftType);
+      const candidates = session.filter(
+        (row) => row.rowIndex != null && rowSignature(row) === signature,
+      );
+      const row =
+        candidates[ordinal] && !claimed.has(candidates[ordinal].rowIndex)
+          ? candidates[ordinal]
+          : candidates.find((candidate) => !claimed.has(candidate.rowIndex));
+      if (!row) return null;
+      claimed.add(row.rowIndex);
+      return row;
+    };
+
+    const believed = probeLanded(op, session) ? op.probe.after : op.believed;
+    // A row the in-flight change wrote sits after the identical ones that
+    // were there before it.
+    const ordinal =
+      op.probe && believed === op.probe.after ? op.probe.count : op.ordinal;
+    const wanted = op.fields;
+    const next = {
+      id: op.id,
+      date: op.date,
+      status: QUEUED,
+      attempts: 0,
+      conflicts: 0,
+    };
+
+    if (!believed) {
+      if (wanted) {
+        ops.push({
+          ...next,
+          kind: "insert",
+          key: op.key ?? `n${op.id}`,
+          liftType: op.liftType,
+          fields: { ...wanted },
+        });
+      }
+      continue;
+    }
+
+    // A row already followed by key is the one, as long as it reads as the
+    // earlier page believed (else the sheet changed under it: look again).
+    let row = null;
+    if (!op.key && op.targetKey) {
+      const signature = fieldsSignature(believed, op.liftType);
+      row =
+        session.find(
+          (candidate) =>
+            candidate.rowIndex != null &&
+            !claimed.has(candidate.rowIndex) &&
+            (keys.get(candidate.rowIndex) ?? defaultKey(candidate.rowIndex)) ===
+              op.targetKey &&
+            rowSignature(candidate) === signature,
+        ) ?? null;
+      if (row) claimed.add(row.rowIndex);
+    }
+    row ??= claim(believed, ordinal ?? 0);
+    if (!row) {
+      // Already gone, or someone already made the change, or it was done
+      // and has since been changed in the sheet itself: nothing owed.
+      if (!wanted || sameFields(believed, wanted)) continue;
+      const done = claim(wanted);
+      if (done) {
+        if (op.key) keys.set(done.rowIndex, op.key);
+        continue;
+      }
+      failed.push(op);
+      continue;
+    }
+    if (op.key) keys.set(row.rowIndex, op.key);
+    const key = op.key ?? keys.get(row.rowIndex) ?? defaultKey(row.rowIndex);
+    if (!wanted) {
+      ops.push({ ...next, kind: "delete", key });
+      continue;
+    }
+    const patch = {};
+    for (const field of EDITABLE_FIELDS) {
+      if (wanted[field] !== believed[field]) patch[field] = wanted[field];
+    }
+    if (Object.keys(patch).length) {
+      ops.push({ ...next, kind: "edit", key, patch });
+    }
+  }
+
+  let next = { ...state, ops, keys };
+  for (const op of failed) {
+    next = failOp({ ...next, ops: [...next.ops, op] }, op, "row-changed");
+  }
+  return next;
 }
 
 // --- Internals -----------------------------------------------------------------
@@ -750,12 +1174,20 @@ function fold(state, ops, { date = null, includeUnconfirmed = false }) {
   }));
   for (const op of ops) {
     if (op.status !== DONE && !includeUnconfirmed) continue;
-    entries = applyOp(entries, op, date, includeUnconfirmed);
+    entries = applyOp(
+      entries,
+      op,
+      date,
+      includeUnconfirmed,
+      state.base.readAt !== null,
+    );
   }
-  return entries;
+  return entries.some((entry) => entry.hidden)
+    ? entries.filter((entry) => !entry.hidden)
+    : entries;
 }
 
-function applyOp(entries, op, date, drawPending) {
+function applyOp(entries, op, date, drawPending, live = true) {
   const confirmed = op.status === DONE;
   const inScope = date === null || op.date === date;
   const isTarget = (entry) =>
@@ -828,6 +1260,73 @@ function applyOp(entries, op, date, drawPending) {
       }
     }
     return remaining;
+  }
+
+  if (op.kind === "recover") {
+    // Saved by an earlier page: drawn as the lifter left it, never placed.
+    if (!drawPending || !inScope) return entries;
+    if (op.key) {
+      // A set the sheet may already hold (its last request was in flight, or
+      // it landed after the saved copy was read): once a read shows one more
+      // row like it than there was, that row is this set, drawn as the lifter
+      // left it rather than beside a copy of itself.
+      const findLanded = (fields, before) => {
+        const signature = fieldsSignature(fields, op.liftType);
+        const matches = entries.filter((entry) => {
+          if (entry.baseIndex === null || entry.row.date !== op.date) {
+            return false;
+          }
+          entry.originSignature ??= rowSignature(entry.row);
+          return entry.originSignature === signature;
+        });
+        if (matches.length <= before) return null;
+        return (
+          [matches[before], ...matches].find(
+            (entry) => entry && !entry.recovered,
+          ) ?? null
+        );
+      };
+      const landed =
+        (op.probe?.after && findLanded(op.probe.after, op.probe.count)) ||
+        (op.believed && findLanded(op.believed, op.baseCount ?? 0)) ||
+        null;
+      if (landed) {
+        landed.recovered = true;
+        landed.recoveredBy = op.id;
+        landed.key = op.key;
+        if (!op.fields) {
+          landed.hidden = true;
+          return entries;
+        }
+        landed.row = { ...landed.row, ...fieldsPatch(op.fields) };
+        landed.saving = true;
+        return entries;
+      }
+      if (!op.fields) return entries;
+      entries.push({
+        key: op.key,
+        sheetIndex: null,
+        baseIndex: null,
+        row: { ...fieldsToRow(op.fields, op.liftType, op.date) },
+        sheet: null,
+        pending: true,
+        saving: false,
+      });
+      return entries;
+    }
+    // A row a saved delete removes is only hidden, so the rows after it keep
+    // their count (see fold and findRecoverTarget).
+    const target = findRecoverTarget(entries, op, live);
+    if (!target) return entries;
+    target.recovered = true;
+    target.recoveredBy = op.id;
+    if (!op.fields) {
+      target.hidden = true;
+      return entries;
+    }
+    target.row = { ...target.row, ...fieldsPatch(op.fields) };
+    target.saving = true;
+    return entries;
   }
 
   if (op.kind === "deleteSession") {
@@ -913,6 +1412,166 @@ function sheetText(entry) {
   };
 }
 
+/**
+ * The row of the snapshot an earlier page's saved change is about: found by
+ * what it read, and by which of several identical rows it was. Rows other
+ * saved changes have taken are skipped. `live` says whether the snapshot is
+ * a read this page made or the copy saved on the phone.
+ */
+function findRecoverTarget(entries, op, live) {
+  if (live && op.targetKey !== undefined) {
+    if (op.targetKey === null) return null;
+    return (
+      entries.find(
+        (entry) =>
+          entry.key === op.targetKey &&
+          entry.baseIndex !== null &&
+          !entry.recovered,
+      ) ?? null
+    );
+  }
+  // Against the very read the earlier page last had, the row reads as it
+  // did there. Against anything newer (a read this page made, or a saved copy
+  // from a later read), as the sheet holds it by that page's account.
+  const byOrigin =
+    !live &&
+    op.origin &&
+    op.originHash !== null &&
+    op.originHash ===
+      sessionHash(
+        entries.filter(
+          (entry) => entry.baseIndex !== null && entry.row.date === op.date,
+        ),
+      );
+  const fields = byOrigin ? op.origin : op.believed;
+  if (!fields) return null;
+  const signature = fieldsSignature(fields, op.liftType);
+  const ordinal = byOrigin ? (op.originOrdinal ?? 0) : (op.ordinal ?? 0);
+  let target = null;
+  let seen = 0;
+  for (const entry of entries) {
+    if (entry.baseIndex === null || entry.row.date !== op.date) continue;
+    entry.originSignature ??= rowSignature(entry.row);
+    if (target || entry.originSignature !== signature) continue;
+    if (seen === ordinal && !entry.recovered) target = entry;
+    seen += 1;
+  }
+  return (
+    target ??
+    entries.find(
+      (entry) =>
+        entry.baseIndex !== null &&
+        !entry.recovered &&
+        entry.originSignature === signature,
+    ) ??
+    null
+  );
+}
+
+/**
+ * The rows a new read should hold, for carrying keys across: rows an earlier
+ * page's saved changes are drawn on are expected as that page believed the
+ * sheet holds them, and rows it had already deleted not at all. Without this
+ * a row the lifter is looking at could swap keys with an identical row the
+ * saved copy still had.
+ */
+function expectFromRecovered(state, entries, date, fresh, onGone) {
+  let changed = false;
+  for (const op of state.ops) {
+    if (op.kind !== "recover" || op.key !== null || op.date !== date) continue;
+    const target = findRecoverTarget(entries, op, state.base.readAt !== null);
+    if (!target) continue;
+    target.recovered = true;
+    target.recoveredBy = op.id;
+    changed = true;
+    const holds = probeLanded(op, fresh) ? op.probe.after : op.believed;
+    if (holds) {
+      target.row = { ...target.row, ...fieldsPatch(holds) };
+    } else {
+      target.hidden = true;
+      onGone(op.id);
+    }
+  }
+  return changed ? entries.filter((entry) => !entry.hidden) : entries;
+}
+
+/**
+ * Did the change that was in flight when the earlier page closed land? It did
+ * if these rows hold one more of the row it would have written, or one fewer
+ * of the row it deleted, than the sheet had before it.
+ */
+function probeLanded(op, rows) {
+  if (!op.probe) return false;
+  const counted = op.probe.after ?? op.believed;
+  if (!counted) return false;
+  const signature = fieldsSignature(counted, op.liftType);
+  const count = rows.filter((row) => rowSignature(row) === signature).length;
+  return op.probe.after ? count > op.probe.count : count < op.probe.count;
+}
+
+/** A short fingerprint of a session's rows as a snapshot holds them. */
+function sessionHash(entries) {
+  let hash = 5381;
+  for (const entry of entries) {
+    entry.originSignature ??= rowSignature(entry.row);
+    const text = `${entry.originSignature}\n`;
+    for (let i = 0; i < text.length; i += 1) {
+      hash = ((hash << 5) + hash + text.charCodeAt(i)) | 0;
+    }
+  }
+  return `${entries.length}:${hash >>> 0}`;
+}
+
+function findEntry(entries, key) {
+  return entries.find((entry) => entry.key === key) ?? null;
+}
+
+/** A row's lifter-facing values, in the shape an intent saves them. */
+function entryFields(entry) {
+  const row = entry.row;
+  return {
+    reps: row.reps,
+    weight: row.weight,
+    unitType: row.unitType ?? "",
+    notes: row.notes ?? "",
+    url: row.URL ?? "",
+  };
+}
+
+function fieldsToRow(fields, liftType, date) {
+  return {
+    date,
+    liftType,
+    reps: fields.reps,
+    weight: fields.weight,
+    unitType: fields.unitType,
+    notes: fields.notes,
+    URL: fields.url,
+    rowIndex: null,
+    isHistoricalPR: false,
+  };
+}
+
+/** The editable values of a row, to lay over one already drawn. */
+function fieldsPatch(fields) {
+  return {
+    reps: fields.reps,
+    weight: fields.weight,
+    unitType: fields.unitType,
+    notes: fields.notes,
+    URL: fields.url,
+  };
+}
+
+function fieldsSignature(fields, liftType) {
+  return rowSignature(fieldsToRow(fields, liftType, null));
+}
+
+function sameFields(a, b) {
+  if (!a || !b) return a === b;
+  return fieldsSignature(a, "") === fieldsSignature(b, "");
+}
+
 function lastBySheetIndex(entries) {
   return entries.reduce((a, b) => (b.sheetIndex > a.sheetIndex ? b : a));
 }
@@ -944,9 +1603,10 @@ function sessionSignature(entries) {
  * one weight, logged in the same minute) and only position tells them apart.
  * Content second, in order, for rows that moved for a reason we did not cause.
  * Whatever is left and still shares a position is the same row with content
- * the sheet reformatted.
+ * the sheet reformatted. Without `byPosition` (rows numbered by an older read)
+ * only content counts.
  */
-function matchRows(expected, fresh) {
+function matchRows(expected, fresh, { byPosition = true } = {}) {
   const matches = new Map();
   if (!expected.length || !fresh.length) return matches;
   const expectedSigs = expected.map((entry) => rowSignature(entry.row));
@@ -961,7 +1621,9 @@ function matchRows(expected, fresh) {
   }
 
   const taken = new Set();
-  const byIndex = new Map(fresh.map((row, i) => [row.rowIndex, i]));
+  const byIndex = new Map(
+    byPosition ? fresh.map((row, i) => [row.rowIndex, i]) : [],
+  );
   expected.forEach((entry, i) => {
     const at = byIndex.get(entry.sheetIndex);
     if (at === undefined || freshSigs[at] !== expectedSigs[i]) return;

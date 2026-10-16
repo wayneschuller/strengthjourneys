@@ -6,6 +6,12 @@
  * the lifter changes date, opens another page or lets the phone sleep still
  * has to reach the sheet, so nothing here depends on a mounted component.
  *
+ * It also outlives the tab. After every change what is still owed is handed
+ * to `io.persist`, and on start it takes over what closed tabs left behind
+ * through `io.adopt`. Nothing is sent until a read this page made has
+ * arrived: a copy saved on the phone is good to look at and to log against,
+ * but only the sheet itself can say where a row goes.
+ *
  * All timing, network and clock access comes in through `io`, which is what
  * lets scripts/validate-log-sync.mjs drive this exact code against a
  * simulated sheet. The decisions themselves are in log-sync-engine.js.
@@ -23,11 +29,15 @@ import {
   enqueueEdit,
   enqueueInsert,
   getNextOp,
+  getRecoverableIntents,
+  getRecoveryReadDue,
   getSyncSummary,
+  hasUnrecoverableChanges,
   markSending,
   planRequest,
   releaseBackoff,
   releaseEditHolds,
+  restoreIntents,
   takeEvents,
   trackDate,
 } from "@/lib/sheet/log-sync-engine";
@@ -50,6 +60,12 @@ const REQUEST_TIMEOUT_MS = 25000;
  * @param {Function} io.clearTimer
  * @param {() => boolean} io.isReady
  * @param {(event: object) => void} io.onFailure A change was handed back.
+ * @param {(ssid: string, intents: object[]) => boolean} [io.persist] Saves
+ *   what is still owed; returns false when it could not be saved.
+ * @param {(ssid: string, take: (intents: object[]) => void) => Promise<void>} [io.adopt]
+ *   Hands `take` whatever closed tabs left for this sheet, and forgets it
+ *   once `take` has returned.
+ * @param {() => number} [io.wallNow] Epoch ms, for saved changes' timing.
  */
 export function createLogSyncStore(io) {
   let state = createEngineState();
@@ -62,11 +78,24 @@ export function createLogSyncStore(io) {
   const refresh = { inFlight: false, nextAt: 0, attempt: 0 };
   const listeners = new Set();
   const waiters = new Map();
+  let persistedOps = state.ops;
+  let persistOk = true;
+
+  const wallNow = () => (io.wallNow ? io.wallNow() : io.now());
+  const toWall = (time) => wallNow() - (io.now() - time);
+  const fromWall = (epochMs) => io.now() - (wallNow() - epochMs);
+
+  function persist() {
+    if (!io.persist || !state.ssid || state.ops === persistedOps) return;
+    persistedOps = state.ops;
+    persistOk = io.persist(state.ssid, getRecoverableIntents(state, toWall));
+  }
 
   function setState(next) {
     if (next === state) return;
     const drained = takeEvents(next);
     state = drained.state;
+    persist();
     for (const event of drained.events) {
       if (event.type === "settled") {
         waiters.get(event.opId)?.forEach((resolve) => resolve(event.ok));
@@ -121,10 +150,10 @@ export function createLogSyncStore(io) {
       });
   }
 
-  function requestRefresh() {
+  function requestRefresh(notBefore = 0) {
     // Never before the hold allows a conclusive answer, however eager a
     // retry is.
-    const due = Math.max(refresh.nextAt, state.hold?.after ?? 0);
+    const due = Math.max(refresh.nextAt, state.hold?.after ?? 0, notBefore);
     const wait = due - io.now();
     if (wait > 0) wake(wait);
     else startRefresh();
@@ -138,7 +167,18 @@ export function createLogSyncStore(io) {
     try {
       for (;;) {
         if (!state.ssid || !io.isReady()) return;
+        // A copy saved on the phone has no say in where a row goes. The
+        // page's own first read will wake us.
+        if (state.base.readAt === null) return;
         const now = io.now();
+
+        // Changes an earlier page left wait for a read begun after we took
+        // them over (and after any request of theirs could have landed).
+        const recoveryDue = getRecoveryReadDue(state);
+        if (recoveryDue !== null) {
+          requestRefresh(recoveryDue);
+          return;
+        }
 
         if (state.hold?.kind === "backoff") {
           if (state.hold.until > now) {
@@ -188,7 +228,7 @@ export function createLogSyncStore(io) {
           continue;
         }
 
-        setState(markSending(state, op.id, plan));
+        setState(markSending(state, op.id, plan, now));
         const result = await io.send({
           ...plan,
           body: { ssid: state.ssid, ...plan.body },
@@ -206,6 +246,22 @@ export function createLogSyncStore(io) {
     } finally {
       busy = false;
     }
+  }
+
+  function adoptLeftovers(ssid) {
+    if (!io.adopt) return;
+    // Whatever was left was left before now, so a read begun from here on
+    // shows every write those tabs managed to make.
+    const notBefore = io.now();
+    Promise.resolve(
+      io.adopt(ssid, (intents) => {
+        if (state.ssid !== ssid || !intents.length) return;
+        setState(restoreIntents(state, intents, { notBefore, fromWall }));
+        refresh.nextAt = Math.min(refresh.nextAt, io.now());
+      }),
+    )
+      .catch(() => {})
+      .then(() => pump());
   }
 
   return {
@@ -226,15 +282,25 @@ export function createLogSyncStore(io) {
 
     configure(ssid) {
       const next = configureSheet(state, ssid ?? null);
-      if (next !== state) {
+      const changed = next !== state;
+      if (changed) {
         waiters.forEach((resolvers) =>
           resolvers.forEach((resolve) => resolve(false)),
         );
         waiters.clear();
         trailingAt = null;
+        // A new sheet starts from nothing saved; leave the old sheet's record
+        // where it is for a page that links it again.
+        persistedOps = next.ops;
       }
       setState(next);
+      if (changed && ssid) adoptLeftovers(ssid);
       void pump();
+    },
+
+    /** Look again for changes a tab closed since left behind. */
+    adoptAgain() {
+      if (state.ssid) adoptLeftovers(state.ssid);
     },
 
     snapshot(snapshot, date) {
@@ -293,6 +359,12 @@ export function createLogSyncStore(io) {
     },
 
     hasUnsentChanges: () => getSyncSummary(state).pending > 0,
+
+    /** Pending changes a closed tab would lose: a session delete, or any
+     * change when the phone would not let us save. */
+    hasUnsavedChanges: () =>
+      getSyncSummary(state).pending > 0 &&
+      (!persistOk || !io.persist || hasUnrecoverableChanges(state)),
   };
 }
 

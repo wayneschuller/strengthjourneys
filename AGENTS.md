@@ -172,7 +172,14 @@ authenticated users.
   parser found (`getSheetWriteColumns`), and every write route checks it
   against row 1 before writing (`resolveWriteColumns` in
   `src/lib/sheet/sheet-row-ops.js`). Never address a cell by a fixed column
-  letter. Do not add
+  letter. The outbox outlives the tab: after every change
+  the store saves what the last read does not show yet as content-named
+  intents (`getRecoverableIntents`), one localStorage record per tab
+  (`log-sync-persistence.js`, guarded by a Web Lock so only a closed tab's
+  record is ever taken over), and a new page takes them over as `recover` ops
+  settled by its own first read. The last read itself is kept on the phone
+  (`sheet-local-cache.js`) so the log opens and takes sets offline; nothing is
+  sent until a live read has arrived. Do not add
   optimistic state to a component, send a sheet write from anywhere else, or
   gate the UI on `isValidating`. Read the engine's header comment first, and
   prove a change with `scripts/validate-log-sync.mjs`, which drives the real

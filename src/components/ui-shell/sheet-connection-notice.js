@@ -1,9 +1,12 @@
 /**
  * Tells a lifter with a linked sheet when the connection, not their sheet, is the problem.
- * Offline: says the log reloads on reconnect (SWR revalidates on the browser's online event).
- * Online but the sheet read keeps failing with a network or 5xx error: counts down to the next
- * retry, backing off, with a button to retry now. Auth and missing-sheet errors are not ours to
- * handle here; the layout toast and the setup dialog's recovery flow own those.
+ * Offline: says logging carries on, with sets kept on the phone until the sheet answers.
+ * Online but the sheet read keeps failing with a network or 5xx error: with the copy saved on
+ * the phone on screen, says so and offers a retry; with nothing to show, counts down to the
+ * next retry, backing off. A connection that reports itself online but carries nothing (patchy
+ * gym data) lands in the second case, since navigator.onLine only knows about the radio.
+ * Auth and missing-sheet errors are not ours to handle here; the layout toast and the setup
+ * dialog's recovery flow own those.
  */
 
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -17,6 +20,7 @@ import {
 } from "@/components/ui/app-banner";
 import { Button } from "@/components/ui/button";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { useLogSyncSummary } from "@/components/log/use-log-sheet-sync";
 
 const RETRY_DELAYS_SECONDS = [10, 20, 40, 60];
 
@@ -56,8 +60,10 @@ export function SheetConnectionNotice() {
     isValidating,
     rawRows,
     hasCachedSheetData,
+    isShowingSavedCopy,
     mutate,
   } = useUserLiftingData();
+  const { pending } = useLogSyncSummary();
   const isOnline = useIsOnline();
   const [attempt, setAttempt] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(null);
@@ -111,10 +117,40 @@ export function SheetConnectionNotice() {
           <AppBannerMessage className="flex items-center gap-2">
             <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>
-              <strong>You&apos;re offline.</strong> Your lifting log reloads as
-              soon as you&apos;re back online.
+              <strong>You&apos;re offline.</strong>{" "}
+              {pending > 0
+                ? "Your latest sets are kept on this phone and reach your sheet once you're back."
+                : "Keep logging. New sets are kept on this phone and reach your sheet once you're back."}
             </span>
           </AppBannerMessage>
+        </AppBannerContent>
+      </AppBanner>
+    );
+  }
+
+  // The saved copy is on screen and the sheet has stopped answering: the
+  // lifter can log on regardless, and should know what they are looking at.
+  if (fetchFailed && isShowingSavedCopy && isRetryableSheetError(apiError)) {
+    return (
+      <AppBanner tint="amber" role="status" aria-live="polite">
+        <AppBannerContent density="compact">
+          <AppBannerMessage className="flex items-center gap-2">
+            <WifiOff className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              <strong>Showing your log as saved on this phone.</strong> Keep
+              logging; it all reaches your sheet once Google Sheets answers.
+            </span>
+          </AppBannerMessage>
+          <AppBannerActions className="flex-row flex-nowrap">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={isValidating}
+              onClick={() => mutate()}
+            >
+              Retry now
+            </Button>
+          </AppBannerActions>
         </AppBannerContent>
       </AppBanner>
     );

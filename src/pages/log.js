@@ -396,12 +396,16 @@ export default function LogSessionPage({
   // The demo painted before auth resolves. A returning lifter's pre-paint
   // mark hides it and shows the skeleton in its place (see _document.js).
   const isPresumedDemo = dataSource === "demo" && authStatus === "loading";
-  // A save or a background refresh in progress blocks nothing; the sync
-  // queues whatever the lifter does next. What does block is having no sheet
-  // to save to: it has not loaded, the last read of it failed, or the session
-  // is being deleted. Nothing new is accepted then, by decision: a change
-  // taken while the sheet cannot be reached would sit in this tab's memory
-  // and be lost with it. Changes accepted earlier keep retrying.
+  // A save, a background refresh or a lost connection blocks nothing: the
+  // sync queues whatever the lifter does next, saves it on the phone so a
+  // closed tab loses nothing, and sends it once a read of the sheet says
+  // where it goes. A log shown from the copy saved on the phone takes sets
+  // the same way. What does block is having nothing to log against yet, or
+  // the session being deleted.
+  //
+  // Deleting a whole session is the exception. It is not saved on the phone
+  // (replaying it later, on a sheet that may have moved on, is not worth the
+  // risk), so it waits for the sheet itself to be answering.
   //
   // Nor is anything written to a sheet with no header row to go by. Sets are
   // written into the lifter's own columns, in whatever order the sheet keeps
@@ -414,10 +418,9 @@ export default function LogSessionPage({
     showSessionBootstrap ||
     isDeletingSession ||
     hasUnsupportedLayout ||
-    isLoading ||
-    isError ||
-    fetchFailed ||
     !Array.isArray(parsedData);
+  const isSessionDeleteBlocked =
+    isWriteBlocked || isError || fetchFailed || parsedDataReadAt === null;
 
   const prevSessionDate = useMemo(
     () => getPrevSessionDate(sessionDates, sessionDate),
@@ -664,7 +667,7 @@ export default function LogSessionPage({
       aiReviewLink={aiSessionReviewLink}
       isToday={isToday}
       isDeleting={isDeletingSession}
-      isBlocked={isWriteBlocked}
+      isBlocked={isSessionDeleteBlocked}
       onCancel={() => setShowDeleteConfirm(false)}
       onConfirm={handleDeleteSession}
       onRequestConfirm={() => setShowDeleteConfirm(true)}

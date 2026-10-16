@@ -12,6 +12,11 @@
  * The property being defended, checked after every event of every run: what
  * the lifter sees is exactly what they asked for, and once the queue drains
  * the sheet holds exactly that too. Each row keeps one key for its whole life.
+ *
+ * The same holds across a tab that dies mid-session: a successor page, opened
+ * on the copy saved on the phone and handed what the dead tab saved, ends with
+ * the sheet holding exactly what the lifter asked for, with nothing doubled,
+ * even when the dead tab's last request was still landing.
  */
 
 import assert from "node:assert/strict";
@@ -319,10 +324,17 @@ class FakeSheet {
 
 // --- A world: sheet + network + SWR + the real store -----------------------------
 
-function createWorld({ rows, header = HEADER, seed = 1, faults = {} }) {
-  const clock = createClock();
-  const random = createRandom(seed);
-  const sheet = new FakeSheet(rows, header);
+function createWorld({
+  rows,
+  header = HEADER,
+  seed = 1,
+  faults = {},
+  // A successor page shares the dead tab's sheet and clock.
+  clock = createClock(),
+  random = createRandom(seed),
+  sheet = new FakeSheet(rows, header),
+  inherited = null,
+}) {
   const failures = [];
   const scripted = [];
   const world = {
@@ -333,6 +345,9 @@ function createWorld({ rows, header = HEADER, seed = 1, faults = {} }) {
     viewDate: null,
     attached: true,
     offline: false,
+    dead: false,
+    // What this page last saved on the phone (io.persist).
+    saved: [],
     /** Force the next sends to behave a given way, in order. */
     script: (...modes) => scripted.push(...modes),
   };
@@ -413,7 +428,7 @@ function createWorld({ rows, header = HEADER, seed = 1, faults = {} }) {
     // The page hands the snapshot on a moment later, as an effect would.
     clock.setTimer(
       () => {
-        if (world.attached && swr.cache === data) {
+        if (world.attached && !world.dead && swr.cache === data) {
           store.snapshot(data, world.viewDate);
         }
       },
@@ -433,9 +448,20 @@ function createWorld({ rows, header = HEADER, seed = 1, faults = {} }) {
 
   const store = createLogSyncStore({
     now: clock.now,
+    wallNow: clock.now,
     setTimer: clock.setTimer,
     clearTimer: clock.clearTimer,
-    isReady: () => true,
+    isReady: () => !world.dead,
+    persist: (ssid, intents) => {
+      // A closed page saves nothing more. Round-trip through JSON, as
+      // localStorage would.
+      if (!world.dead) world.saved = JSON.parse(JSON.stringify(intents));
+      return true;
+    },
+    adopt: async (ssid, take) => {
+      if (inherited?.length) take(inherited);
+      inherited = null;
+    },
     send: (plan) => runMutation(sendSheetRequest(plan, fakeFetch)),
     refresh: async (needRows) => {
       const data = await revalidate();
@@ -468,13 +494,49 @@ function createWorld({ rows, header = HEADER, seed = 1, faults = {} }) {
     parseStrengthJourneysData(sheet.snapshot()).filter(
       (row) => row.date === date,
     );
-  world.start = async (viewDate) => {
+  world.start = async (
+    viewDate,
+    { savedCopy = null, offline = false } = {},
+  ) => {
     world.viewDate = viewDate;
+    world.offline = offline;
     store.configure("sheet-1");
+    // The copy saved on the phone paints first, before any read.
+    if (savedCopy) {
+      store.snapshot(
+        {
+          rows: savedCopy.rows,
+          readAt: null,
+          columns: savedCopy.columns,
+        },
+        viewDate,
+      );
+    }
     void revalidate();
-    await clock.run();
+    await clock.run({ until: offline ? clock.now() + 5000 : Infinity });
   };
+  world.lastRead = () => swr.cache;
   return world;
+}
+
+/**
+ * The tab dies: no more saves, sends or snapshots, though a request it had
+ * already sent still lands. A new page opens on the same sheet, painted from
+ * the copy saved at the dead tab's last read, and takes over what it saved.
+ */
+function restart(world, options = {}) {
+  world.dead = true;
+  trace(world.clock.now(), "tab closed, saved", JSON.stringify(world.saved));
+  const successor = createWorld({
+    clock: world.clock,
+    random: world.random,
+    sheet: world.sheet,
+    inherited: world.saved,
+    faults: options.faults ?? {},
+  });
+  // The phone keeps the copy from the last page that managed a read.
+  successor.savedCopy = world.lastRead() ?? world.savedCopy ?? null;
+  return successor;
 }
 
 // --- The lifter, and what they expect to see -------------------------------------
@@ -589,6 +651,34 @@ function createLifter(world) {
             `${label}: ${liftType} on ${date}`,
           );
         }
+      }
+    },
+    /**
+     * A new page gives rows new keys. Take them from its view, checking that
+     * it shows the same rows in the same order.
+     */
+    rekey(nextWorld, label) {
+      world = nextWorld;
+      for (const [date, rows] of expected) {
+        nextWorld.store.view(date);
+        const view = nextWorld.view(date);
+        for (const liftType of new Set(rows.map((row) => row.liftType))) {
+          const want = rows.filter((row) => row.liftType === liftType);
+          const seen = view[liftType] ?? [];
+          assert.deepEqual(
+            seen.map(describeRow),
+            want.map(describeRow),
+            `${label}: ${liftType} on ${date} after reopening`,
+          );
+          want.forEach((row, i) => {
+            row.key = seen[i]._key;
+          });
+        }
+        assert.deepEqual(
+          Object.keys(view).sort(),
+          [...new Set(rows.map((row) => row.liftType))].sort(),
+          `${label}: lift blocks on ${date} after reopening`,
+        );
       }
     },
     /** The sheet holds what is on screen. */
@@ -1061,6 +1151,117 @@ const scenarios = {
     lifter.checkSheet("back online");
     assert.equal(world.failures.length, 0);
   },
+
+  // --- A tab that dies mid-session ---
+
+  async "sets logged offline survive the tab closing, and more can follow"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    world.offline = true;
+    const first = lifter.add(TODAY, "Back Squat", { weight: 110 });
+    lifter.edit(TODAY, first, { weight: 112.5 });
+    lifter.add(TODAY, "Deadlift", { reps: 3, weight: 180 });
+    await world.clock.run({ until: world.clock.now() + 10000 });
+    assert.equal(world.sheet.requests.length, 0);
+
+    // Chrome discards the tab. The lifter reopens the log, still offline.
+    const next = restart(world);
+    await next.start(TODAY, { savedCopy: next.savedCopy, offline: true });
+    lifter.rekey(next, "reopened offline");
+    lifter.add(TODAY, "Deadlift", { reps: 3, weight: 190 });
+    lifter.checkView("reopened offline");
+
+    next.offline = false;
+    next.store.retryNow();
+    await settle(next, lifter, "reopened online");
+    lifter.checkSheet("reopened online");
+    assert.equal(next.failures.length, 0);
+  },
+
+  async "a set whose answer was lost as the tab closed is not doubled"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    world.script("lost-response");
+    lifter.add(TODAY, "Back Squat", { weight: 107.5 });
+    // Long enough for the send to go out and its answer to be lost.
+    await world.clock.run({ until: world.clock.now() + 1000 });
+
+    const next = restart(world);
+    await next.start(TODAY, { savedCopy: next.savedCopy });
+    lifter.rekey(next, "reopened");
+    await settle(next, lifter, "lost answer");
+    lifter.checkSheet("lost answer");
+    assert.equal(next.failures.length, 0);
+  },
+
+  async "a set still on its way when the tab closed is not doubled"() {
+    const world = createWorld({
+      rows: baseRows(),
+      faults: { lateBy: 20000 },
+    });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    world.script("late");
+    lifter.add(TODAY, "Back Squat", { weight: 107.5 });
+    await world.clock.run({ until: world.clock.now() + 600 });
+
+    // The request lands 20s from now, after the new page's first read.
+    const next = restart(world);
+    await next.start(TODAY, { savedCopy: next.savedCopy });
+    lifter.rekey(next, "reopened");
+    await settle(next, lifter, "late arrival");
+    lifter.checkSheet("late arrival");
+    assert.equal(next.failures.length, 0);
+  },
+
+  async "a set that landed just before the tab closed keeps its later edit"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    const key = lifter.add(TODAY, "Bench Press", { reps: 5, weight: 70 });
+    // Sent and confirmed, but the read that would retire it never comes.
+    await world.clock.run({ until: world.clock.now() + 900 });
+    world.offline = true;
+    lifter.edit(TODAY, key, { reps: 4 });
+    await world.clock.run({ until: world.clock.now() + 3000 });
+
+    const next = restart(world);
+    await next.start(TODAY, { savedCopy: next.savedCopy });
+    lifter.rekey(next, "reopened");
+    await settle(next, lifter, "landed then edited");
+    lifter.checkSheet("landed then edited");
+    assert.equal(next.failures.length, 0);
+  },
+
+  async "edits and deletes to older sets made offline survive the tab closing"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    world.offline = true;
+    // The third of three identical sets, so position among equals matters.
+    lifter.edit(TODAY, keyAt(world, TODAY, "Back Squat", 3), { reps: 4 });
+    lifter.remove(TODAY, keyAt(world, TODAY, "Back Squat", 1));
+    lifter.edit(TODAY, keyAt(world, TODAY, "Bench Press", 1), {
+      notes: "14:24 easy",
+    });
+    await world.clock.run({ until: world.clock.now() + 5000 });
+
+    const next = restart(world);
+    await next.start(TODAY, { savedCopy: next.savedCopy, offline: true });
+    lifter.rekey(next, "reopened offline");
+    next.offline = false;
+    next.store.retryNow();
+    await settle(next, lifter, "older sets");
+    lifter.checkSheet("older sets");
+    assert.equal(next.failures.length, 0);
+  },
 };
 
 // --- Fuzz: a lifter tapping at random through an unreliable network ----------------
@@ -1163,9 +1364,97 @@ async function fuzz(seed) {
   assert.deepEqual(world.failures, [], `${label}: a change was handed back`);
 }
 
+// --- Fuzz: the same, with the tab dying at random moments -------------------------
+
+async function fuzzRestarts(seed) {
+  const faults = {
+    rates: {
+      "lost-request": 0.1,
+      "lost-response": 0.08,
+      "server-error": 0.04,
+      late: 0.06,
+    },
+    lateBy: 900,
+  };
+  let world = createWorld({
+    rows: baseRows(),
+    header: seed % 2 ? HEADER : OWN_ORDER,
+    seed: seed + 10000,
+    faults,
+  });
+  const { random, clock } = world;
+  const liftTypes = ["Back Squat", "Bench Press", "Deadlift"];
+  await world.start(TODAY);
+  const lifter = createLifter(world);
+  lifter.seed(TODAY);
+  const label = `restart fuzz seed ${seed}`;
+
+  for (let step = 0; step < 40; step += 1) {
+    const rows = lifter.expected.get(TODAY);
+    const roll = random.next();
+    if (roll < 0.35) {
+      lifter.add(TODAY, random.pick(liftTypes), {
+        reps: random.int(1, 6),
+        weight: random.pick([60, 100, 102.5]),
+      });
+    } else if (roll < 0.6 && rows.length) {
+      lifter.edit(
+        TODAY,
+        random.pick(rows).key,
+        random.chance(0.5)
+          ? { reps: random.pick([3, 5, 8]) }
+          : { weight: random.pick([62.5, 100, 140]) },
+      );
+    } else if (roll < 0.7 && rows.length) {
+      lifter.remove(TODAY, random.pick(rows).key);
+    } else if (roll < 0.8) {
+      world.offline = !world.offline;
+      if (!world.offline) world.store.retryNow();
+    } else if (roll < 0.88) {
+      // The tab dies; the lifter reopens the log, maybe still offline.
+      const offline = world.offline || random.chance(0.3);
+      world = restart(world, { faults });
+      await world.start(TODAY, { savedCopy: world.savedCopy, offline });
+      try {
+        lifter.rekey(world, label);
+      } catch (error) {
+        dumpState(world);
+        throw error;
+      }
+    }
+    // Rows shown from the saved copy take the keys of the read that replaces
+    // it, so across a reopen the check is row for row by content.
+    const check = () => {
+      try {
+        lifter.rekey(world, label);
+      } catch (error) {
+        dumpState(world);
+        throw error;
+      }
+    };
+    check();
+    await clock.run({
+      until: clock.now() + random.pick([0, 50, 300, 1500, 5000]),
+      afterEach: check,
+    });
+  }
+
+  world.offline = false;
+  world.store.retryNow();
+  await clock.run({ afterEach: () => lifter.rekey(world, label) });
+  await settle(world, null, label);
+  lifter.rekey(world, label);
+  lifter.checkSheet(label);
+  assert.deepEqual(world.failures, [], `${label}: a change was handed back`);
+}
+
 // --- Run -----------------------------------------------------------------------------
 
+// LOG_SYNC_ONLY="tab closing" runs just the scenarios whose name contains it.
+const onlyScenario = process.env.LOG_SYNC_ONLY ?? "";
 for (const [name, run] of Object.entries(scenarios)) {
+  if (!name.includes(onlyScenario)) continue;
+  if (TRACE) console.log(`--- ${name}`);
   try {
     await run();
   } catch (error) {
@@ -1179,7 +1468,10 @@ const onlySeed = Number(process.env.LOG_SYNC_SEED ?? 0);
 for (let seed = onlySeed || 1; seed <= (onlySeed || FUZZ_RUNS); seed += 1) {
   await fuzz(seed);
 }
+for (let seed = onlySeed || 1; seed <= (onlySeed || FUZZ_RUNS); seed += 1) {
+  await fuzzRestarts(seed);
+}
 
 console.log(
-  `Log sync checks passed (${Object.keys(scenarios).length} scenarios, ${FUZZ_RUNS} fuzz runs).`,
+  `Log sync checks passed (${Object.keys(scenarios).length} scenarios, ${FUZZ_RUNS} fuzz runs, ${FUZZ_RUNS} with restarts).`,
 );

@@ -6,10 +6,15 @@ import {
   useCallback,
   createContext,
   useMemo,
+  useRef,
 } from "react";
 import { useSession } from "next-auth/react";
 import useSWR from "swr";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import {
+  readCachedSheet,
+  writeCachedSheet,
+} from "@/lib/sheet/sheet-local-cache";
 import { parseData, parseImportedFile } from "@/lib/import/import-dispatcher";
 import {
   getSheetLayout,
@@ -310,6 +315,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   const [sheetLayout, setSheetLayout] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
+  // The sheet data last parsed, so a failed refresh does not parse the same
+  // saved copy again on every retry.
+  const lastParsedSourceRef = useRef(null);
 
   // -- Imported file data (view-only, persisted in sessionStorage) ------------
   // Initialize as null (matches server) and hydrate after mount via layout effect
@@ -658,9 +666,41 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       ? Math.max(latestReadStartedAt, parsedDataSourceData.readStartedAt ?? 0)
       : (parsedDataSourceData.readStartedAt ?? null);
 
-  const rawRows = data?.values?.length ?? null;
+  // The copy of the sheet saved on this phone at the last read (see
+  // sheet-local-cache.js). Until this page's own read arrives it stands in,
+  // so a returning lifter opens on their own log at once, with or without a
+  // connection. Read before paint, so the skeleton never flashes up first.
+  const localCopySsid =
+    authStatus === "authenticated" ? (storedSheetInfo?.ssid ?? null) : null;
+  const [localCopy, setLocalCopy] = useState(null);
+  useIsomorphicLayoutEffect(() => {
+    if (!localCopySsid) return;
+    setLocalCopy((current) =>
+      current?.ssid === localCopySsid
+        ? current
+        : { ssid: localCopySsid, data: readCachedSheet(localCopySsid) },
+    );
+  }, [localCopySsid]);
+  const localData =
+    !data && localCopySsid && localCopy?.ssid === localCopySsid
+      ? localCopy.data
+      : null;
+  // What the app shows: the live read, or failing that the saved copy.
+  const sheetData = data ?? localData;
+  const isShowingSavedCopy = !!localData;
+
+  // Every read that brought new rows replaces the saved copy, once the
+  // browser is idle. SWR keeps the same object for an unchanged sheet, so an
+  // identical read writes nothing.
+  useEffect(() => {
+    if (authStatus !== "authenticated" || !storedSheetInfo?.ssid) return;
+    if (!Array.isArray(data?.values)) return;
+    return writeCachedSheet(storedSheetInfo.ssid, data);
+  }, [authStatus, storedSheetInfo?.ssid, data]);
+
+  const rawRows = sheetData?.values?.length ?? null;
   const isError = !!error;
-  const hasCachedSheetData = Array.isArray(data?.values);
+  const hasCachedSheetData = Array.isArray(sheetData?.values);
 
   const apiError = useMemo(() => {
     if (!error) return null;
@@ -715,10 +755,11 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     );
 
     if (authStatus === "loading") return; // Wait for auth. Don't prematurely go into demo mode
-    if (isLoading) return; // Wait for useSWR. Don't prematurely go into demo mode
+    if (isLoading && !sheetData) return; // Wait for useSWR. Don't prematurely go into demo mode
 
     // API errors: GA tracking is handled in onErrorRetry (only fires on genuine
-    // failures, not transient retry gaps). Effect just logs and bails.
+    // failures, not transient retry gaps). Effect just logs and bails, unless
+    // the saved copy has not been shown yet: it is worth showing all the more.
     if (isError) {
       const statusInfo = error?.status ? ` (${error.status})` : "";
       console.error(
@@ -727,13 +768,26 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         "color:inherit",
       );
       setParseError(null);
+      if (!localData || lastParsedSourceRef.current === localData) return;
+    }
+
+    // Signed in with a sheet linked but nothing read yet, such as opening
+    // with no connection and no saved copy: keep waiting, never show an
+    // empty log in place of theirs.
+    if (
+      authStatus === "authenticated" &&
+      storedSheetInfo?.ssid &&
+      !sheetData &&
+      !isImportedData
+    ) {
       return;
     }
 
     const storedSsid = storedSheetInfo?.ssid ?? null;
+    lastParsedSourceRef.current = sheetData ?? null;
     const result = getParsedDataWithFallback({
       authStatus,
-      data,
+      data: sheetData,
       dataSource,
       demoParsedData,
       isKnownUnreadable: storedSsid !== null && storedSsid === unreadableSsid,
@@ -747,14 +801,20 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       setUnreadableSsid(null);
     }
 
-    if (result.parsedData && result.parsedData !== demoParsedData && data) {
-      parsedDataSource.set(result.parsedData, data);
+    if (
+      result.parsedData &&
+      result.parsedData !== demoParsedData &&
+      sheetData
+    ) {
+      parsedDataSource.set(result.parsedData, sheetData);
     }
     setParsedData(result.parsedData);
     setSheetLayout(result.sheetLayout);
     setParseError(result.parseError);
   }, [
     data,
+    sheetData,
+    localData,
     isLoading,
     isError,
     error,
@@ -763,6 +823,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     demoParsedData,
     storedSheetInfo?.ssid,
     unreadableSsid,
+    isImportedData,
   ]);
 
   // -----------------------------------------------------------------------------------------------
@@ -928,7 +989,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   return (
     <UserLiftingDataContext.Provider
       value={{
-        isLoading,
+        // Loading only while there is nothing to show: a saved copy counts.
+        isLoading: isLoading && !localData,
+        isShowingSavedCopy,
         isError,
         fetchFailed,
         apiError,

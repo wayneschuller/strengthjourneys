@@ -75,10 +75,17 @@ export const LOCAL_STORAGE_KEYS = {
   // Marks a browser that has completed (or attempted) a Google sign-in before.
   // Read at module load to suppress the sign-in education dialog for returners.
   SIGNED_IN_BEFORE: "SJ_signedInBefore",
-  // "1" while this browser holds a session, cleared once the server confirms
-  // a sign-out. Lets ResilientSession tell a dropped session request from a
-  // real sign-out, so patchy mobile data never drops a lifter into the demo.
+  // The signed-in lifter's name, email and picture (never a token) while this
+  // browser holds a session, cleared once the server confirms a sign-out.
+  // Lets ResilientSession tell a dropped session request from a real
+  // sign-out, and open the app offline as the lifter rather than the demo.
   SESSION_EXPECTED: "SJ_sessionExpected",
+  // The last read of the linked sheet, so the app opens on the lifter's own
+  // log with no connection (see sheet-local-cache.js). Cleared on sign-out.
+  SHEET_CACHE: "SJ_sheetCache",
+  // Prefix for the log's unsent changes, one record per tab and sheet (see
+  // log-sync-persistence.js). Cleared on sign-out.
+  LOG_OUTBOX: "SJ_logOutbox",
   // Rare recovery rail only: stores the interrupted save intent long enough to
   // resume after Google re-consent. Do not expand this into a general workflow
   // state machine.

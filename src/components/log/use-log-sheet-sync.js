@@ -7,7 +7,9 @@
  * turns the lifter's taps into queued changes.
  *
  * The store is one per tab, not one per page, so a set added a moment before
- * the lifter changes date or leaves the log still reaches the sheet.
+ * the lifter changes date or leaves the log still reaches the sheet. What it
+ * still owes is saved on the phone after every change (log-sync-persistence),
+ * so a closed or discarded tab hands it on to the next page instead.
  */
 
 import {
@@ -39,6 +41,10 @@ import {
   createLogSyncStore,
   sendSheetRequest,
 } from "@/lib/sheet/log-sync-store";
+import {
+  adoptLogOutboxes,
+  persistLogOutbox,
+} from "@/lib/sheet/log-sync-persistence";
 
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
 import { logSheetTimings } from "@/components/log/timing-log";
@@ -53,6 +59,9 @@ const bridge = { mutate: null, toast: null, failureListeners: new Set() };
 
 const store = createLogSyncStore({
   now: () => performance.now(),
+  wallNow: () => Date.now(),
+  persist: persistLogOutbox,
+  adopt: adoptLogOutboxes,
   setTimer: (fn, ms) => setTimeout(fn, ms),
   clearTimer: (handle) => clearTimeout(handle),
   isReady: () => Boolean(bridge.mutate),
@@ -101,6 +110,20 @@ const STALL_NOTICE_MS = 8000;
 const EMPTY_STATE = createEngineState();
 const getServerState = () => EMPTY_STATE;
 
+/**
+ * The tab's sync queue at a glance, for surfaces outside the log page (the
+ * connection banner): how many changes are still on their way to the sheet,
+ * and whether they are stuck waiting on the connection.
+ */
+export function useLogSyncSummary() {
+  const state = useSyncExternalStore(
+    store.subscribe,
+    store.getState,
+    getServerState,
+  );
+  return useMemo(() => getSyncSummary(state), [state]);
+}
+
 let pageListenersInstalled = false;
 
 // Installed once and left in place: they have to outlive the log page for the
@@ -111,11 +134,17 @@ function installPageListeners() {
   window.addEventListener("online", () => store.retryNow());
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") store.flush();
-    else store.retryNow();
+    else {
+      store.retryNow();
+      // Another tab may have closed meanwhile, leaving changes behind.
+      store.adoptAgain();
+    }
   });
   window.addEventListener("pagehide", () => store.flush());
   window.addEventListener("beforeunload", (event) => {
-    if (!store.hasUnsentChanges()) return;
+    // Changes saved on the phone go on from the next page; only warn about
+    // one that cannot.
+    if (!store.hasUnsavedChanges()) return;
     store.flush();
     event.preventDefault();
     event.returnValue = "";
@@ -248,7 +277,7 @@ export function useLogSheetSync({
             bridge.toast?.({
               title: "Saving is waiting on the connection",
               description:
-                "Your changes are held here and will reach your sheet as soon as it answers. Keep this tab open until the tick shows.",
+                "Keep logging. Your sets are safe on this phone and reach your sheet as soon as it answers.",
               duration: 8000,
             });
           }, STALL_NOTICE_MS);

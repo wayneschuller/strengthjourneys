@@ -30,6 +30,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
+import { clearLocalLogData } from "@/lib/sheet/sheet-local-cache";
+import { clearSavedSession } from "@/components/ui-shell/resilient-session";
 
 /**
  * User avatar button in the nav bar. Shows a Google sign-in button when unauthenticated,
@@ -165,7 +167,14 @@ export function AvatarDropdown() {
               <span className="sr-only">(opens in a new tab)</span>
             </a>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => signOut()}>
+          <DropdownMenuItem
+            onClick={() => {
+              // Nothing of the lifter's log stays on a phone they signed out of.
+              clearLocalLogData();
+              clearSavedSession();
+              signOut();
+            }}
+          >
             <LogOut className="mr-2 h-4 w-4" />
             Sign out
           </DropdownMenuItem>

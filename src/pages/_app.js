@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/components/ui-shell/theme-provider";
 import { Layout } from "@/components/ui-shell/layout";
 import { Toaster } from "@/components/ui/toaster";
 import { AnalyticsSession } from "@/components/ui-shell/analytics-session";
+import { ResilientSession } from "@/components/ui-shell/resilient-session";
 import { SessionProvider } from "next-auth/react";
 import { MotionConfig } from "motion/react";
 import { useEffect } from "react";
@@ -93,21 +94,27 @@ export default function App({ Component, pageProps, session }) {
           // disableTransitionOnChange
         >
           <SessionProvider session={session}>
-            <AnalyticsSession />
-            {/* A page that server-renders the demo sets demoAnchorDate in
+            {/* Must stay first inside SessionProvider: every useSession()
+                reads through it, so patchy data never looks like a sign-out. */}
+            <ResilientSession>
+              <AnalyticsSession />
+              {/* A page that server-renders the demo sets demoAnchorDate in
                 its getStaticProps; see UserLiftingDataProvider. */}
-            <UserLiftingDataProvider demoAnchorDate={pageProps.demoAnchorDate}>
-              <TimerProvider>
-                <LiftColorsProvider>
-                  <AthleteBioProvider>
-                    <Layout>
-                      <Component {...pageProps} />
-                      <Toaster />
-                    </Layout>
-                  </AthleteBioProvider>
-                </LiftColorsProvider>
-              </TimerProvider>
-            </UserLiftingDataProvider>
+              <UserLiftingDataProvider
+                demoAnchorDate={pageProps.demoAnchorDate}
+              >
+                <TimerProvider>
+                  <LiftColorsProvider>
+                    <AthleteBioProvider>
+                      <Layout>
+                        <Component {...pageProps} />
+                        <Toaster />
+                      </Layout>
+                    </AthleteBioProvider>
+                  </LiftColorsProvider>
+                </TimerProvider>
+              </UserLiftingDataProvider>
+            </ResilientSession>
           </SessionProvider>
         </ThemeProvider>
       </MotionConfig>

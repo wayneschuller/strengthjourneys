@@ -162,6 +162,8 @@ export function requireFullSheetRead() {
   fullReadsOwed += 1;
 }
 
+const READ_TIMEOUT_MS = 15000;
+
 /**
  * Generic JSON fetcher for useSWR.
  * Throws on non-2xx so SWR sets `error` and the UI can surface real failures.
@@ -181,10 +183,22 @@ const fetcher = async (...args) => {
       : {}),
     ...(mayAnswerUnchanged ? { "X-Sheet-Unchanged-Ok": "1" } : {}),
   };
-  const res = await fetch(url, {
-    ...init,
-    headers: { ...init?.headers, ...sheetHeaders },
-  });
+  // On patchy mobile data a request can stall with no answer for minutes,
+  // and the log page stays write-blocked the whole time. Giving up on the
+  // response headers hands it to onErrorRetry's backoff instead. The body is
+  // not timed: a long sheet arriving slowly is still arriving.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), READ_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: { ...init?.headers, ...sheetHeaders },
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
   const json = await res.json().catch(() => null);
 
   if (!res.ok) {

@@ -15,6 +15,7 @@ import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
   countSkip,
+  countSkippedLift,
   getSetSkipReason,
   normalizeExportLiftType,
   parseLeadingInteger,
@@ -187,6 +188,7 @@ function parseStrongData(data, { preferredUnit } = {}) {
     );
   const parsedData = [];
   const skippedByReason = {};
+  const skippedLifts = {};
   const acceptedWorkouts = new Set();
 
   for (let i = 1; i < data.length; i++) {
@@ -214,6 +216,7 @@ function parseStrongData(data, { preferredUnit } = {}) {
     });
     if (skipReason) {
       countSkip(skippedByReason, skipReason);
+      countSkippedLift(skippedLifts, skipReason, liftType);
       continue;
     }
 
@@ -242,6 +245,7 @@ function parseStrongData(data, { preferredUnit } = {}) {
   return {
     entries: parsedData,
     skippedByReason,
+    skippedLifts,
     workoutCount: acceptedWorkouts.size,
     unitType,
   };

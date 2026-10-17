@@ -30,6 +30,9 @@
 //                      getSetSkipReason returns, added up with countSkip.
 //                      Return it only when every skip is counted; a parser
 //                      that cannot yet say why leaves it out altogether.
+//     skippedLifts     Optional. Which exercises those skips were, as
+//                      { reason: { liftType: sets } }, added up with
+//                      countSkippedLift, so the preview can name them.
 //     workoutCount     When the export marks where one workout ends.
 //     unitType         When one unit holds for the whole file.
 //
@@ -110,6 +113,7 @@ import { devLog, recordTiming } from "@/lib/processing-utils";
  * @property {(rows: string[][], context: { importedAt: Date, preferredUnit?: "lb"|"kg" }) => {
  *   entries: LiftEntry[],
  *   skippedByReason?: Object<string, number>,
+ *   skippedLifts?: Object<string, Object<string, number>>,
  *   workoutCount?: number,
  *   unitType?: "lb"|"kg",
  * }} parse
@@ -123,6 +127,7 @@ import { devLog, recordTiming } from "@/lib/processing-utils";
  * @property {number} parsedRows
  * @property {number} skippedRows
  * @property {Object<string, number>} skippedByReason
+ * @property {Object<string, Object<string, number>>} [skippedLifts]
  * @property {number} [workoutCount]
  * @property {"lb"|"kg"} [unitType]
  */
@@ -340,6 +345,7 @@ function parseAppExport(format, rows, context) {
       parsedRows: data.length,
       skippedRows,
       skippedByReason,
+      skippedLifts: result.skippedLifts,
       workoutCount: result.workoutCount,
       unitType: result.unitType,
     },

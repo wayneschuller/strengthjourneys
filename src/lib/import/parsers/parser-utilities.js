@@ -631,6 +631,14 @@ export function countSkip(skippedByReason, reason, sets = 1) {
   skippedByReason[reason] = (skippedByReason[reason] || 0) + sets;
 }
 
+// Adds to a parser's tally of which exercises were left out for `reason`, so
+// the import preview can name them: "Chest Dip, Push Up and 9 more".
+export function countSkippedLift(skippedLifts, reason, liftType, sets = 1) {
+  if (!liftType) return;
+  const byLift = (skippedLifts[reason] ??= {});
+  byLift[liftType] = (byLift[liftType] || 0) + sets;
+}
+
 // -- Reading an app's export -------------------------------------------------
 //
 // Helpers shared by the app-export parsers (Hevy, Strong and the rest). Each

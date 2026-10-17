@@ -40,6 +40,7 @@ import { formatLifetimeTonnage } from "@/lib/home-dashboard/inspiration-card-met
 import { MEET_LIFTS, formatMeetTotal } from "@/lib/meet-detection";
 import { getWeakestLiftHint } from "@/lib/thousand-club";
 import { getReadableDateString } from "@/lib/date-utils";
+import { gaTrackCoffeeNudgeClick } from "@/lib/analytics/analytics";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import {
   MEET_GOLD,
@@ -725,25 +726,53 @@ function getMotivationalPhrase(percentile) {
   return "Every journey starts somewhere. You're on your way.";
 }
 
-const IMPORT_SKIP_REASON_LABELS = {
-  invalidDate: "invalid dates",
-  missingExercise: "missing exercise names",
-  missingReps: "missing or invalid reps",
-  missingWeight: "missing loads",
-  invalidWeight: "invalid loads",
-  unsupportedDurationOrDistance: "duration or distance-only sets",
+// Why each kind of set was left out, in the lifter's terms. `noun` takes the
+// count, `why` follows the exercise names. Bodyweight and timed work are the
+// big ones: whole categories we do not read yet, not faults in the file.
+const IMPORT_SKIP_REASONS = {
+  invalidWeight: {
+    noun: (n) => `${pluralize(n, "bodyweight set")} with no added weight`,
+    why: "Bodyweight exercises are not supported yet. Any you logged with added weight came through.",
+  },
+  unsupportedDurationOrDistance: {
+    noun: (n) => pluralize(n, "timed or distance set"),
+    why: "Cardio, holds and stretching are not supported yet either.",
+  },
+  missingReps: {
+    noun: (n) => `${pluralize(n, "set")} with no reps logged`,
+  },
+  missingWeight: {
+    noun: (n) => `${pluralize(n, "set")} with no weight logged`,
+  },
+  invalidDate: {
+    noun: (n) => `${pluralize(n, "row")} with a date we could not read`,
+  },
+  missingExercise: {
+    noun: (n) => `${pluralize(n, "row")} with no exercise name`,
+  },
 };
+
+const NOT_YET_SUPPORTED = ["invalidWeight", "unsupportedDurationOrDistance"];
+
+// "Chest Dip, Push Up, Hanging Leg Raise and 9 more", most logged first.
+function describeSkippedLifts(byLift, shown = 3) {
+  const names = Object.entries(byLift || {})
+    .sort((a, b) => b[1] - a[1])
+    .map(([name]) => name);
+  if (names.length === 0) return null;
+  if (names.length <= shown) return joinWithAnd(names);
+  return `${names.slice(0, shown).join(", ")} and ${names.length - shown} more`;
+}
 
 function ImportDiagnosticsNotice({ diagnostics }) {
   if (!diagnostics?.skippedRows) return null;
 
-  const reasonSummary = Object.entries(diagnostics.skippedByReason || {})
+  const reasons = Object.entries(diagnostics.skippedByReason || {})
     .filter(([, count]) => count > 0)
-    .map(
-      ([reason, count]) =>
-        `${count.toLocaleString()} ${IMPORT_SKIP_REASON_LABELS[reason] || "unsupported rows"}`,
-    )
-    .join(", ");
+    .sort((a, b) => b[1] - a[1]);
+  const hasUnsupported = reasons.some(([reason]) =>
+    NOT_YET_SUPPORTED.includes(reason),
+  );
 
   return (
     <div className="mt-4 flex w-full items-start gap-3 rounded-lg border border-amber-300/60 bg-amber-50/50 p-3 text-left dark:border-amber-500/30 dark:bg-amber-500/5">
@@ -751,13 +780,40 @@ function ImportDiagnosticsNotice({ diagnostics }) {
       <div className="text-sm">
         <p className="font-medium">
           Imported {diagnostics.parsedRows.toLocaleString()} of{" "}
-          {diagnostics.sourceRows.toLocaleString()} set rows
+          {diagnostics.sourceRows.toLocaleString()} sets
         </p>
-        <p className="text-muted-foreground mt-1 leading-5">
-          {diagnostics.skippedRows.toLocaleString()} could not become weighted,
-          rep-based Strength Journeys entries
-          {reasonSummary ? `: ${reasonSummary}.` : "."}
-        </p>
+        <ul className="text-muted-foreground mt-1 space-y-1 leading-5">
+          {reasons.map(([reason, count]) => {
+            const copy = IMPORT_SKIP_REASONS[reason];
+            const lifts = describeSkippedLifts(
+              diagnostics.skippedLifts?.[reason],
+            );
+            return (
+              <li key={reason}>
+                <span className="text-foreground">
+                  {copy ? copy.noun(count) : pluralize(count, "other set")}
+                </span>
+                {lifts ? `: ${lifts}.` : "."}
+                {copy?.why ? ` ${copy.why}` : ""}
+              </li>
+            );
+          })}
+        </ul>
+        {hasUnsupported && (
+          <p className="text-muted-foreground mt-2 leading-5">
+            Strength Journeys is a one-person project. A coffee helps bring
+            bodyweight and cardio support sooner.{" "}
+            <a
+              href="https://buymeacoffee.com/lrhvbjxzqr"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => gaTrackCoffeeNudgeClick("import_skipped_sets")}
+              className="text-foreground font-medium underline underline-offset-2"
+            >
+              Buy me a coffee
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );

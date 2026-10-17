@@ -16,6 +16,7 @@ import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
   countSkip,
+  countSkippedLift,
   findColumn,
   getSetSkipReason,
   isBodyweightLoadLiftName,
@@ -83,6 +84,7 @@ function parseFitNotesData(data, { importedAt = new Date() } = {}) {
 
   const parsedData = [];
   const skippedByReason = {};
+  const skippedLifts = {};
   const acceptedWorkouts = new Set();
   const anchoredWorkouts = new Set();
 
@@ -112,6 +114,7 @@ function parseFitNotesData(data, { importedAt = new Date() } = {}) {
     });
     if (skipReason) {
       countSkip(skippedByReason, skipReason);
+      countSkippedLift(skippedLifts, skipReason, liftType);
       continue;
     }
 
@@ -138,6 +141,7 @@ function parseFitNotesData(data, { importedAt = new Date() } = {}) {
   return {
     entries: parsedData,
     skippedByReason,
+    skippedLifts,
     workoutCount: acceptedWorkouts.size,
     unitType,
   };

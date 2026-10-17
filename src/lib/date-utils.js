@@ -3,6 +3,28 @@
  * Keep week math canonical here so cards and heatmaps agree on Monday-first buckets.
  *
  * ──────────────────────────────────────────────────────────────────────────
+ *  WHY YYYY-MM-DD STRINGS, AND WHERE THEY ARE MADE
+ * ──────────────────────────────────────────────────────────────────────────
+ *  Every date in parsedData is a zero-padded "YYYY-MM-DD" string, by design:
+ *
+ *    - String order is date order, so sorting and range checks are plain
+ *      string comparisons (a.date < b.date, localeCompare), cheap at the
+ *      tens of thousands of sets a long history holds.
+ *    - The string is its own key: grouping by day, merge duplicate matching
+ *      and caches use it directly, with no Date to convert back.
+ *    - A calendar day held as a string cannot shift across midnight (see the
+ *      timezone model below).
+ *    - It is the format our sheet template recommends, so a write and a
+ *      fresh read round-trip unchanged.
+ *
+ *  The price is that every outside date is converted once, at the boundary,
+ *  and nothing raw is ever compared with a parsed date. Sheet cells and app
+ *  exports go through normalizeDateInput (with resolveDateColumnLocale for a
+ *  column's day/month order) before they touch parsedData or are compared
+ *  with it. A raw "17/10/2026" compared as a string sorts wrongly without
+ *  any error, which is how the import merge once placed rows.
+ *
+ * ──────────────────────────────────────────────────────────────────────────
  *  YYYY-MM-DD TIMEZONE MODEL (read before touching date code)
  * ──────────────────────────────────────────────────────────────────────────
  *  Lift dates flow through the app as "YYYY-MM-DD" strings with **no

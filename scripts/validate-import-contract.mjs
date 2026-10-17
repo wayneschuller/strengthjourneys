@@ -199,8 +199,33 @@ not a date,Upper A,45m,Squat (Barbell),1,100,5,0,0,,,
       unitType: "kg",
     },
     {
-      // A few 225s are not enough to call a file lb, and with no setting to
-      // follow, an unclear file reads as lb.
+      // A first-time visitor's short kg history: the loads lean kg without
+      // pointing clearly, and with no setting to follow, the lean decides.
+      name: "short kg history, no setting",
+      csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),W,20,10,0,0,,,
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),1,62.5,5,0,0,,,
+2024-03-06 19:00:00,Legs,1h,Squat (Barbell),1,100,5,0,0,,,
+`,
+      count: 3,
+      skipped: {},
+      unitType: "kg",
+    },
+    {
+      // The same lean gives way to a lifter who has set lb.
+      name: "short kg-leaning history, lb setting",
+      csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),W,20,10,0,0,,,
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),1,62.5,5,0,0,,,
+2024-03-06 19:00:00,Legs,1h,Squat (Barbell),1,100,5,0,0,,,
+`,
+      context: { preferredUnit: "lb" },
+      count: 3,
+      skipped: {},
+      unitType: "lb",
+    },
+    {
+      // A few 225s lean lb, and with no setting to follow, the lean decides.
       name: "unclear loads, no setting",
       csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
 2024-03-04 19:00:00,Pull,1h,Deadlift (Barbell),1,225,3,0,0,,,

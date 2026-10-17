@@ -3,7 +3,8 @@
 // Public samples show one row per set with `Date`, `Exercise Name`, `Weight`,
 // and `Reps`. Strong exports do not expose units in the CSV, so we infer the
 // most likely unit from common barbell warm-up/loading patterns. When the file
-// does not say clearly, the lifter's own unit setting decides, then pounds. Not the StrongLifts 5x5 app, which has its
+// does not say clearly, the lifter's own unit setting decides, if they have
+// one, before the loads' narrower lead. Not the StrongLifts 5x5 app, which has its
 // own parser. Follows the parser contract in import-dispatcher.js.
 //
 // Besides sets, the file holds cardio and timed work (no reps, a distance or
@@ -124,10 +125,17 @@ function extractUnitFromHeader(header) {
   return null;
 }
 
-// The unit the loads point to, or null when they do not point clearly. One
-// unit has to outscore the other twice over, and by enough sets to mean
-// something, or a few 225s (a fair kg load too) would settle a file alone.
-function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
+// The unit the loads point to. They point clearly when one unit outscores the
+// other twice over, and by enough sets to mean something; only then do they
+// outrank the lifter's own unit setting, since a few 225s are a fair kg load
+// too. With no setting to follow, the higher score decides, as it always has,
+// so a short kg history from a first-time visitor still reads as kg.
+function inferStrongUnitType(
+  data,
+  weightColumnIndex,
+  exerciseNameColumnIndex,
+  preferredUnit,
+) {
   let kgScore = 0;
   let lbScore = 0;
 
@@ -150,7 +158,8 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
 
   if (kgScore >= 10 && kgScore >= lbScore * 2) return "kg";
   if (lbScore >= 10 && lbScore >= kgScore * 2) return "lb";
-  return null;
+  if (preferredUnit) return preferredUnit;
+  return kgScore > lbScore ? "kg" : "lb";
 }
 
 function parseStrongData(data, { preferredUnit } = {}) {
@@ -170,9 +179,12 @@ function parseStrongData(data, { preferredUnit } = {}) {
 
   const unitType =
     extractUnitFromHeader(weightHeader) ||
-    inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) ||
-    preferredUnit ||
-    "lb";
+    inferStrongUnitType(
+      data,
+      weightColumnIndex,
+      exerciseNameColumnIndex,
+      preferredUnit,
+    );
   const parsedData = [];
   const skippedByReason = {};
   const acceptedWorkouts = new Set();

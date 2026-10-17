@@ -156,7 +156,6 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
       total,
       inClub: total >= 1000,
       delta: Math.abs(total - 1000),
-      lifts: liftTotals,
       biggestOpportunity: getWeakestLiftHint(
         liftTotals.squat,
         liftTotals.bench,
@@ -263,12 +262,12 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
 
           {thousandClub && (
             <FeaturePanel
+              href="/1000lb-club-calculator"
               visual={
                 <ThousandDonut
                   total={thousandClub.total}
                   prefersReducedMotion={true}
                   compact={true}
-                  href="/1000lb-club-calculator"
                   className="my-0 h-[144px] w-full max-w-[144px] xl:h-[144px] xl:max-w-[144px]"
                 />
               }
@@ -276,11 +275,11 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
               <p className="text-lg leading-snug font-bold">
                 {thousandClub.inClub
                   ? "You’re in the 1000lb Club"
-                  : `Your 1000lb Club total is ${thousandClub.total.toLocaleString()} lb`}
+                  : `Your 1000lb Club total is ${thousandClub.total.toLocaleString()} lb${isMetric ? ` (${Math.round(toKg(thousandClub.total, "lb")).toLocaleString()} kg)` : ""}`}
               </p>
               <p className="text-muted-foreground mt-1 text-sm">
                 {thousandClub.inClub
-                  ? `A ${thousandClub.total.toLocaleString()} lb total, ${thousandClub.delta} lb past 1000.`
+                  ? `A ${thousandClub.total.toLocaleString()} lb total${isMetric ? ` (${Math.round(toKg(thousandClub.total, "lb")).toLocaleString()} kg)` : ""}, ${thousandClub.delta} lb past 1000.`
                   : `You’re ${thousandClub.delta} lb away from the 1000lb Club.`}
               </p>
               {thousandClub.biggestOpportunity && !thousandClub.inClub && (
@@ -296,11 +295,6 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
                   {thousandClub.biggestOpportunity.lift.toLowerCase()}.
                 </p>
               )}
-              <p className="text-muted-foreground mt-1 text-xs tabular-nums">
-                Squat {thousandClub.lifts.squat} · Bench{" "}
-                {thousandClub.lifts.bench} · Deadlift{" "}
-                {thousandClub.lifts.deadlift}
-              </p>
             </FeaturePanel>
           )}
         </Reveal>
@@ -531,12 +525,21 @@ function StatTile({ value, label, detail }) {
 }
 
 // A chart on the left and its meaning on the right, stacked on a phone.
-function FeaturePanel({ visual, children }) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-lg border p-4 sm:flex-row sm:gap-4">
+function FeaturePanel({ visual, children, href }) {
+  const body = (
+    <>
       <div className="w-36 shrink-0">{visual}</div>
       <div className="min-w-0 text-center sm:text-left">{children}</div>
-    </div>
+    </>
+  );
+  const className =
+    "flex flex-col items-center gap-3 rounded-lg border p-4 sm:flex-row sm:gap-4";
+  return href ? (
+    <Link href={href} className={`${className} hover:bg-muted/40`}>
+      {body}
+    </Link>
+  ) : (
+    <div className={className}>{body}</div>
   );
 }
 

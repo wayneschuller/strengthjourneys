@@ -2,8 +2,8 @@
 //
 // Public samples show one row per set with `Date`, `Exercise Name`, `Weight`,
 // and `Reps`. Strong exports do not expose units in the CSV, so we infer the
-// most likely unit from common barbell warm-up/loading patterns and default to
-// pounds if the file is ambiguous. Not the StrongLifts 5x5 app, which has its
+// most likely unit from common barbell warm-up/loading patterns. When the file
+// does not say clearly, the lifter's own unit setting decides, then pounds. Not the StrongLifts 5x5 app, which has its
 // own parser. Follows the parser contract in import-dispatcher.js.
 //
 // Besides sets, the file holds cardio and timed work (no reps, a distance or
@@ -27,20 +27,42 @@ export const strongFormat = {
 };
 
 // Strong writes its headings in the app's language, so each column has a
-// heading per language a real export has shown us. Add a language here from a
-// real file, never a guess. The weight, distance and seconds headings can
-// carry a unit, "Weight (kg)", so those match from the front.
+// heading per language. English and French come from real exports. Spanish is
+// our best reading of Strong's pattern, unconfirmed until a real file arrives,
+// so it carries the likely variants. Headings are compared without accents or
+// case. The weight, distance and seconds headings can carry a unit,
+// "Weight (kg)", so those match from the front.
 const STRONG_HEADINGS = {
-  date: ["date"],
-  workoutName: ["workout name", "nom de l'entraînement"],
-  exerciseName: ["exercise name", "nom de l'exercice"],
-  setOrder: ["set order", "ordre de la série"],
-  weight: ["weight", "poids"],
-  reps: ["reps", "réps"],
-  distance: ["distance"],
-  seconds: ["seconds", "secondes"],
-  notes: ["notes"],
-  workoutNotes: ["workout notes"],
+  date: ["date", "fecha"],
+  workoutName: [
+    "workout name",
+    "nom de l'entrainement",
+    "nombre del entrenamiento",
+    "nombre de entrenamiento",
+    "nombre del entreno",
+  ],
+  exerciseName: [
+    "exercise name",
+    "nom de l'exercice",
+    "nombre del ejercicio",
+    "nombre de ejercicio",
+  ],
+  setOrder: [
+    "set order",
+    "ordre de la serie",
+    "orden de la serie",
+    "orden de serie",
+  ],
+  weight: ["weight", "poids", "peso"],
+  reps: ["reps", "repeticiones"],
+  distance: ["distance", "distancia"],
+  seconds: ["seconds", "secondes", "segundos"],
+  notes: ["notes", "notas"],
+  workoutNotes: [
+    "workout notes",
+    "notas del entrenamiento",
+    "notas de entrenamiento",
+  ],
   rpe: ["rpe"],
 };
 const PREFIX_HEADINGS = new Set(["weight", "distance", "seconds"]);
@@ -60,9 +82,11 @@ function findStrongColumn(headers, key) {
   const names = STRONG_HEADINGS[key];
   const matchesFront = PREFIX_HEADINGS.has(key);
   return headers.findIndex((header) => {
-    // Typographic apostrophes and decomposed accents read the same as typed.
+    // Accents and typographic apostrophes are dropped, so "Réps", "Reps"
+    // and "Nom de l’exercice" all read as typed in the table.
     const normalized = String(header || "")
-      .normalize("NFC")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/\u2019/g, "'")
       .trim()
       .toLowerCase();
@@ -100,6 +124,9 @@ function extractUnitFromHeader(header) {
   return null;
 }
 
+// The unit the loads point to, or null when they do not point clearly. One
+// unit has to outscore the other twice over, and by enough sets to mean
+// something, or a few 225s (a fair kg load too) would settle a file alone.
 function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
   let kgScore = 0;
   let lbScore = 0;
@@ -121,10 +148,12 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
     if (exerciseName.includes("barbell") && weight === 45) lbScore += 3;
   }
 
-  return kgScore > lbScore ? "kg" : "lb";
+  if (kgScore >= 10 && kgScore >= lbScore * 2) return "kg";
+  if (lbScore >= 10 && lbScore >= kgScore * 2) return "lb";
+  return null;
 }
 
-function parseStrongData(data) {
+function parseStrongData(data, { preferredUnit } = {}) {
   const headers = data[0] || [];
   const dateColumnIndex = findStrongColumn(headers, "date");
   const workoutNameColumnIndex = findStrongColumn(headers, "workoutName");
@@ -141,7 +170,9 @@ function parseStrongData(data) {
 
   const unitType =
     extractUnitFromHeader(weightHeader) ||
-    inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex);
+    inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) ||
+    preferredUnit ||
+    "lb";
   const parsedData = [];
   const skippedByReason = {};
   const acceptedWorkouts = new Set();

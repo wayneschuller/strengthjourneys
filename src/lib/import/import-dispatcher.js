@@ -19,7 +19,7 @@
 //     True only for this app's header row. Keep it exact: an export's headings
 //     are fixed, and a loose match here takes another app's file.
 //
-//   parse(rows, { importedAt }) → { entries, skippedByReason?, workoutCount?, unitType? }
+//   parse(rows, { importedAt, preferredUnit }) → { entries, skippedByReason?, workoutCount?, unitType? }
 //     entries          One LiftEntry per set, in any order. Each needs an ISO
 //                      date, a liftType from normalizeExportLiftType (or
 //                      normalizeLiftTypeNames), whole reps above zero, a
@@ -32,6 +32,10 @@
 //                      that cannot yet say why leaves it out altogether.
 //     workoutCount     When the export marks where one workout ends.
 //     unitType         When one unit holds for the whole file.
+//
+//   preferredUnit is the lifter's own unit setting, "kg" or "lb", or absent
+//   when they have never set one. Only for a file that does not say its unit:
+//   what the file says always wins.
 //
 // The dispatcher does the rest for every format, so no parser has to:
 //   - tries each detect in the order of APP_EXPORT_FORMATS, first match wins
@@ -103,7 +107,7 @@ import { devLog, recordTiming } from "@/lib/processing-utils";
  * @property {string} id   Durable id, persisted in import profiles
  * @property {string} name Display name, also written into provenance notes
  * @property {(headers: string[]) => boolean} detect
- * @property {(rows: string[][], context: { importedAt: Date }) => {
+ * @property {(rows: string[][], context: { importedAt: Date, preferredUnit?: "lb"|"kg" }) => {
  *   entries: LiftEntry[],
  *   skippedByReason?: Object<string, number>,
  *   workoutCount?: number,
@@ -200,10 +204,12 @@ export function detectFormat(headers) {
  * Handles container decoding (CSV → rows) and format detection.
  *
  * @param {File} file The dropped/selected file
+ * @param {{ preferredUnit?: "lb"|"kg" }} [context] The lifter's unit setting,
+ *   for a file that does not say its unit
  * @returns {Promise<{ data: ParsedData, formatId: string, formatName: string, diagnostics: ImportDiagnostics | null }>}
  * @throws {Error} If the file can't be parsed or format is unrecognized
  */
-export async function parseImportedFile(file) {
+export async function parseImportedFile(file, context = {}) {
   const ext = file.name.split(".").pop()?.toLowerCase();
   let rows;
 
@@ -214,7 +220,7 @@ export async function parseImportedFile(file) {
     rows = decodeCSV(text);
   }
 
-  return parseImportedRows(rows);
+  return parseImportedRows(rows, context);
 }
 
 /**
@@ -223,12 +229,17 @@ export async function parseImportedFile(file) {
  * validation scripts can hold every format to the contract.
  *
  * @param {string[][]} rows
- * @param {{ importedAt?: Date }} [context] `importedAt` dates the provenance
+ * @param {{ importedAt?: Date, preferredUnit?: "lb"|"kg" }} [context] `importedAt` dates the provenance
  *   note some formats write into the first set of each workout.
+ *   `preferredUnit` is the lifter's unit setting, for a file that does not
+ *   say its unit.
  * @returns {{ data: ParsedData, formatId: string, formatName: string, diagnostics: ImportDiagnostics | null }}
  * @throws {Error} If the format is unrecognized or holds no valid entries
  */
-export function parseImportedRows(rows, { importedAt = new Date() } = {}) {
+export function parseImportedRows(
+  rows,
+  { importedAt = new Date(), preferredUnit } = {},
+) {
   if (rows.length < 2) {
     throw new Error("File appears to be empty or has no data rows.");
   }
@@ -261,7 +272,7 @@ export function parseImportedRows(rows, { importedAt = new Date() } = {}) {
     parsed =
       format === strengthJourneysFormat
         ? { data: format.parse(rows).entries, diagnostics: null }
-        : parseAppExport(format, rows, { importedAt });
+        : parseAppExport(format, rows, { importedAt, preferredUnit });
   }
 
   if (!parsed.data || parsed.data.length === 0) {

@@ -360,7 +360,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       formatId,
       formatName,
       diagnostics,
-    } = await parseImportedFile(file);
+    } = await parseImportedFile(file, {
+      preferredUnit: readChosenUnitPreference(),
+    });
     const processed = markHigherWeightAsHistoricalPRs(parsed);
     setImportedParsedData(processed);
     setImportedFormatName(formatName);
@@ -1093,4 +1095,21 @@ function getParsedDataWithFallback({
   parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
   return { parsedData, parseError, sheetLayout };
+}
+
+// The lifter's unit, for a file that does not say its own: only once they
+// chose one or their own data set it (see useAthleteBioData), never the lb
+// default every new visitor starts with.
+function readChosenUnitPreference() {
+  try {
+    const source = localStorage.getItem(LOCAL_STORAGE_KEYS.UNIT_PREFERENCE_SET);
+    if (source !== "1" && source !== "data") return undefined;
+    const isMetric = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.CALC_IS_METRIC),
+    );
+    if (typeof isMetric !== "boolean") return undefined;
+    return isMetric ? "kg" : "lb";
+  } catch {
+    return undefined;
+  }
 }

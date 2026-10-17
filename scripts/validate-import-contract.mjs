@@ -165,20 +165,74 @@ not a date,Upper A,45m,Squat (Barbell),1,100,5,0,0,,,
       // shape, with no notes columns and reps written as decimals.
       name: "French headings",
       csv: `Date,Nom de l'entraînement,Durée,Nom de l'exercice,Ordre de la série,Poids,Réps,Distance,Secondes,RPE
-2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",W,70.0,10.0,0,0.0,
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",W,60.0,10.0,0,0.0,
 2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",1,200.0,2.0,0,0.0,
 2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",É,225.0,1.0,0,0.0,
 2024-03-04 21:05:11,"Bas du corps",1h 52min,"Pull Up",1,0.0,8.0,0,0.0,
 2024-03-04 21:05:11,"Bas du corps",1h 52min,"Hanging Leg Raise",1,0,12.0,0,0.0,
 2024-03-04 21:05:11,"Bas du corps",1h 52min,"Running (Treadmill)",1,0,0.0,1.66,600.0,
 2024-03-06 00:36:23,"Haut du corps",1h 55min,"Bench Press (Barbell)",W,20.0,10.0,0,0.0,
+2024-03-06 00:36:23,"Haut du corps",1h 55min,"Bench Press (Barbell)",W,20.0,10.0,0,0.0,
 2024-03-06 00:36:23,"Haut du corps",1h 55min,"Bench Press (Barbell)",1,75.0,10.0,0,0.0,
 `,
       // A bodyweight pull up is a set; an unweighted leg raise is not. The
       // empty 20 kg bar is what tells kg from lb in a file with no unit.
-      count: 6,
+      count: 7,
       skipped: { invalidWeight: 1, unsupportedDurationOrDistance: 1 },
       workoutCount: 2,
+      unitType: "kg",
+    },
+    {
+      // Our best reading of the Spanish headings, typed without accents as a
+      // lifter's own copy might be. Loads with no clear unit follow the
+      // lifter's setting.
+      name: "Spanish headings, unit from the lifter's setting",
+      csv: `Fecha,Nombre del entrenamiento,Duracion,Nombre del ejercicio,Orden de la serie,Peso,Repeticiones,Distancia,Segundos,Notas,Notas del entrenamiento,RPE
+2024-03-04 19:00:00,Pierna,1h 10min,Squat (Barbell),1,102.5,5,0,0,Buena,,8
+2024-03-04 19:00:00,Pierna,1h 10min,Squat (Barbell),F,107.5,3,0,0,,,
+2024-03-04 19:00:00,Pierna,1h 10min,Plank,1,0,0,0,60,,,
+`,
+      context: { preferredUnit: "kg" },
+      count: 2,
+      skipped: { unsupportedDurationOrDistance: 1 },
+      workoutCount: 1,
+      unitType: "kg",
+    },
+    {
+      // A few 225s are not enough to call a file lb, and with no setting to
+      // follow, an unclear file reads as lb.
+      name: "unclear loads, no setting",
+      csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2024-03-04 19:00:00,Pull,1h,Deadlift (Barbell),1,225,3,0,0,,,
+2024-03-04 19:00:00,Pull,1h,Deadlift (Barbell),2,230,3,0,0,,,
+`,
+      count: 2,
+      skipped: {},
+      unitType: "lb",
+    },
+    {
+      name: "unclear loads, kg setting",
+      csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2024-03-04 19:00:00,Pull,1h,Deadlift (Barbell),1,225,3,0,0,,,
+2024-03-04 19:00:00,Pull,1h,Deadlift (Barbell),2,230,3,0,0,,,
+`,
+      context: { preferredUnit: "kg" },
+      count: 2,
+      skipped: {},
+      unitType: "kg",
+    },
+    {
+      // What the file says outranks the setting.
+      name: "clear kg loads, lb setting",
+      csv: `Date,Workout Name,Duration,Exercise Name,Set Order,Weight,Reps,Distance,Seconds,Notes,Workout Notes,RPE
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),W,20,10,0,0,,,
+2024-03-04 19:00:00,Push,1h,Squat (Barbell),W,20,10,0,0,,,
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),W,60,5,0,0,,,
+2024-03-04 19:00:00,Push,1h,Bench Press (Barbell),1,100,3,0,0,,,
+`,
+      context: { preferredUnit: "lb" },
+      count: 4,
+      skipped: {},
       unitType: "kg",
     },
   ],
@@ -359,7 +413,10 @@ for (const format of IMPORT_FORMATS) {
     // Its own header row reaches it, past every format tried before it.
     assert.equal(detectFormat(rows[0])?.id, format.id, `${label} detection`);
 
-    const result = parseImportedRows(rows, { importedAt });
+    const result = parseImportedRows(rows, {
+      importedAt,
+      ...fixture.context,
+    });
     assert.equal(result.formatId, format.id, label);
     assert.equal(result.formatName, format.name, label);
     assert.equal(result.data.length, fixture.count, `${label} set count`);

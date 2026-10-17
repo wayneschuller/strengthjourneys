@@ -1,7 +1,7 @@
 import { kv } from "@/lib/kv";
 import { getServerSession } from "next-auth/next";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { normalizeDateInput } from "@/lib/date-utils";
+import { normalizeDateInput, resolveDateColumnLocale } from "@/lib/date-utils";
 import {
   normalizeBigFourLiftType,
   STANDARD_BIG_FOUR_LIFT_TYPES,
@@ -535,6 +535,11 @@ export async function enrichCandidateMetadata(
   let previousDate = null;
   let previousSessionLiftType = null;
   const bestByLift = {};
+  // One day/month order for the whole column, as the client parser reads it.
+  const dateLocale = resolveDateColumnLocale(
+    rows.map((row) => row?.[dateColumnIndex]),
+    locale,
+  );
 
   for (const row of rows) {
     if (
@@ -545,7 +550,7 @@ export async function enrichCandidateMetadata(
     }
     nonEmptyRowCount += 1;
 
-    const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], locale);
+    const parsedDateFromCell = parseYmd(row?.[dateColumnIndex], dateLocale);
     if (
       parsedDateFromCell &&
       previousDate &&

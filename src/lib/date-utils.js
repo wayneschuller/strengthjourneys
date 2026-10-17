@@ -272,19 +272,25 @@ export function getYearFromYmd(dateStr) {
 export function normalizeYmd(dateStr) {
   if (!dateStr) return null;
 
-  const trimmed = dateStr.trim();
-  const parts = trimmed.split("-");
-  if (parts.length !== 3) return null;
+  // Only a real day passes, and a time after it is dropped: "2026-02-31" or
+  // "2026-10-17 07:30" would otherwise reach the YYYY-MM-DD data model as a
+  // key that is no day at all.
+  const match = String(dateStr)
+    .trim()
+    .match(
+      /^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T]\d{1,2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?$/,
+    );
+  if (!match) return null;
 
-  const year = parts[0];
-  if (year.length !== 4) return null;
+  const [, year, monthRaw, dayRaw] = match;
+  const month = Number.parseInt(monthRaw, 10);
+  const day = Number.parseInt(dayRaw, 10);
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > daysInMonth(Number.parseInt(year, 10), month)) {
+    return null;
+  }
 
-  const month = parts[1].padStart(2, "0");
-  const day = parts[2].padStart(2, "0");
-  if (month < "01" || month > "12") return null;
-  if (day < "01" || day > "31") return null;
-
-  return `${year}-${month}-${day}`;
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 function getLocaleRegion(localeHint) {
@@ -298,6 +304,41 @@ function getLocaleRegion(localeHint) {
 function localePrefersMonthFirst(localeHint) {
   const region = getLocaleRegion(localeHint);
   return ["US"].includes(region);
+}
+
+const DAY_FIRST_LOCALE = "en-GB";
+const MONTH_FIRST_LOCALE = "en-US";
+
+/**
+ * The locale hint that reads a whole date column in one day/month order.
+ *
+ * Deciding each cell alone by the browser's language splits a column in two:
+ * on an en-US browser an Australian sheet's 13/04/2026 is April 13 but its
+ * 03/04/2026 is March 4. A part above 12 can only be a day, so the column's
+ * own unambiguous dates settle the order for every cell in it. The fallback
+ * hint decides only when nothing settles it or the column contradicts itself.
+ *
+ * @param {Iterable<any>} values The column's raw date cells.
+ * @param {string} [localeHint] Used when the values do not decide.
+ * @returns {string|undefined} A hint for normalizeDateInput.
+ */
+export function resolveDateColumnLocale(values, localeHint) {
+  let firstAboveTwelve = false;
+  let secondAboveTwelve = false;
+
+  for (const value of values ?? []) {
+    const match = String(value ?? "")
+      .trim()
+      .match(/^(\d{1,2})[/. -](\d{1,2})[/. -]\d{4}$/);
+    if (!match) continue;
+    if (Number.parseInt(match[1], 10) > 12) firstAboveTwelve = true;
+    if (Number.parseInt(match[2], 10) > 12) secondAboveTwelve = true;
+    if (firstAboveTwelve && secondAboveTwelve) break;
+  }
+
+  if (firstAboveTwelve && !secondAboveTwelve) return DAY_FIRST_LOCALE;
+  if (secondAboveTwelve && !firstAboveTwelve) return MONTH_FIRST_LOCALE;
+  return localeHint;
 }
 
 export function normalizeDateInput(dateStr, localeHint) {

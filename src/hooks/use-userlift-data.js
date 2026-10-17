@@ -911,6 +911,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         body: JSON.stringify({
           ssid: linkedSheetId,
           ...(columns ? { columns } : {}),
+          ...(sheetLayout?.dateLocale
+            ? { dateLocale: sheetLayout.dateLocale }
+            : {}),
           startRowIndex: warning.startRowIndex,
           endRowIndex: warning.endRowIndex,
           currentDate: warning.currentDate,

@@ -17,7 +17,7 @@
 // See getDemoParsedData in @/lib/import/sample-parsed-data.js for example data.
 
 import { recordTiming } from "@/lib/processing-utils";
-import { normalizeDateInput } from "@/lib/date-utils";
+import { normalizeDateInput, resolveDateColumnLocale } from "@/lib/date-utils";
 import { getCuratedLift } from "@/lib/lifts/lift-registry";
 import {
   normalizeLiftTypeNames,
@@ -50,7 +50,8 @@ const sheetLayouts = new WeakMap();
  * @param {import("./index").ParsedData} parsedData As returned by
  *   parseStrengthJourneysData (the same array, not a copy).
  * @returns {{hasHeaderRow: boolean, header: string[],
- *   columns: Object<string, number>, inferred: string[],
+ *   dateLocale: string|undefined, columns: Object<string, number>,
+ *   inferred: string[],
  *   repair: ReturnType<typeof planHeaderRepair>} | null} `header` is
  *   row 1 with recognised names normalised (empty when the sheet has no
  *   header row). `columns` maps Date, Lift Type, Reps, Weight, Notes, Label
@@ -147,6 +148,7 @@ export function parseStrengthJourneysData(
     firstDataRow,
     header: normalizedColumnNames,
     columns,
+    dateLocale,
   } = layout;
   const repairLog = createParseRepairLog("Strength Journeys");
 
@@ -223,7 +225,7 @@ export function parseStrengthJourneysData(
     // --- DATE HANDLING LOGIC ---
     // If the date cell is filled, try to normalize it
     if (row[dateCol]) {
-      const normalizedDate = normalizeDateInput(row[dateCol], localeHint);
+      const normalizedDate = normalizeDateInput(row[dateCol], dateLocale);
       if (normalizedDate) {
         // Valid date: use it and update previousDate
         obj.date = normalizedDate;
@@ -411,10 +413,12 @@ export function parseStrengthJourneysData(
  * @param {boolean} [options.claimLabelledColumns=false] See
  *   parseStrengthJourneysData.
  * @returns {{hasHeaderRow: boolean, firstDataRow: number, header: string[],
- *   columns: Object<string, number>, inferred: string[]}} `columns` maps
- *   Date, Lift Type, Reps, Weight, Notes, Label and URL to a 0-based column,
- *   -1 when it could not be found. `inferred` names the required columns that
- *   were worked out rather than read from a heading.
+ *   dateLocale: string|undefined, columns: Object<string, number>,
+ *   inferred: string[]}} `columns` maps Date, Lift Type, Reps, Weight, Notes,
+ *   Label and URL to a 0-based column, -1 when it could not be found.
+ *   `inferred` names the required columns that were worked out rather than
+ *   read from a heading. `dateLocale` reads every date in the column in one
+ *   day/month order (see resolveDateColumnLocale).
  */
 export function detectSheetLayout(
   data,
@@ -453,6 +457,12 @@ export function detectSheetLayout(
     hasHeaderRow,
     firstDataRow,
     header,
+    dateLocale: resolveDateColumnLocale(
+      required.Date >= 0
+        ? data.slice(firstDataRow).map((row) => row?.[required.Date])
+        : [],
+      localeHint,
+    ),
     columns: {
       ...required,
       Notes: header.indexOf("Notes"),

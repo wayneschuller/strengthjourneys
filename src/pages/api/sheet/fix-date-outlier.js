@@ -39,7 +39,12 @@ export default async function handler(req, res) {
     currentDate,
     suggestedDate,
     columns: requestedColumns,
+    dateLocale: requestedDateLocale,
   } = req.body;
+  // The day/month order the client read the whole Date column in, so these
+  // cells are read the same way as the parse that found the typo.
+  const dateLocale =
+    typeof requestedDateLocale === "string" ? requestedDateLocale : undefined;
 
   if (
     !ssid ||
@@ -88,7 +93,7 @@ export default async function handler(req, res) {
       return sectionRows[index] ?? [];
     });
 
-    const firstDate = normalizeDateInput(rows[0]?.[dateColumn]);
+    const firstDate = normalizeDateInput(rows[0]?.[dateColumn], dateLocale);
     if (firstDate !== currentDate) {
       return res.status(409).json({
         error: `The workout date changed before it could be fixed.`,
@@ -99,7 +104,7 @@ export default async function handler(req, res) {
 
     const nextRows = rows.map((row) => {
       const rawDate = row?.[dateColumn] ?? "";
-      const normalizedDate = normalizeDateInput(rawDate);
+      const normalizedDate = normalizeDateInput(rawDate, dateLocale);
       if (!rawDate) return [""];
       if (normalizedDate !== currentDate) {
         throw new DateSectionMismatchError(normalizedDate || rawDate);

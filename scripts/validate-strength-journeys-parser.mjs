@@ -873,6 +873,42 @@ const repairedLayout = quietly(() => detectSheetLayout(repairedRows));
 assert.deepEqual(repairedLayout.inferred, []);
 assert.ok(getSheetWriteColumns(repairedLayout));
 
+// A column's own unambiguous dates settle day/month order for every cell, so
+// an Australian sheet read on an en-US browser keeps 03/04 as April 3.
+const { normalizeDateInput } = await import("../src/lib/date-utils.js");
+const dayFirstRows = [
+  ["Date", "Lift Type", "Reps", "Weight"],
+  ["13/04/2026", "Back Squat", "5", "100kg"],
+  ["03/04/2026", "Back Squat", "5", "95kg"],
+];
+assert.equal(
+  quietly(() => detectSheetLayout(dayFirstRows, { localeHint: "en-US" }))
+    .dateLocale,
+  "en-GB",
+);
+assert.deepEqual(
+  quietly(() => parseStrengthJourneysData(dayFirstRows)).map(
+    (entry) => entry.date,
+  ),
+  ["2026-04-03", "2026-04-13"],
+);
+const monthFirstRows = [
+  ["Date", "Lift Type", "Reps", "Weight"],
+  ["04/13/2026", "Back Squat", "5", "225lb"],
+  ["03/04/2026", "Back Squat", "5", "215lb"],
+];
+assert.equal(
+  quietly(() => detectSheetLayout(monthFirstRows, { localeHint: "en-AU" }))
+    .dateLocale,
+  "en-US",
+);
+// Year-first dates must be real days, and a time after one is dropped.
+assert.equal(normalizeDateInput("2026-02-31"), null);
+assert.equal(normalizeDateInput("2024-02-29"), "2024-02-29");
+assert.equal(normalizeDateInput("2026-10-17 07:30"), "2026-10-17");
+assert.equal(normalizeDateInput("2026-10-17T07:30:00Z"), "2026-10-17");
+assert.equal(normalizeDateInput("2026-10-17x"), null);
+
 console.log("Strength Journeys parser checks passed.");
 
 function permutations(values) {

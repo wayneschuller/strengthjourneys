@@ -160,6 +160,27 @@ not a date,Upper A,45m,Squat (Barbell),1,100,5,0,0,,,
       },
       workoutCount: 3,
     },
+    {
+      // Strong writes its headings in the app's language. This is the French
+      // shape, with no notes columns and reps written as decimals.
+      name: "French headings",
+      csv: `Date,Nom de l'entraînement,Durée,Nom de l'exercice,Ordre de la série,Poids,Réps,Distance,Secondes,RPE
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",W,70.0,10.0,0,0.0,
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",1,200.0,2.0,0,0.0,
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Deadlift (Barbell)",É,225.0,1.0,0,0.0,
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Pull Up",1,0.0,8.0,0,0.0,
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Hanging Leg Raise",1,0,12.0,0,0.0,
+2024-03-04 21:05:11,"Bas du corps",1h 52min,"Running (Treadmill)",1,0,0.0,1.66,600.0,
+2024-03-06 00:36:23,"Haut du corps",1h 55min,"Bench Press (Barbell)",W,20.0,10.0,0,0.0,
+2024-03-06 00:36:23,"Haut du corps",1h 55min,"Bench Press (Barbell)",1,75.0,10.0,0,0.0,
+`,
+      // A bodyweight pull up is a set; an unweighted leg raise is not. The
+      // empty 20 kg bar is what tells kg from lb in a file with no unit.
+      count: 6,
+      skipped: { invalidWeight: 1, unsupportedDurationOrDistance: 1 },
+      workoutCount: 2,
+      unitType: "kg",
+    },
   ],
   wodify: [
     {

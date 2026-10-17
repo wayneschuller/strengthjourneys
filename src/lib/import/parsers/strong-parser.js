@@ -14,7 +14,6 @@ import { requireImportSource } from "@/lib/import/import-sources";
 import {
   buildNotes,
   countSkip,
-  findExactColumn,
   getSetSkipReason,
   normalizeExportLiftType,
   parseLeadingInteger,
@@ -27,30 +26,56 @@ export const strongFormat = {
   parse: parseStrongData,
 };
 
-function isStrongExport(headers) {
-  const lower = headers.map((header) =>
-    String(header || "")
-      .toLowerCase()
-      .trim(),
-  );
-  return (
-    lower.includes("date") &&
-    lower.includes("workout name") &&
-    lower.includes("exercise name") &&
-    lower.some((header) => header.startsWith("weight")) &&
-    lower.includes("reps")
-  );
-}
+// Strong writes its headings in the app's language, so each column has a
+// heading per language a real export has shown us. Add a language here from a
+// real file, never a guess. The weight, distance and seconds headings can
+// carry a unit, "Weight (kg)", so those match from the front.
+const STRONG_HEADINGS = {
+  date: ["date"],
+  workoutName: ["workout name", "nom de l'entraînement"],
+  exerciseName: ["exercise name", "nom de l'exercice"],
+  setOrder: ["set order", "ordre de la série"],
+  weight: ["weight", "poids"],
+  reps: ["reps", "réps"],
+  distance: ["distance"],
+  seconds: ["seconds", "secondes"],
+  notes: ["notes"],
+  workoutNotes: ["workout notes"],
+  rpe: ["rpe"],
+};
+const PREFIX_HEADINGS = new Set(["weight", "distance", "seconds"]);
 
-function findHeaderByPrefix(headers, prefixes) {
-  return headers.find((header) => {
+// A set's order is its number, or a letter for its kind, in the app's
+// language: É is the French échec. Each kind is still a set, so it is kept,
+// and noted the way Hevy notes it. A failure single can be a lifter's best.
+const STRONG_SET_TYPES = {
+  W: "warmup",
+  D: "dropset",
+  F: "failure",
+  É: "failure",
+};
+
+// Index of a Strong column in this header row, or -1.
+function findStrongColumn(headers, key) {
+  const names = STRONG_HEADINGS[key];
+  const matchesFront = PREFIX_HEADINGS.has(key);
+  return headers.findIndex((header) => {
+    // Typographic apostrophes and decomposed accents read the same as typed.
     const normalized = String(header || "")
+      .normalize("NFC")
+      .replace(/\u2019/g, "'")
       .trim()
       .toLowerCase();
-    return prefixes.some((prefix) =>
-      normalized.startsWith(prefix.toLowerCase()),
+    return names.some((name) =>
+      matchesFront ? normalized.startsWith(name) : normalized === name,
     );
   });
+}
+
+function isStrongExport(headers) {
+  return ["date", "workoutName", "exerciseName", "weight", "reps"].every(
+    (key) => findStrongColumn(headers, key) >= 0,
+  );
 }
 
 function normalizeStrongDate(dateTimeString) {
@@ -101,22 +126,18 @@ function inferStrongUnitType(data, weightColumnIndex, exerciseNameColumnIndex) {
 
 function parseStrongData(data) {
   const headers = data[0] || [];
-  const dateColumnIndex = findExactColumn(headers, ["Date"]);
-  const workoutNameColumnIndex = findExactColumn(headers, ["Workout Name"]);
-  const exerciseNameColumnIndex = findExactColumn(headers, ["Exercise Name"]);
-  const setOrderColumnIndex = findExactColumn(headers, ["Set Order"]);
-  const weightHeader = findHeaderByPrefix(headers, ["Weight"]);
-  const weightColumnIndex = weightHeader ? headers.indexOf(weightHeader) : -1;
-  const repsColumnIndex = findExactColumn(headers, ["Reps"]);
-  const distanceColumnIndex = headers.indexOf(
-    findHeaderByPrefix(headers, ["Distance"]),
-  );
-  const secondsColumnIndex = headers.indexOf(
-    findHeaderByPrefix(headers, ["Seconds"]),
-  );
-  const notesColumnIndex = findExactColumn(headers, ["Notes"]);
-  const workoutNotesColumnIndex = findExactColumn(headers, ["Workout Notes"]);
-  const rpeColumnIndex = findExactColumn(headers, ["RPE"]);
+  const dateColumnIndex = findStrongColumn(headers, "date");
+  const workoutNameColumnIndex = findStrongColumn(headers, "workoutName");
+  const exerciseNameColumnIndex = findStrongColumn(headers, "exerciseName");
+  const setOrderColumnIndex = findStrongColumn(headers, "setOrder");
+  const weightColumnIndex = findStrongColumn(headers, "weight");
+  const weightHeader = headers[weightColumnIndex];
+  const repsColumnIndex = findStrongColumn(headers, "reps");
+  const distanceColumnIndex = findStrongColumn(headers, "distance");
+  const secondsColumnIndex = findStrongColumn(headers, "seconds");
+  const notesColumnIndex = findStrongColumn(headers, "notes");
+  const workoutNotesColumnIndex = findStrongColumn(headers, "workoutNotes");
+  const rpeColumnIndex = findStrongColumn(headers, "rpe");
 
   const unitType =
     extractUnitFromHeader(weightHeader) ||
@@ -132,6 +153,7 @@ function parseStrongData(data) {
     // The rest between two sets, not a set: neither imported nor counted.
     const setOrder = String(row[setOrderColumnIndex] ?? "").trim();
     if (/^rest timer$/i.test(setOrder)) continue;
+    const setType = STRONG_SET_TYPES[setOrder.toUpperCase()];
 
     const date = normalizeStrongDate(row[dateColumnIndex]);
     const liftType = normalizeExportLiftType(row[exerciseNameColumnIndex]);
@@ -168,6 +190,7 @@ function parseStrongData(data) {
       notes: buildNotes(
         row[notesColumnIndex],
         row[workoutNotesColumnIndex],
+        setType ? `Set type: ${setType}` : null,
         row[rpeColumnIndex] ? `RPE ${row[rpeColumnIndex]}` : null,
       ),
     });

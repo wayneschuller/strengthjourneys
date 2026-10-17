@@ -22,6 +22,7 @@ import {
   getSheetWriteColumns,
 } from "@/lib/import/parsers/strength-journeys-parser";
 import { placeRowValues, resolveWriteColumns } from "@/lib/sheet/sheet-row-ops";
+import { normalizeDateInput } from "@/lib/date-utils";
 import {
   buildVisibleImportProvenance,
   hasVisibleImportProvenance,
@@ -372,7 +373,12 @@ export default async function handler(req, res) {
     // inferred from the column beneath it. What cannot be merged into is a
     // sheet with no header row at all, since the placement below counts rows
     // from one.
-    const sheetLayout = detectSheetLayout(sheetRows);
+    // The browser's language breaks a day/month tie the column cannot settle
+    // itself, as it does when the lifter's own browser reads the sheet.
+    const acceptLanguage = String(req.headers["accept-language"] || "");
+    const sheetLayout = detectSheetLayout(sheetRows, {
+      localeHint: acceptLanguage.split(",")[0].trim() || undefined,
+    });
     const detectedColumns = getSheetWriteColumns(sheetLayout);
     const layout = detectedColumns
       ? resolveWriteColumns(detectedColumns, sheetRows[0])
@@ -392,12 +398,20 @@ export default async function handler(req, res) {
 
     // Build a map of date → highest row index (1-based, skipping header at index 0)
     // Sheet is newest-first: row index 1 = header, row 2+ = data
-    // We carry forward dates through sparse rows
+    // We carry forward dates through sparse rows. Each date is read the way
+    // the parser reads it, so a sheet that shows 17/10/2026 compares with the
+    // import's YYYY-MM-DD dates, and rows under a date the parser skips are
+    // left out here too.
     const dateRowMap = []; // [{ date, rowIndex }] for all data rows
     let currentDate = null;
     for (let i = 1; i < sheetRows.length; i++) {
       const row = sheetRows[i];
-      if (row?.[columns.date]) currentDate = row[columns.date];
+      if (row?.[columns.date]) {
+        currentDate = normalizeDateInput(
+          String(row[columns.date]),
+          sheetLayout.dateLocale,
+        );
+      }
       if (currentDate) {
         dateRowMap.push({ date: currentDate, rowIndex: i + 1 }); // 1-based
       }

@@ -195,42 +195,54 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
         e1rmFormula={e1rmFormula}
       />
 
-      {/* The four numbers a lifter would say out loud */}
-      <Reveal index={0} className="mt-5 grid grid-cols-2 gap-2 lg:grid-cols-4">
-        <StatTile
-          value={story.journey.value}
-          label={
-            story.journey.detail
-              ? `${story.journey.detail} under the bar`
-              : "under the bar"
-          }
-          detail={`${getReadableDateString(story.firstDate)} to ${getReadableDateString(story.lastDate)}`}
-        />
-        <StatTile
-          value={(
-            diagnostics?.workoutCount || story.sessionCount
-          ).toLocaleString()}
-          label={diagnostics?.workoutCount ? "workouts" : "training days"}
-          detail={`across ${pluralize(story.exerciseCount, "exercise")}`}
-        />
-        <StatTile
-          value={story.totalSets.toLocaleString()}
-          label="sets logged"
-          detail={
-            story.totalReps > 0 ? pluralize(story.totalReps, "rep") : null
-          }
-        />
-        {story.tonnage && (
+      {/* The four numbers a lifter would say out loud, the way into their
+          home dashboard, which shows these and the rest of their history. */}
+      <Reveal index={0} className="mt-5">
+        <Link
+          href="/"
+          className="group hover:bg-muted/30 -m-1 grid grid-cols-2 gap-2 rounded-xl p-1 lg:grid-cols-4"
+        >
           <StatTile
-            value={`${formatLifetimeTonnage(Math.round(story.tonnage.total))} ${story.tonnage.unit}`}
-            label="moved"
+            value={story.journey.value}
+            label={
+              story.journey.detail
+                ? `${story.journey.detail} under the bar`
+                : "under the bar"
+            }
+            detail={`${getReadableDateString(story.firstDate)} to ${getReadableDateString(story.lastDate)}`}
+          />
+          <StatTile
+            value={(
+              diagnostics?.workoutCount || story.sessionCount
+            ).toLocaleString()}
+            label={diagnostics?.workoutCount ? "workouts" : "training days"}
+            detail={`across ${pluralize(story.exerciseCount, "exercise")}`}
+          />
+          <StatTile
+            value={story.totalSets.toLocaleString()}
+            label="sets logged"
             detail={
-              story.tonnage.equivalent
-                ? `About ${pluralize(story.tonnage.equivalent.count, story.tonnage.equivalent.name)} ${story.tonnage.equivalent.emoji}`
-                : null
+              story.totalReps > 0 ? pluralize(story.totalReps, "rep") : null
             }
           />
-        )}
+          {story.tonnage && (
+            <StatTile
+              value={`${formatLifetimeTonnage(Math.round(story.tonnage.total))} ${story.tonnage.unit}`}
+              label="moved"
+              detail={
+                story.tonnage.equivalent
+                  ? `About ${pluralize(story.tonnage.equivalent.count, story.tonnage.equivalent.name)} ${story.tonnage.equivalent.emoji}`
+                  : null
+              }
+            />
+          )}
+          <p className="text-muted-foreground group-hover:text-foreground col-span-full pt-1 text-sm">
+            Your home dashboard has all of this and more.{" "}
+            <span className="text-foreground font-medium underline underline-offset-2">
+              Take a look
+            </span>
+          </p>
+        </Link>
       </Reveal>
 
       {(strength || thousandClub) && (
@@ -240,6 +252,7 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
         >
           {strength && (
             <FeaturePanel
+              href="/how-strong-am-i"
               visual={<SinglePercentileRing percentile={strength.pct} />}
             >
               <p className="text-lg leading-snug font-bold">
@@ -250,12 +263,9 @@ export function ImportHero({ fileName, formatName, diagnostics }) {
               </p>
               <p className="text-muted-foreground mt-1 text-xs">
                 From your best {joinWithAnd(strength.liftLabels)}.{" "}
-                <Link
-                  href="/how-strong-am-i"
-                  className="hover:text-foreground underline underline-offset-2"
-                >
+                <span className="underline underline-offset-2">
                   See the full ranking
-                </Link>
+                </span>
               </p>
             </FeaturePanel>
           )}

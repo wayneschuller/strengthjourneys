@@ -51,8 +51,9 @@ registerHooks({
   },
 });
 
-const { normalizeLiftTypeNames } =
+const { isValidLiftWeight, normalizeLiftTypeNames } =
   await import("../src/lib/import/parsers/parser-utilities.js");
+const { estimateLiftE1RM } = await import("../src/lib/estimate-e1rm.js");
 const { CURATED_LIFTS } = await import("../src/lib/lifts/lift-registry.js");
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { detectFormat, parseImportedRows } =
@@ -112,6 +113,24 @@ const expectedNames = {
   "Safety Squat Bar Squat": "Safety Bar Squat",
   "Pull Up (Bodyweight)": "Pull-up",
 
+  // Bodyweight movements, each variant a lift of its own.
+  "Chest Dip": "Chest Dip",
+  "Triceps Dip": "Triceps Dip",
+  "Parallel Bar Triceps Dip": "Triceps Dip",
+  "Bench Dip": "Bench Dip",
+  Dips: "Dip",
+  "Dips alle parallele": "Dip",
+  "Push Up": "Push-up",
+  pushups: "Push-up",
+  "Push-up (Bodyweight)": "Push-up",
+  "Push Up on Knees": "Knee Push-up",
+  "Decline Push Up": "Decline Push-up",
+  "Diamond Push Up": "Diamond Push-up",
+  "Tricep Push Up": "Close-grip Push-up",
+  "Pike Push Up": "Pike Push-up",
+  "Inverted Row": "Inverted Row",
+  "Pistol Squat": "Pistol Squat",
+
   // Other equipment stays a lift of its own.
   "Bench Press (Dumbbell)": "Bench Press (Dumbbell)",
   "Squat (Smith Machine)": "Squat (Smith Machine)",
@@ -164,5 +183,43 @@ assert.deepEqual(strongNames, {
   "Bent Over Row (Barbell)": "Barbell Row",
   "Pull Up (Assisted)": "Pull Up (Assisted)",
 });
+
+// A bodyweight set logged at 0 is a real set, and the e1RM counts the share
+// of bodyweight each movement lifts: all of it for a dip, about two thirds
+// for a push up, half for a bench dip.
+for (const liftType of ["Chest Dip", "Bench Dip", "Push-up", "Pistol Squat"]) {
+  assert.ok(isValidLiftWeight(liftType, 0), `${liftType} at 0 is a set`);
+}
+assert.ok(!isValidLiftWeight("Hanging Leg Raise", 0));
+const at100kg = (liftType) =>
+  estimateLiftE1RM({
+    reps: 10,
+    weight: 0,
+    equation: "Brzycki",
+    liftType,
+    bodyWeight: 100,
+    bodyWeightUnitType: "kg",
+    liftUnitType: "kg",
+  });
+assert.equal(at100kg("Pull-up"), 33);
+assert.equal(at100kg("Chest Dip"), 33);
+assert.equal(at100kg("Push-up"), 21);
+assert.equal(at100kg("Bench Dip"), 17);
+
+// A sheet that logs a chin up as the athlete's whole bodyweight is read as
+// bodyweight alone, not as 106 kg hung from a belt; a real belt stays a belt.
+const chinUp = (weight) =>
+  estimateLiftE1RM({
+    reps: 3,
+    weight,
+    equation: "Brzycki",
+    liftType: "Chin-up",
+    bodyWeight: 106,
+    bodyWeightUnitType: "kg",
+    liftUnitType: "kg",
+  });
+assert.equal(chinUp(106), chinUp(0));
+assert.equal(chinUp(108), chinUp(2));
+assert.ok(chinUp(20) > chinUp(0));
 
 console.log("Lift-name validation passed.");

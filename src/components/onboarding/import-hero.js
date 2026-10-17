@@ -730,12 +730,13 @@ function getMotivationalPhrase(percentile) {
 }
 
 // Why each kind of set was left out, in the lifter's terms. `noun` takes the
-// count, `why` follows the exercise names. Bodyweight and timed work are the
-// big ones: whole categories we do not read yet, not faults in the file.
+// count, `why` follows the exercise names. Unloaded core work and timed work
+// are the big ones: whole categories we do not read yet, not faults in the
+// file. Pull ups, dips and push ups at bodyweight do come through.
 const IMPORT_SKIP_REASONS = {
   invalidWeight: {
-    noun: (n) => `${pluralize(n, "bodyweight set")} with no added weight`,
-    why: "Bodyweight exercises are not supported yet. Any you logged with added weight came through.",
+    noun: (n) => `${pluralize(n, "set")} with no weight`,
+    why: "Core work and other unloaded exercises are not supported yet. Any you logged with a weight came through.",
   },
   unsupportedDurationOrDistance: {
     noun: (n) => pluralize(n, "timed or distance set"),
@@ -804,8 +805,8 @@ function ImportDiagnosticsNotice({ diagnostics }) {
         </ul>
         {hasUnsupported && (
           <p className="text-muted-foreground mt-2 leading-5">
-            Strength Journeys is a one-person project. A coffee helps bring
-            bodyweight and cardio support sooner.{" "}
+            Strength Journeys is a one-person project. A coffee helps bring core
+            and cardio support sooner.{" "}
             <a
               href="https://buymeacoffee.com/lrhvbjxzqr"
               target="_blank"

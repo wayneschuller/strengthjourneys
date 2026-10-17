@@ -2,10 +2,13 @@
  * Shared one-rep-max estimate helpers.
  *
  * Most lifts use the logged weight as the full load. Bodyweight-loaded movements
- * use logged weight as external load, so current bodyweight is added for formula
- * math and subtracted again before displaying external-load projections.
+ * use logged weight as external load, so the share of current bodyweight the
+ * movement lifts (all of it for a pull up, about two thirds for a push up) is
+ * added for formula math and subtracted again before displaying external-load
+ * projections.
  */
 import {
+  getBodyweightShare,
   isBodyweightLoadLiftName,
   STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
 } from "@/lib/import/parsers/parser-utilities";
@@ -35,13 +38,21 @@ export function isBodyweightLoadLift(liftType) {
   return isBodyweightLoadLiftName(liftType);
 }
 
+// The part of the athlete's bodyweight this lift moves, in the lift's unit.
 export function getBodyWeightForLiftUnit({
   bodyWeight,
   bodyWeightUnitType = "lb",
   liftUnitType = "lb",
+  liftType,
 }) {
   if (!bodyWeight) return null;
-  return convertWeightUnit(bodyWeight, bodyWeightUnitType, liftUnitType);
+  const converted = convertWeightUnit(
+    bodyWeight,
+    bodyWeightUnitType,
+    liftUnitType,
+  );
+  if (converted == null) return null;
+  return liftType ? converted * getBodyweightShare(liftType) : converted;
 }
 
 export function estimateLiftE1RM({
@@ -64,16 +75,40 @@ export function estimateLiftE1RM({
     bodyWeight,
     bodyWeightUnitType,
     liftUnitType,
+    liftType,
   });
 
   if (!bodyWeightForLift || bodyWeightForLift <= 0) {
     return estimateE1RM(reps, numericWeight, equation);
   }
 
+  const addedWeight = readAddedWeight(numericWeight, {
+    bodyWeight,
+    bodyWeightUnitType,
+    liftUnitType,
+  });
   return Math.round(
-    estimateE1RM(reps, numericWeight + bodyWeightForLift, equation) -
+    estimateE1RM(reps, addedWeight + bodyWeightForLift, equation) -
       bodyWeightForLift,
   );
+}
+
+// Apps log a bodyweight lift as the load added to it. Some hand-kept sheets
+// log the whole load instead, the athlete's own bodyweight typed in ("Chin Ups,
+// 106kg"). A load of at least 80% of their bodyweight is read that way, as
+// only a handful of elite lifters add that much, and what was added is
+// whatever sits above their bodyweight.
+function readAddedWeight(
+  weight,
+  { bodyWeight, bodyWeightUnitType, liftUnitType },
+) {
+  const wholeBodyWeight = getBodyWeightForLiftUnit({
+    bodyWeight,
+    bodyWeightUnitType,
+    liftUnitType,
+  });
+  if (!wholeBodyWeight || weight < wholeBodyWeight * 0.8) return weight;
+  return Math.max(0, weight - wholeBodyWeight);
 }
 
 export function estimateLiftWeightForReps({
@@ -96,6 +131,7 @@ export function estimateLiftWeightForReps({
     bodyWeight,
     bodyWeightUnitType,
     liftUnitType,
+    liftType,
   });
 
   if (!bodyWeightForLift || bodyWeightForLift <= 0) {

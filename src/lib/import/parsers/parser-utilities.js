@@ -10,13 +10,97 @@ export const STANDARD_BIG_FOUR_LIFT_TYPES = BIG_FOUR_LIFT_TYPES;
 
 export const STANDARD_BIG_FOUR_LIFT_TYPE_SET = BIG_FOUR_LIFT_TYPE_SET;
 
-export const STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES = [
-  "Chin-up",
-  "Pull-up",
-  "Dip",
-  "Ring Dip",
-  "Muscle-up",
+// Lifts where the athlete moves their own body. Each is logged as the load
+// they add, as every app export does: 0 is bodyweight alone, 20 is a 20 kg
+// belt. Tonnage counts only that added load, so a set of bench dips adds
+// nothing to it. `bodyweightShare` is how much of their bodyweight the
+// movement lifts, which the e1RM adds back. The push up shares come from
+// force-plate studies (Ebben et al. 2011: about 64% on the hands for a
+// standard push up, 49% from the knees, 41% inclined, 74% feet raised); bench
+// dips, pike push ups, inverted rows and pistol squats are our estimates.
+// Every variant is a lift of its own: a chest dip and a bench dip are not the
+// same strength, so they never share a line.
+const BODYWEIGHT_LOAD_LIFTS = [
+  { liftType: "Chin-up", bodyweightShare: 1, spellings: ["chin up"] },
+  { liftType: "Pull-up", bodyweightShare: 1, spellings: ["pull up"] },
+  {
+    liftType: "Dip",
+    bodyweightShare: 1,
+    spellings: ["dip", "bar dip", "parallel bar dip", "dips alle parallele"],
+  },
+  { liftType: "Ring Dip", bodyweightShare: 1, spellings: ["ring dip"] },
+  { liftType: "Chest Dip", bodyweightShare: 1, spellings: ["chest dip"] },
+  {
+    liftType: "Triceps Dip",
+    bodyweightShare: 1,
+    spellings: ["triceps dip", "tricep dip", "parallel bar triceps dip"],
+  },
+  {
+    liftType: "Bench Dip",
+    bodyweightShare: 0.5,
+    spellings: ["bench dip", "triceps bench dip", "tricep bench dip"],
+  },
+  { liftType: "Muscle-up", bodyweightShare: 1, spellings: ["muscle up"] },
+  {
+    liftType: "Push-up",
+    bodyweightShare: 0.64,
+    spellings: ["push up", "press up"],
+  },
+  {
+    liftType: "Knee Push-up",
+    bodyweightShare: 0.49,
+    spellings: ["knee push up", "kneeling push up", "push up on knees"],
+  },
+  {
+    liftType: "Incline Push-up",
+    bodyweightShare: 0.41,
+    spellings: ["incline push up"],
+  },
+  {
+    liftType: "Decline Push-up",
+    bodyweightShare: 0.74,
+    spellings: ["decline push up", "feet elevated push up"],
+  },
+  {
+    liftType: "Diamond Push-up",
+    bodyweightShare: 0.64,
+    spellings: ["diamond push up"],
+  },
+  {
+    liftType: "Close-grip Push-up",
+    bodyweightShare: 0.64,
+    spellings: [
+      "close grip push up",
+      "tricep push up",
+      "triceps push up",
+      "close triceps push up",
+    ],
+  },
+  {
+    liftType: "Wide Push-up",
+    bodyweightShare: 0.64,
+    spellings: ["wide push up", "wide grip push up"],
+  },
+  {
+    liftType: "Pike Push-up",
+    bodyweightShare: 0.7,
+    spellings: ["pike push up"],
+  },
+  {
+    liftType: "Inverted Row",
+    bodyweightShare: 0.6,
+    spellings: ["inverted row", "australian pull up"],
+  },
+  {
+    liftType: "Pistol Squat",
+    bodyweightShare: 0.85,
+    spellings: ["pistol squat"],
+  },
 ];
+
+export const STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES = BODYWEIGHT_LOAD_LIFTS.map(
+  (lift) => lift.liftType,
+);
 
 export const STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET = new Set(
   STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
@@ -76,28 +160,19 @@ const BIG_FOUR_LIFT_TYPE_ALIASES = {
   "lento avanti": "Strict Press",
 };
 
-const BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES = {
-  "chin up": "Chin-up",
-  "chin ups": "Chin-up",
-  chinup: "Chin-up",
-  chinups: "Chin-up",
-  "pull up": "Pull-up",
-  "pull ups": "Pull-up",
-  pullup: "Pull-up",
-  pullups: "Pull-up",
-  dip: "Dip",
-  dips: "Dip",
-  "bar dip": "Dip",
-  "bar dips": "Dip",
-  "parallel bar dip": "Dip",
-  "parallel bar dips": "Dip",
-  "ring dip": "Ring Dip",
-  "ring dips": "Ring Dip",
-  "muscle up": "Muscle-up",
-  "muscle ups": "Muscle-up",
-  muscleup: "Muscle-up",
-  muscleups: "Muscle-up",
-};
+// Every spelling as the lookup key reads it: plural, and run together for the
+// "up" lifts, so "Push Ups", "pushup" and "Push-up (Bodyweight)" all meet.
+const BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES = {};
+const BODYWEIGHT_SHARE_BY_LIFT_TYPE = new Map();
+for (const { liftType, bodyweightShare, spellings } of BODYWEIGHT_LOAD_LIFTS) {
+  BODYWEIGHT_SHARE_BY_LIFT_TYPE.set(liftType, bodyweightShare);
+  for (const spelling of spellings) {
+    const joined = spelling.replace(/ up$/, "up");
+    for (const key of [spelling, `${spelling}s`, joined, `${joined}s`]) {
+      BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES[key] = liftType;
+    }
+  }
+}
 
 // A lift name with case, accents and punctuation set aside, so two spellings
 // of one name meet. The registry lookup uses it, and so does the merge's
@@ -126,6 +201,16 @@ export function normalizeBodyweightLoadLiftType(liftType) {
   if (STANDARD_BODYWEIGHT_LOAD_LIFT_TYPE_SET.has(liftType)) return liftType;
   const key = normalizeBodyweightLoadLiftTypeLookupKey(liftType);
   return BODYWEIGHT_LOAD_LIFT_TYPE_ALIASES[key] || null;
+}
+
+// How much of the athlete's bodyweight a bodyweight lift moves, 0 to 1, or 0
+// for a lift that is not one.
+export function getBodyweightShare(liftType) {
+  return (
+    BODYWEIGHT_SHARE_BY_LIFT_TYPE.get(
+      normalizeBodyweightLoadLiftType(liftType),
+    ) ?? 0
+  );
 }
 
 export function isBodyweightLoadLiftName(liftType) {

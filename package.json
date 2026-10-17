@@ -126,6 +126,7 @@
     "glob": ">=10.5.0",
     "follow-redirects": ">=1.16.0",
     "picomatch": ">=4.0.4",
-    "flatted": ">=3.4.2"
+    "flatted": ">=3.4.2",
+    "source-map-js": ">=1.2.2"
   }
 }

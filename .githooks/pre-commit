@@ -1,7 +1,8 @@
 #!/bin/sh
 # Blocks a commit whose staged files are not Prettier-formatted (this includes
 # Tailwind class order). Applies to every tool and agent that commits here.
-# Fix with: npm run format
+# Fix with: npx prettier --write <the listed files>, never the whole repo,
+# since other agents may have unfinished work in this checkout.
 
 files=$(git diff --cached --name-only --diff-filter=ACMR)
 [ -z "$files" ] && exit 0
@@ -12,6 +13,6 @@ prettier=node_modules/.bin/prettier
 if ! echo "$files" | tr '\n' '\0' | xargs -0 "$prettier" --check --ignore-unknown >/dev/null 2>&1; then
   echo "pre-commit: these staged files are not Prettier-formatted:" >&2
   echo "$files" | tr '\n' '\0' | xargs -0 "$prettier" --list-different --ignore-unknown >&2
-  echo "Run 'npm run format' (or prettier --write on those files), re-stage, and commit again." >&2
+  echo "Run 'npx prettier --write' on just those files, re-stage, and commit again." >&2
   exit 1
 fi

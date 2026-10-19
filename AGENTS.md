@@ -56,7 +56,9 @@ Node `>=24` is required.
 
 Formatting is Prettier with `prettier-plugin-tailwindcss` (`.prettierrc`), which
 also sets the order of Tailwind classes. Do not format or order classes by hand.
-Run `npx prettier --write` on every file you create or edit before you commit.
+In Claude Code a hook formats every file you Edit or Write. Run
+`npx prettier --write` yourself on anything written another way, and in other
+agents, before you commit.
 
 A pre-commit hook (`.githooks/pre-commit`, wired up by `npm install`) rejects a
 commit whose staged files are not formatted. When it fires, format those files,
@@ -397,17 +399,12 @@ push to fix it.
 
 Agents operating in this repo should:
 
-- Prefer minimal, surgical edits
 - Never add project infrastructure, such as a top-level folder or an npm
   script, without the user's permission. Propose it and say why, then wait for
   a yes. Put new files beside the code they serve
-- Preserve visual design consistency
-- Avoid architectural rewrites unless explicitly requested
 - Park future follow-up tasks and todos in `.agents/follow-up-audit-items.md`
 - Prefer reusing shared flows (`sheet-flow.js`, import helpers, analytics
   helpers, `promptDeveloper`) over creating one-off parallel implementations
-
-If unsure, follow existing patterns in nearby files.
 
 ---
 

@@ -2,6 +2,14 @@ import { Resend } from "resend";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { RegExpMatcher, englishDataset } from "obscenity";
+import { kv } from "@/lib/kv";
+import { getRequestClientIp } from "@/lib/playlists/playlist-security";
+
+// Every submission sends a Resend email, and that quota is shared with sign-in and lifter
+// mail, so a scripted flood here could silence the rest. Generous enough that a real lifter
+// sending a few notes never notices it.
+const FEEDBACK_LIMIT_PER_WINDOW = 5;
+const FEEDBACK_WINDOW_SECONDS = 10 * 60;
 
 const matcher = new RegExpMatcher({ ...englishDataset.build() });
 
@@ -54,6 +62,19 @@ function normalizeMetadata(metadata) {
   };
 }
 
+// Fails open: a KV outage should never cost us a genuine piece of feedback.
+async function isFeedbackThrottled(req) {
+  try {
+    const key = `feedback-throttle:${getRequestClientIp(req)}`;
+    const count = await kv.incr(key);
+    if (count === 1) await kv.expire(key, FEEDBACK_WINDOW_SECONDS);
+    return count > FEEDBACK_LIMIT_PER_WINDOW;
+  } catch (error) {
+    console.error("Feedback throttle check failed:", error);
+    return false;
+  }
+}
+
 function isValidEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
@@ -94,6 +115,12 @@ export default async function handler(req, res) {
 
   if (message.length > 5000) {
     return res.status(400).json({ error: "Message too long (max 5000 chars)" });
+  }
+
+  if (await isFeedbackThrottled(req)) {
+    return res
+      .status(429)
+      .json({ error: "Too many submissions, try again soon" });
   }
 
   // Get session if authenticated

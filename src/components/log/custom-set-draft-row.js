@@ -38,7 +38,9 @@ export function CustomSetDraftRow({
 
   useEffect(() => {
     if (disabled) return;
-    repsInputRef.current?.focus();
+    // preventScroll: the row opens right where the lifter tapped, so the
+    // browser hauling the page to the field is only a jump.
+    repsInputRef.current?.focus({ preventScroll: true });
     repsInputRef.current?.select?.();
   }, [disabled]);
 
@@ -107,7 +109,9 @@ export function CustomSetDraftRow({
 
   return (
     <div className="border-primary/35 bg-primary/5 rounded-lg border border-dashed px-2 py-3">
-      <div className="flex items-start gap-4">
+      {/* Phone: numbers, then notes, each full width and thumb sized. From md
+          up they share one line. */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
         <div className="flex items-center">
           <input
             ref={repsInputRef}
@@ -116,7 +120,7 @@ export function CustomSetDraftRow({
             type="text"
             inputMode="numeric"
             aria-label="Reps"
-            className="border-primary w-12 rounded-sm border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+            className="border-primary h-14 w-20 rounded-sm border px-2 py-0.5 text-right text-3xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-12 md:px-1 md:text-xl"
             value={draftReps}
             disabled={disabled}
             placeholder="5"
@@ -133,14 +137,16 @@ export function CustomSetDraftRow({
               }
             }}
           />
-          <span className="text-muted-foreground mx-0.5 text-base">@</span>
+          <span className="text-muted-foreground mx-2 text-xl md:mx-0.5 md:text-base">
+            @
+          </span>
           <input
             ref={weightInputRef}
             type="text"
             inputMode="decimal"
             aria-label="Weight"
             aria-describedby={isSuspectWeight ? weightHintId : undefined}
-            className={`w-20 rounded-sm border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none ${
+            className={`h-14 w-32 rounded-sm border px-2 py-0.5 text-3xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-20 md:px-1 md:text-xl ${
               isSuspectWeight ? "border-amber-500" : "border-primary"
             }`}
             value={draftWeight}
@@ -164,7 +170,8 @@ export function CustomSetDraftRow({
           <input
             ref={notesInputRef}
             type="text"
-            className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs italic focus:outline-none"
+            // 16px on a phone: smaller and iOS zooms the page on focus.
+            className="border-input text-muted-foreground focus:border-primary min-h-12 w-full border-b bg-transparent py-2 text-base italic focus:outline-none md:min-h-0 md:py-0.5 md:text-xs"
             value={draftNotes}
             disabled={disabled}
             placeholder="notes..."
@@ -224,24 +231,26 @@ export function CustomSetDraftRow({
         </p>
       )}
 
-      <div className="mt-2 flex items-center justify-end gap-1 md:hidden">
+      <div className="mt-3 flex items-center gap-3 md:hidden">
         <button
           type="button"
           disabled={disabled}
-          className="text-muted-foreground/60 hover:text-foreground rounded-sm p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+          className="border-input text-muted-foreground active:bg-muted flex h-12 w-24 items-center justify-center gap-1 rounded-md border text-base transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onCancel}
           aria-label="Cancel custom set"
         >
-          <X className="h-4 w-4" />
+          <X className="h-5 w-5" />
+          Cancel
         </button>
         <button
           type="button"
           disabled={!canSubmit}
-          className="text-primary hover:text-primary/80 disabled:text-muted-foreground/50 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
+          className="bg-primary text-primary-foreground active:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground flex h-12 flex-1 items-center justify-center gap-1 rounded-md text-base font-semibold transition-colors disabled:cursor-not-allowed"
           onClick={commitDraft}
           aria-label="Add custom set"
         >
-          <Check className="h-4 w-4" />
+          <Check className="h-5 w-5" />
+          Add set
         </button>
       </div>
     </div>

@@ -366,18 +366,21 @@ export function SetRow({
         boxShadow: { duration: 0.6, ease: "easeOut" },
       }}
     >
-      {/* Main row: reps@weight + notes + desktop meta rail */}
-      <div className="flex items-center gap-4">
+      {/* Main row: reps@weight + notes + desktop meta rail. On a phone the
+          notes drop under the numbers so both get a full-width, thumb-sized
+          target; from md up they sit beside them as before. */}
+      <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-4">
         {/* Reps @ Weight unit — tight visual unit.
             Every part of this cluster is a fixed width, so the notes column
             starts at the same x on every row. min-w is not enough: a wide
             value like 132.5 outgrows it and drags that row's notes right. */}
         <div className="flex shrink-0 items-center">
-          <div className={cn("w-7", warmupClass)}>
+          <div className={cn("w-12 md:w-7", warmupClass)}>
             {editingReps && !isReadOnly ? (
               <input
                 type="number"
-                className="border-primary w-10 rounded-sm border px-1 py-0.5 text-right text-xl font-semibold tabular-nums focus:outline-none"
+                inputMode="numeric"
+                className="border-primary h-11 w-14 rounded-sm border px-1 py-0.5 text-right text-2xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-10 md:text-xl"
                 value={draftReps}
                 onChange={(e) => setDraftReps(e.target.value)}
                 onBlur={commitReps}
@@ -399,12 +402,12 @@ export function SetRow({
                 autoFocus
               />
             ) : isReadOnly ? (
-              <div className="text-foreground/80 w-full py-0.5 text-right text-xl font-semibold tabular-nums">
+              <div className="text-foreground/80 w-full py-0.5 text-right text-2xl font-semibold tabular-nums md:text-xl">
                 {displayReps}
               </div>
             ) : (
               <button
-                className="hover:bg-muted/60 w-full rounded-sm py-0.5 text-right text-xl font-semibold tabular-nums"
+                className="hover:bg-muted/60 min-h-11 w-full rounded-sm py-0.5 text-right text-2xl font-semibold tabular-nums md:min-h-0 md:text-xl"
                 onClick={() => {
                   cancelledEditRef.current = false;
                   setEditingReps(true);
@@ -416,7 +419,7 @@ export function SetRow({
           </div>
           <span
             className={cn(
-              "text-muted-foreground mx-0.5 text-base",
+              "text-muted-foreground mx-1 text-lg md:mx-0.5 md:text-base",
               warmupClass,
             )}
           >
@@ -426,13 +429,16 @@ export function SetRow({
               weight with a decimal. The unit still hugs the number rather than
               floating at the far edge. */}
           <div
-            className={cn("flex w-[5.5rem] shrink-0 items-center", warmupClass)}
+            className={cn(
+              "flex w-32 shrink-0 items-center md:w-[5.5rem]",
+              warmupClass,
+            )}
           >
             {editingWeight && !isReadOnly ? (
               <input
                 type="text"
                 inputMode="decimal"
-                className="border-primary w-20 rounded-sm border px-1 py-0.5 text-xl font-semibold tabular-nums focus:outline-none"
+                className="border-primary h-11 w-24 rounded-sm border px-1 py-0.5 text-2xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-20 md:text-xl"
                 value={draftWeight}
                 onChange={(e) => setDraftWeight(e.target.value)}
                 onBlur={commitWeight}
@@ -455,12 +461,12 @@ export function SetRow({
                 autoFocus
               />
             ) : isReadOnly ? (
-              <div className="text-foreground/80 py-0.5 text-left text-xl font-semibold tabular-nums">
+              <div className="text-foreground/80 py-0.5 text-left text-2xl font-semibold tabular-nums md:text-xl">
                 {displayWeight}
               </div>
             ) : (
               <button
-                className="hover:bg-muted/60 rounded-sm py-0.5 text-left text-xl font-semibold tabular-nums"
+                className="hover:bg-muted/60 min-h-11 rounded-sm py-0.5 pr-2 text-left text-2xl font-semibold tabular-nums md:min-h-0 md:pr-0 md:text-xl"
                 onClick={() => {
                   cancelledEditRef.current = false;
                   setEditingWeight(true);
@@ -525,7 +531,8 @@ export function SetRow({
           {editingNotes && !isReadOnly ? (
             <input
               type="text"
-              className="border-input text-muted-foreground focus:border-primary w-full border-b bg-transparent py-0.5 text-xs focus:outline-none"
+              // 16px on a phone: smaller and iOS zooms the page on focus.
+              className="border-input text-muted-foreground focus:border-primary min-h-11 w-full border-b bg-transparent py-2 text-base focus:outline-none md:min-h-0 md:py-0.5 md:text-xs"
               value={draftNotes}
               onChange={(e) => setDraftNotes(e.target.value)}
               onBlur={closeNotesEdit}
@@ -555,12 +562,12 @@ export function SetRow({
           ) : (
             <div className="space-y-0.5">
               {isReadOnly ? (
-                <div className="text-muted-foreground w-full text-left text-[13px]">
+                <div className="text-muted-foreground w-full text-left text-sm md:text-[13px]">
                   {displayNotes || (isReadOnly ? "" : "notes...")}
                 </div>
               ) : (
                 <button
-                  className="text-muted-foreground hover:text-foreground w-full text-left text-[13px]"
+                  className="text-muted-foreground hover:text-foreground min-h-10 w-full text-left text-sm md:min-h-0 md:text-[13px]"
                   onClick={openNotesEdit}
                 >
                   {displayNotes || "notes..."}
@@ -642,7 +649,7 @@ export function SetRow({
 
       {/* Mobile: badges + ranking + trash on second row */}
       {(hasBadges || hasRankingBadges || onDelete || set._pending) && (
-        <div className="mt-1 flex items-center gap-2 pl-7 md:hidden">
+        <div className="mt-1 flex items-center gap-2 md:hidden">
           {set._pending ? (
             <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
           ) : (

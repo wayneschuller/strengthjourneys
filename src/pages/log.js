@@ -588,17 +588,24 @@ export default function LogSessionPage({
     todayIso,
   ]);
 
-  // Keep hash navigation working after async lift blocks or optimistic rows
-  // render; the target anchor may not exist on the first route paint.
+  // Keep hash navigation working after async lift blocks render; the target
+  // anchor may not exist on the first route paint. It scrolls once per
+  // destination: this effect re-runs on every set added or edited, and
+  // scrolling again then yanked the page out from under the lifter's thumb.
+  const scrolledHashRef = useRef(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
 
     const hash = window.location.hash.replace(/^#/, "");
     if (!hash) return;
 
+    const target = `${router.asPath}`;
+    if (scrolledHashRef.current === target) return;
+
     const anchorEl = document.getElementById(hash);
     if (!anchorEl) return;
 
+    scrolledHashRef.current = target;
     anchorEl.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [router.asPath, sessionLiftsWithPending]);
 

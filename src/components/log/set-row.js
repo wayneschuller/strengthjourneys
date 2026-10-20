@@ -35,6 +35,7 @@ import {
 } from "@/components/log/set-video-menu";
 import { VideoSourceIcon } from "@/components/log/video-source-icon";
 import { UnitLabel } from "@/components/log/unit-label";
+import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
 
 const WARMUP_FRACTION = 0.6;
 
@@ -66,6 +67,8 @@ export function SetRow({
   const [editingReps, setEditingReps] = useState(false);
   const [editingWeight, setEditingWeight] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
+  // Which field a phone tap opened the whole-set editor on, or null.
+  const [phoneEditField, setPhoneEditField] = useState(null);
   const [draftReps, setDraftReps] = useState(String(set.reps ?? ""));
   const [draftWeight, setDraftWeight] = useState(String(set.weight ?? ""));
   const [draftNotes, setDraftNotes] = useState(set.notes ?? "");
@@ -281,7 +284,26 @@ export function SetRow({
   }
 
   function openNotesEdit() {
+    if (openPhoneEditor("notes")) return;
     setEditingNotes(true);
+  }
+
+  // On a phone a tap on any part of the set opens the same panel as adding
+  // one: big fields and plain Cancel and Save set buttons, saved as one
+  // change. A pointer keeps the quicker inline edit, field by field.
+  function openPhoneEditor(field) {
+    if (window.matchMedia("(min-width: 768px)").matches) return false;
+    setPhoneEditField(field);
+    return true;
+  }
+
+  function savePhoneEdit({ reps, weight, notes }) {
+    setPhoneEditField(null);
+    const patch = {};
+    if (reps !== set.reps) patch.reps = reps;
+    if (weight !== set.weight) patch.weight = weight;
+    if (notes.trim() !== displayNotes.trim()) patch.notes = notes.trim();
+    if (Object.keys(patch).length) onUpdate?.(patch);
   }
 
   const videoSource = useMemo(
@@ -366,10 +388,29 @@ export function SetRow({
         boxShadow: { duration: 0.6, ease: "easeOut" },
       }}
     >
+      {phoneEditField && (
+        <CustomSetDraftRow
+          liftType={set.liftType}
+          unitType={set.unitType}
+          defaultWeight={displayWeight}
+          defaultNotes={displayNotes}
+          initialReps={displayReps ?? ""}
+          initialWeight={displayWeight ?? ""}
+          focusField={phoneEditField}
+          submitLabel="Save set"
+          onCommit={savePhoneEdit}
+          onCancel={() => setPhoneEditField(null)}
+        />
+      )}
       {/* Main row: reps@weight + notes + desktop meta rail. On a phone the
           notes drop under the numbers so both get a full-width, thumb-sized
           target; from md up they sit beside them as before. */}
-      <div className="flex flex-col gap-1 md:flex-row md:items-center md:gap-4">
+      <div
+        className={cn(
+          "flex flex-col gap-1 md:flex-row md:items-center md:gap-4",
+          phoneEditField && "hidden",
+        )}
+      >
         {/* Reps @ Weight unit — tight visual unit.
             Every part of this cluster is a fixed width, so the notes column
             starts at the same x on every row. min-w is not enough: a wide
@@ -409,6 +450,7 @@ export function SetRow({
               <button
                 className="hover:bg-muted/60 min-h-14 w-full rounded-sm py-0.5 text-right text-3xl font-semibold tabular-nums md:min-h-0 md:text-xl"
                 onClick={() => {
+                  if (openPhoneEditor("reps")) return;
                   cancelledEditRef.current = false;
                   setEditingReps(true);
                 }}
@@ -468,6 +510,7 @@ export function SetRow({
               <button
                 className="hover:bg-muted/60 min-h-14 rounded-sm py-0.5 pr-2 text-left text-3xl font-semibold tabular-nums md:min-h-0 md:pr-0 md:text-xl"
                 onClick={() => {
+                  if (openPhoneEditor("weight")) return;
                   cancelledEditRef.current = false;
                   setEditingWeight(true);
                 }}
@@ -648,7 +691,8 @@ export function SetRow({
       </div>
 
       {/* Mobile: badges + ranking + trash on second row */}
-      {(hasBadges || hasRankingBadges || onDelete || set._pending) && (
+      {!phoneEditField &&
+        (hasBadges || hasRankingBadges || onDelete || set._pending) && (
         <div className="mt-1 flex items-center gap-2 md:hidden">
           {set._pending ? (
             <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />

@@ -1,5 +1,6 @@
 /**
- * Inline draft row for entering a custom log set before it is inserted.
+ * Inline draft row for entering a custom log set before it is inserted, and on
+ * a phone for editing a logged one (given its values and a "Save set" label).
  * Reps, weight and notes run as one Tab or Enter sequence, and a weight far
  * past the lifter's best asks for a second confirm before it reaches the sheet.
  */
@@ -24,24 +25,36 @@ export function CustomSetDraftRow({
   onCommit,
   onCancel,
   disabled = false,
+  initialReps = "",
+  initialWeight = "",
+  focusField = "reps",
+  submitLabel = "Add set",
 }) {
   const weightHintId = useId();
   const repsInputRef = useRef(null);
   const weightInputRef = useRef(null);
   const notesInputRef = useRef(null);
-  const [draftReps, setDraftReps] = useState("");
-  const [draftWeight, setDraftWeight] = useState("");
+  const [draftReps, setDraftReps] = useState(String(initialReps));
+  const [draftWeight, setDraftWeight] = useState(String(initialWeight));
   const [draftNotes, setDraftNotes] = useState(defaultNotes ?? "");
   const notesPointerFocusRef = useRef(false);
   // The weight string the lifter has already been asked about once.
   const [queriedWeight, setQueriedWeight] = useState(null);
 
+  // Opening for an edit lands on the field the lifter tapped.
   useEffect(() => {
     if (disabled) return;
+    const input = {
+      reps: repsInputRef,
+      weight: weightInputRef,
+      notes: notesInputRef,
+    }[focusField]?.current;
     // preventScroll: the row opens right where the lifter tapped, so the
     // browser hauling the page to the field is only a jump.
-    repsInputRef.current?.focus({ preventScroll: true });
-    repsInputRef.current?.select?.();
+    input?.focus({ preventScroll: true });
+    if (focusField !== "notes") input?.select?.();
+    // Only on opening; a later focusField change must not steal the caret.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
 
   const parsedReps = Number.parseInt(draftReps, 10);
@@ -237,7 +250,6 @@ export function CustomSetDraftRow({
           disabled={disabled}
           className="border-input text-muted-foreground active:bg-muted flex h-12 w-24 items-center justify-center gap-1 rounded-md border text-base transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           onClick={onCancel}
-          aria-label="Cancel custom set"
         >
           <X className="h-5 w-5" />
           Cancel
@@ -247,10 +259,9 @@ export function CustomSetDraftRow({
           disabled={!canSubmit}
           className="bg-primary text-primary-foreground active:bg-primary/80 disabled:bg-muted disabled:text-muted-foreground flex h-12 flex-1 items-center justify-center gap-1 rounded-md text-base font-semibold transition-colors disabled:cursor-not-allowed"
           onClick={commitDraft}
-          aria-label="Add custom set"
         >
           <Check className="h-5 w-5" />
-          Add set
+          {submitLabel}
         </button>
       </div>
     </div>

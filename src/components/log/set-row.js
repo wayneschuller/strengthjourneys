@@ -375,12 +375,12 @@ export function SetRow({
             starts at the same x on every row. min-w is not enough: a wide
             value like 132.5 outgrows it and drags that row's notes right. */}
         <div className="flex shrink-0 items-center">
-          <div className={cn("w-12 md:w-7", warmupClass)}>
+          <div className={cn("w-20 md:w-7", warmupClass)}>
             {editingReps && !isReadOnly ? (
               <input
                 type="number"
                 inputMode="numeric"
-                className="border-primary h-11 w-14 rounded-sm border px-1 py-0.5 text-right text-2xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-10 md:text-xl"
+                className="border-primary h-14 w-20 rounded-sm border px-2 py-0.5 text-right text-3xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-10 md:px-1 md:text-xl"
                 value={draftReps}
                 onChange={(e) => setDraftReps(e.target.value)}
                 onBlur={commitReps}
@@ -402,12 +402,12 @@ export function SetRow({
                 autoFocus
               />
             ) : isReadOnly ? (
-              <div className="text-foreground/80 w-full py-0.5 text-right text-2xl font-semibold tabular-nums md:text-xl">
+              <div className="text-foreground/80 w-full py-0.5 text-right text-3xl font-semibold tabular-nums md:text-xl">
                 {displayReps}
               </div>
             ) : (
               <button
-                className="hover:bg-muted/60 min-h-11 w-full rounded-sm py-0.5 text-right text-2xl font-semibold tabular-nums md:min-h-0 md:text-xl"
+                className="hover:bg-muted/60 min-h-14 w-full rounded-sm py-0.5 text-right text-3xl font-semibold tabular-nums md:min-h-0 md:text-xl"
                 onClick={() => {
                   cancelledEditRef.current = false;
                   setEditingReps(true);
@@ -419,7 +419,7 @@ export function SetRow({
           </div>
           <span
             className={cn(
-              "text-muted-foreground mx-1 text-lg md:mx-0.5 md:text-base",
+              "text-muted-foreground mx-2 text-xl md:mx-0.5 md:text-base",
               warmupClass,
             )}
           >
@@ -430,7 +430,7 @@ export function SetRow({
               floating at the far edge. */}
           <div
             className={cn(
-              "flex w-32 shrink-0 items-center md:w-[5.5rem]",
+              "flex w-40 shrink-0 items-center md:w-[5.5rem]",
               warmupClass,
             )}
           >
@@ -438,7 +438,7 @@ export function SetRow({
               <input
                 type="text"
                 inputMode="decimal"
-                className="border-primary h-11 w-24 rounded-sm border px-1 py-0.5 text-2xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-20 md:text-xl"
+                className="border-primary h-14 w-32 rounded-sm border px-2 py-0.5 text-3xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-20 md:px-1 md:text-xl"
                 value={draftWeight}
                 onChange={(e) => setDraftWeight(e.target.value)}
                 onBlur={commitWeight}
@@ -461,12 +461,12 @@ export function SetRow({
                 autoFocus
               />
             ) : isReadOnly ? (
-              <div className="text-foreground/80 py-0.5 text-left text-2xl font-semibold tabular-nums md:text-xl">
+              <div className="text-foreground/80 py-0.5 text-left text-3xl font-semibold tabular-nums md:text-xl">
                 {displayWeight}
               </div>
             ) : (
               <button
-                className="hover:bg-muted/60 min-h-11 rounded-sm py-0.5 pr-2 text-left text-2xl font-semibold tabular-nums md:min-h-0 md:pr-0 md:text-xl"
+                className="hover:bg-muted/60 min-h-14 rounded-sm py-0.5 pr-2 text-left text-3xl font-semibold tabular-nums md:min-h-0 md:pr-0 md:text-xl"
                 onClick={() => {
                   cancelledEditRef.current = false;
                   setEditingWeight(true);

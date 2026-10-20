@@ -180,11 +180,14 @@ export function CustomSetDraftRow({
         </div>
 
         <div className="min-w-0 flex-1">
-          <input
+          {/* Two lines on a phone so a longer note can be read while it is
+              written, growing as it fills where the browser can size a field
+              to its content. Enter still saves: a note is one sheet cell. */}
+          <textarea
             ref={notesInputRef}
-            type="text"
+            rows={2}
             // 16px on a phone: smaller and iOS zooms the page on focus.
-            className="border-input text-muted-foreground focus:border-primary min-h-12 w-full border-b bg-transparent py-2 text-base italic focus:outline-none md:min-h-0 md:py-0.5 md:text-xs"
+            className="border-input text-muted-foreground focus:border-primary field-sizing-content max-h-40 min-h-16 w-full resize-none rounded-sm border bg-transparent px-2 py-2 text-base italic focus:outline-none md:max-h-none md:min-h-0 md:rounded-none md:border-0 md:border-b md:px-0 md:py-0.5 md:text-xs"
             value={draftNotes}
             disabled={disabled}
             placeholder="notes..."
@@ -234,11 +237,18 @@ export function CustomSetDraftRow({
         <p
           id={weightHintId}
           role="status"
-          className="mt-2 text-xs text-amber-600 dark:text-amber-400"
+          className="mt-2 text-sm text-amber-600 md:text-xs dark:text-amber-400"
         >
-          {wasQueried
-            ? `Still ${parsedWeight}${unitType}? Press Enter or the tick once more to log it.`
-            : heaviestWeight > 0
+          {wasQueried ? (
+            <>
+              {`Still ${parsedWeight}${unitType}? `}
+              {/* A phone has the labelled button; a desktop the tick and Enter. */}
+              <span className="md:hidden">{`Tap ${submitLabel} again to keep it.`}</span>
+              <span className="hidden md:inline">
+                Press Enter or the tick again to keep it.
+              </span>
+            </>
+          ) : heaviestWeight > 0
               ? `${parsedWeight}${unitType} is a long way past your ${heaviestWeight}${unitType} best. Worth a glance at the digits.`
               : `${parsedWeight}${unitType} is a huge ${liftType}. Worth a glance at the digits.`}
         </p>

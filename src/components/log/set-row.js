@@ -361,7 +361,16 @@ export function SetRow({
 
   return (
     <motion.div
-      className={cn("group py-3", celebrationStyles.rowClassName)}
+      className={cn(
+        "group py-3",
+        // On a phone each set is its own card: the numbers, note and badge
+        // row stack tall, and a hairline divider alone did not show where
+        // one set ends and the next begins.
+        "max-md:border-border/60 max-md:rounded-xl max-md:border max-md:px-3",
+        !celebrationStyles.rowClassName && "max-md:bg-card",
+        celebrationStyles.rowClassName,
+        celebrationStyles.rowClassName && "max-md:mx-0 max-md:border-l-2",
+      )}
       onMouseEnter={offerCopiedLinkOnHover}
       onMouseLeave={endHoverOffer}
       initial={shouldPassiveAnimate ? { opacity: 0, y: 12 } : false}
@@ -693,75 +702,75 @@ export function SetRow({
       {/* Mobile: badges + ranking + trash on second row */}
       {!phoneEditField &&
         (hasBadges || hasRankingBadges || onDelete || set._pending) && (
-        <div className="mt-1 flex items-center gap-2 md:hidden">
-          {set._pending ? (
-            <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
-          ) : (
-            <>
-              {strengthBadge && (
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">{strengthBadge}</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      {strengthTooltip}
-                      <p
-                        className={
-                          strengthTooltip ? "mt-1 opacity-70" : undefined
-                        }
-                      >
-                        Click for {set.liftType} strength levels
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {hasRankingBadges && (
-                <span className="inline-flex flex-col items-start gap-1">
-                  {rankingBadges.map((badge) => (
-                    <PrRankBadge
-                      key={`${badge.scope}-${badge.message}`}
-                      badge={badge}
-                      liftType={set.liftType}
-                      animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
-                      className={cn(metaBadgeClassName, "max-w-[11rem]")}
-                    />
-                  ))}
-                </span>
-              )}
-              {progressionBadge && (
-                <ProgressionBadge
-                  badge={progressionBadge}
-                  liftType={set.liftType}
-                  isMetric={isMetric}
-                  className={cn(metaBadgeClassName, "max-w-[11rem]")}
-                />
-              )}
-              <div className="flex-1" />
-              {onDelete && (
-                <TooltipProvider delayDuration={0}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <button
-                        className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
-                        onClick={onDelete}
-                        disabled={isDeleteDisabled}
-                        aria-label="Delete set"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </TooltipTrigger>
-                    <TooltipContent side="bottom">
-                      <p>Delete set</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-            </>
-          )}
-        </div>
-      )}
+          <div className="mt-1 flex items-center gap-2 md:hidden">
+            {set._pending ? (
+              <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
+            ) : (
+              <>
+                {strengthBadge && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-flex">{strengthBadge}</span>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        {strengthTooltip}
+                        <p
+                          className={
+                            strengthTooltip ? "mt-1 opacity-70" : undefined
+                          }
+                        >
+                          Click for {set.liftType} strength levels
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+                {hasRankingBadges && (
+                  <span className="inline-flex flex-col items-start gap-1">
+                    {rankingBadges.map((badge) => (
+                      <PrRankBadge
+                        key={`${badge.scope}-${badge.message}`}
+                        badge={badge}
+                        liftType={set.liftType}
+                        animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
+                        className={cn(metaBadgeClassName, "max-w-[11rem]")}
+                      />
+                    ))}
+                  </span>
+                )}
+                {progressionBadge && (
+                  <ProgressionBadge
+                    badge={progressionBadge}
+                    liftType={set.liftType}
+                    isMetric={isMetric}
+                    className={cn(metaBadgeClassName, "max-w-[11rem]")}
+                  />
+                )}
+                <div className="flex-1" />
+                {onDelete && (
+                  <TooltipProvider delayDuration={0}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button
+                          className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
+                          onClick={onDelete}
+                          disabled={isDeleteDisabled}
+                          aria-label="Delete set"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom">
+                        <p>Delete set</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </>
+            )}
+          </div>
+        )}
     </motion.div>
   );
 }

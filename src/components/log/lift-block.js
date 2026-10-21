@@ -629,7 +629,7 @@ export function LiftBlock({
       />
 
       {/* Set rows */}
-      <div className="divide-border/40 border-border/40 mx-4 mt-3 divide-y border-t md:mx-5">
+      <div className="md:divide-border/40 md:border-border/40 mx-4 mt-3 space-y-2 md:mx-5 md:space-y-0 md:divide-y md:border-t">
         {sets.map((set, idx) => {
           const rowIdentityKey = getSetIdentityKey(set, `pending-${idx}`);
           const shouldPassiveAnimate =

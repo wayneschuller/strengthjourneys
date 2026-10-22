@@ -313,8 +313,14 @@ export function SetRow({
   // An editable row always keeps the slot: it holds the add-video button
   // until there is a link to show.
   const showVideoSlot = reserveVideoSlot || Boolean(videoSource) || !isReadOnly;
-  const hasBadges =
-    !set._pending && (Boolean(strengthBadge) || Boolean(progressionBadge));
+  const hasBadges = Boolean(strengthBadge) || Boolean(progressionBadge);
+  // A pending set keeps its badges and puts a spinner the trash button's size
+  // where the trash goes, so the card stays the same height when it lands.
+  const pendingMark = (
+    <span className="inline-flex p-1">
+      <Loader2 className="text-muted-foreground/70 h-3.5 w-3.5 animate-spin" />
+    </span>
+  );
   const offeredSource =
     offeredUrl && !displayUrl && !editingNotes
       ? getVideoSourceMeta(offeredUrl)
@@ -630,52 +636,50 @@ export function SetRow({
         </div>
 
         <div className="hidden w-[17rem] shrink-0 items-center justify-end gap-2 md:flex">
-          {set._pending ? (
-            <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
-          ) : (
-            <>
-              <div className="ml-auto flex items-center gap-2">
-                {strengthBadge && (
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex">{strengthBadge}</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {strengthTooltip}
-                        <p
-                          className={
-                            strengthTooltip ? "mt-1 opacity-70" : undefined
-                          }
-                        >
-                          Click for {set.liftType} strength levels
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                <span className="inline-flex flex-col items-end gap-1">
-                  {hasRankingBadges &&
-                    rankingBadges.map((badge) => (
-                      <PrRankBadge
-                        key={`${badge.scope}-${badge.message}`}
-                        badge={badge}
-                        liftType={set.liftType}
-                        animationKey={`desktop-rank-${getSetIdentityKey(set)}-${badge.message}`}
-                        className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
-                      />
-                    ))}
-                  {progressionBadge && (
-                    <ProgressionBadge
-                      badge={progressionBadge}
-                      liftType={set.liftType}
-                      isMetric={isMetric}
-                      className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
-                    />
-                  )}
-                </span>
-              </div>
-              {onDelete && (
+          <div className="ml-auto flex items-center gap-2">
+            {strengthBadge && (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">{strengthBadge}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {strengthTooltip}
+                    <p
+                      className={
+                        strengthTooltip ? "mt-1 opacity-70" : undefined
+                      }
+                    >
+                      Click for {set.liftType} strength levels
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <span className="inline-flex flex-col items-end gap-1">
+              {hasRankingBadges &&
+                rankingBadges.map((badge) => (
+                  <PrRankBadge
+                    key={`${badge.scope}-${badge.message}`}
+                    badge={badge}
+                    liftType={set.liftType}
+                    animationKey={`desktop-rank-${getSetIdentityKey(set)}-${badge.message}`}
+                    className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
+                  />
+                ))}
+              {progressionBadge && (
+                <ProgressionBadge
+                  badge={progressionBadge}
+                  liftType={set.liftType}
+                  isMetric={isMetric}
+                  className={cn(metaBadgeClassName, rankingBadgeMaxClass)}
+                />
+              )}
+            </span>
+          </div>
+          {set._pending
+            ? pendingMark
+            : onDelete && (
                 <TooltipProvider delayDuration={0}>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -694,8 +698,6 @@ export function SetRow({
                   </Tooltip>
                 </TooltipProvider>
               )}
-            </>
-          )}
         </div>
       </div>
 
@@ -703,52 +705,50 @@ export function SetRow({
       {!phoneEditField &&
         (hasBadges || hasRankingBadges || onDelete || set._pending) && (
           <div className="mt-1 flex items-center gap-2 md:hidden">
-            {set._pending ? (
-              <Loader2 className="text-muted-foreground/70 h-3 w-3 animate-spin" />
-            ) : (
-              <>
-                {strengthBadge && (
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex">{strengthBadge}</span>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        {strengthTooltip}
-                        <p
-                          className={
-                            strengthTooltip ? "mt-1 opacity-70" : undefined
-                          }
-                        >
-                          Click for {set.liftType} strength levels
-                        </p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-                {hasRankingBadges && (
-                  <span className="inline-flex flex-col items-start gap-1">
-                    {rankingBadges.map((badge) => (
-                      <PrRankBadge
-                        key={`${badge.scope}-${badge.message}`}
-                        badge={badge}
-                        liftType={set.liftType}
-                        animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
-                        className={cn(metaBadgeClassName, "max-w-[11rem]")}
-                      />
-                    ))}
-                  </span>
-                )}
-                {progressionBadge && (
-                  <ProgressionBadge
-                    badge={progressionBadge}
+            {strengthBadge && (
+              <TooltipProvider delayDuration={0}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">{strengthBadge}</span>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    {strengthTooltip}
+                    <p
+                      className={
+                        strengthTooltip ? "mt-1 opacity-70" : undefined
+                      }
+                    >
+                      Click for {set.liftType} strength levels
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            {hasRankingBadges && (
+              <span className="inline-flex flex-col items-start gap-1">
+                {rankingBadges.map((badge) => (
+                  <PrRankBadge
+                    key={`${badge.scope}-${badge.message}`}
+                    badge={badge}
                     liftType={set.liftType}
-                    isMetric={isMetric}
+                    animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
                     className={cn(metaBadgeClassName, "max-w-[11rem]")}
                   />
-                )}
-                <div className="flex-1" />
-                {onDelete && (
+                ))}
+              </span>
+            )}
+            {progressionBadge && (
+              <ProgressionBadge
+                badge={progressionBadge}
+                liftType={set.liftType}
+                isMetric={isMetric}
+                className={cn(metaBadgeClassName, "max-w-[11rem]")}
+              />
+            )}
+            <div className="flex-1" />
+            {set._pending
+              ? pendingMark
+              : onDelete && (
                   <TooltipProvider delayDuration={0}>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -767,8 +767,6 @@ export function SetRow({
                     </Tooltip>
                   </TooltipProvider>
                 )}
-              </>
-            )}
           </div>
         )}
     </motion.div>

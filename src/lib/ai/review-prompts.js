@@ -5,6 +5,8 @@
  * while leaving room for the assistant to choose the right coaching structure.
  */
 
+import { getDisplayWeight } from "@/lib/processing-utils";
+
 export const AI_ASSISTANT_PATH = "/ai-lifting-assistant";
 export const AI_ASSISTANT_PROMPT_STORAGE_PREFIX = "SJ_AI_ASSISTANT_PROMPT_";
 
@@ -91,6 +93,84 @@ export function buildLogSessionReviewPrompt({
       : "";
 
   return `Review my lifting session${dateText}. Use the visible log data below as the source of truth for this session review; do not assume extra sets beyond this list unless I have shared broader training data with you.${visibleSessionText}${visibleTonnageText}`;
+}
+
+/**
+ * One line per lift for the log's session review prompt: "- Back Squat:
+ * 5@100kg, 5@105kg PR; notes: ...". Sets still on their way to the sheet are
+ * left out.
+ */
+export function buildLogSessionPromptSummaries({
+  sessionLiftsWithPending,
+  isMetric,
+}) {
+  return Object.entries(sessionLiftsWithPending)
+    .map(([liftType, sets]) => {
+      const visibleSets = Array.isArray(sets)
+        ? sets.filter(
+            (set) =>
+              (set.reps ?? 0) > 0 && (set.weight ?? 0) > 0 && !set._pending,
+          )
+        : [];
+      if (visibleSets.length === 0) return null;
+
+      const setLines = visibleSets.map((set) => {
+        const { value, unit } = getDisplayWeight(set, isMetric);
+        const prLabel = set.isHistoricalPR ? " PR" : "";
+        return `${set.reps}@${formatPromptNumber(value)}${unit}${prLabel}`;
+      });
+      const noteLines = visibleSets
+        .map((set) => normalizePromptNote(set.notes))
+        .filter(Boolean)
+        .slice(0, 4);
+      const notesText =
+        noteLines.length > 0 ? `; notes: ${noteLines.join(" | ")}` : "";
+
+      return `- ${liftType}: ${setLines.join(", ")}${notesText}`;
+    })
+    .filter(Boolean);
+}
+
+/** Per-lift tonnage lines for the same prompt, with the comparison when one holds. */
+export function buildLogSessionTonnagePromptSummaries(perLiftTonnageStats) {
+  if (!perLiftTonnageStats) return [];
+
+  return Object.entries(perLiftTonnageStats)
+    .map(([liftType, stats]) => {
+      if (!stats?.currentLiftTonnage || stats.currentLiftTonnage <= 0) {
+        return null;
+      }
+
+      const unit = stats.unitType ?? "";
+      const current = formatPromptNumber(stats.currentLiftTonnage);
+      if (!stats.shouldShowComparison || !Number.isFinite(stats.pctDiff)) {
+        return `- ${liftType}: tonnage=${current}${unit}`;
+      }
+
+      const pct = Math.round(stats.pctDiff);
+      const sign = pct > 0 ? "+" : "";
+      const sessionCountText =
+        stats.sessionCount > 0
+          ? ` across ${stats.sessionCount} prior sessions`
+          : "";
+
+      return `- ${liftType}: tonnage=${current}${unit} (${sign}${pct}% vs average${sessionCountText})`;
+    })
+    .filter(Boolean);
+}
+
+function normalizePromptNote(note) {
+  if (typeof note !== "string") return "";
+  const compact = note.replace(/\s+/g, " ").trim();
+  if (!compact) return "";
+  return compact.length > 120 ? `${compact.slice(0, 117).trim()}...` : compact;
+}
+
+function formatPromptNumber(value) {
+  if (!Number.isFinite(value)) return "0";
+  return Math.abs(value - Math.round(value)) < 0.05
+    ? String(Math.round(value))
+    : value.toFixed(1);
 }
 
 export function buildLiftChartReviewPrompt({

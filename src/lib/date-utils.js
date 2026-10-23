@@ -284,6 +284,23 @@ export function getDaysBetweenYmd(fromYmd, toYmd) {
   );
 }
 
+/**
+ * Spoken "how long ago" for a past YYYY-MM-DD date: "Yesterday", "5 days
+ * ago", "3 weeks ago", "4 months ago", "2 years ago". Null for today or a
+ * future date. Like getCompactAgeFromYmd, today comes in from the caller.
+ */
+export function getRelativeDayLabel(dateStr, todayYmd) {
+  if (!dateStr || !todayYmd) return null;
+  const days = getDaysBetweenYmd(dateStr, todayYmd);
+  if (!Number.isFinite(days) || days <= 0) return null;
+  if (days === 1) return "Yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.round(days / 7)} weeks ago`;
+  if (days < 365) return `${Math.round(days / 30.44)} months ago`;
+  const years = Math.floor(days / 365);
+  return years === 1 ? "1 year ago" : `${years} years ago`;
+}
+
 export function getYearFromYmd(dateStr) {
   if (!dateStr || dateStr.length < 4) return null;
   const year = Number.parseInt(dateStr.slice(0, 4), 10);

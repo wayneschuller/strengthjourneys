@@ -31,6 +31,7 @@ import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { parseData } from "@/lib/import/import-dispatcher";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDisplayWeight } from "@/lib/processing-utils";
+import { buzz, HAPTIC } from "@/lib/haptics";
 import {
   applySnapshot,
   createEngineState,
@@ -290,7 +291,10 @@ export function useLogSheetSync({
       if (hadPending) {
         hadPending = false;
         // A queue that emptied by handing a change back did not save it.
-        if (!handedBack) show("saved", 2000);
+        if (!handedBack) {
+          show("saved", 2000);
+          buzz(HAPTIC.saved);
+        }
         handedBack = false;
       }
     });

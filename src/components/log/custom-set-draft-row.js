@@ -124,8 +124,11 @@ export function CustomSetDraftRow({
   ]);
 
   return (
+    // data-no-swipe: a flick across a half-typed set must not turn the log
+    // to another session and take the draft with it.
     <div
       ref={panelRef}
+      data-no-swipe=""
       className="border-primary/35 bg-primary/5 rounded-lg border border-dashed px-2 py-3"
     >
       {/* Phone: numbers, then notes, each full width and thumb sized. From md

@@ -22,6 +22,7 @@ import {
   getCelebrationTier,
   getTrainingAgeYears,
 } from "@/lib/celebration";
+import { buzzForCelebration } from "@/lib/haptics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { getDisplayWeight } from "@/lib/processing-utils";
@@ -490,6 +491,9 @@ export function LiftBlock({
     activeCelebrationTimerRef.current = setTimeout(() => {
       setActiveCelebrationKey(null);
     }, 2200);
+
+    // Felt, not seen, so it plays whatever the motion setting.
+    buzzForCelebration(winner.celebration.tier);
 
     if (prefersReducedMotion) return;
 

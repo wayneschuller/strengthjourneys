@@ -11,7 +11,7 @@ import {
   ChevronsRight,
 } from "lucide-react";
 
-import { getReadableDateString } from "@/lib/date-utils";
+import { getReadableDateString, getRelativeDayLabel } from "@/lib/date-utils";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarWidget } from "@/components/ui/calendar";
 import {
@@ -115,11 +115,13 @@ export function LogDateNav({
                       : getReadableDateString(sessionDate, true)}
                   </span>
                 </span>
-                {isToday ? (
-                  <span className="text-muted-foreground text-xs">
-                    {getReadableDateString(sessionDate, true)}
-                  </span>
-                ) : null}
+                {/* Every date gets a second line, so the header keeps one
+                    height from today back through history. */}
+                <span className="text-muted-foreground text-xs">
+                  {isToday
+                    ? getReadableDateString(sessionDate, true)
+                    : (getRelativeDayLabel(sessionDate, todayIso) ?? "\u00a0")}
+                </span>
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="center">

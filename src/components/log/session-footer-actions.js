@@ -2,8 +2,9 @@
  * The row of actions that closes out a log session: ask the AI coach about it,
  * head back to the dashboard, or delete the day.
  *
- * The main actions are tall and share the row. Delete stays red and only as
- * wide as its label, with the confirm step on its own line underneath so the
+ * The main actions are tall and share the row. Delete is red text on an
+ * outline, only as wide as its label: easy to find, never the loudest thing
+ * under a session. Its confirm step sits on its own line underneath so the
  * destructive question never sits a thumb-width from the AI button.
  */
 
@@ -79,13 +80,13 @@ export function SessionFooterActions({
   );
 
   // Hug the label. The other actions fill the row; this one stays a
-  // smaller red control so deleting a day is available without dominating it.
+  // quieter red control so deleting a day is available without dominating it.
   const deleteButton =
     canDelete && !showConfirm ? (
       <div className={cn("flex justify-end", embedded && "sm:col-span-full")}>
         <Button
-          variant="destructive"
-          className="h-12 gap-2 rounded-xl px-5 shadow-sm"
+          variant="outline"
+          className="border-destructive/30 text-destructive hover:bg-destructive/10 hover:text-destructive h-12 gap-2 rounded-xl px-5"
           onClick={onRequestConfirm}
         >
           <Trash2 />
@@ -105,7 +106,9 @@ export function SessionFooterActions({
         <p className="text-muted-foreground text-sm">
           {isDeleting
             ? "Removing this session from your sheet."
-            : `Delete all rows for ${getLongReadableDateString(sessionDate) ?? sessionDate}?`}
+            : isBlocked
+              ? "Deleting is ready as soon as your sheet is answering."
+              : `Delete all rows for ${getLongReadableDateString(sessionDate) ?? sessionDate}?`}
         </p>
         <Button
           size="sm"
@@ -122,7 +125,12 @@ export function SessionFooterActions({
             "Delete"
           )}
         </Button>
-        <Button size="sm" variant="ghost" onClick={onCancel}>
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={onCancel}
+          aria-label="Keep this session"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>

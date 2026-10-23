@@ -90,7 +90,7 @@ const LOG_PAGE_KEYWORDS =
 const LOG_PAGE_STATIC_CONTENT = {
   heading: "A free barbell workout log you will never lose",
   intro:
-    "The session above is a demo, loaded with somebody else's training so you can look around before you sign in. Browse the dates, open a lift, see what your own log would look like. Once it is yours, every set, rep, weight and note lives in a Google Sheet in your own Drive — so the history you build here outlasts any app, including this one.",
+    "The session above is a demo, loaded with somebody else's training so you can look around before you sign in. Browse the dates, open a lift, see what your own log would look like. Once it is yours, every set, rep, weight and note lives in a Google Sheet in your own Drive, so the history you build here outlasts any app, including this one.",
   highlights: [
     "Log today's session in seconds. Open a lift and your recent sets are already there to work from.",
     "Any lift that takes reps and a weight is tracked the same way: PR badges, estimated one rep max, and warm-up jumps beside the sets that earned them.",
@@ -109,7 +109,7 @@ const LOG_PAGE_STATIC_CONTENT = {
     {
       question: "Can I log lifts other than the big four?",
       answer:
-        "Yes. Anything that takes reps and a weight belongs in the log — Olympic lifts, hex bar, weighted chin-ups, curls, hip thrust, whatever your program calls for. Every lift you log gets PR tracking, estimated one rep max and full session history. Strength ratings against your age, bodyweight and sex are the one thing limited to the squat, bench press, deadlift and strict press.",
+        "Yes. Anything that takes reps and a weight belongs in the log: Olympic lifts, hex bar, weighted chin-ups, curls, hip thrust, whatever your program calls for. Every lift you log gets PR tracking, estimated one rep max and full session history. Strength ratings against your age, bodyweight and sex are the one thing limited to the squat, bench press, deadlift and strict press.",
     },
     {
       question: "Do I have to start logging from scratch?",
@@ -496,7 +496,11 @@ export default function LogSessionPage({
   const unitNudgeShown = useRef(false);
   // Detect the all-kg/all-lb sheet case after data loads and offer a one-time
   // preference correction before new rows are written in the other unit.
+  // Only the lifter's own sheet counts: the demo is all lb and paints before
+  // sign-in resolves, so judging it would tell every kg lifter their sheet
+  // is in lb.
   useEffect(() => {
+    if (!hasLinkedSheet) return;
     if (!parsedData?.length || unitNudgeShown.current) return;
     const realEntries = parsedData.filter((e) => e.unitType);
     if (!realEntries.length) return;
@@ -521,7 +525,7 @@ export default function LogSessionPage({
         </ToastAction>
       ),
     });
-  }, [parsedData, isMetric, toast, toggleIsMetric]);
+  }, [hasLinkedSheet, parsedData, isMetric, toast, toggleIsMetric]);
 
   // Handle /log?startLift=... links from other pages by creating or focusing
   // the requested lift block after auth, sheet, and parsed data are ready.
@@ -1038,7 +1042,7 @@ function LogStaticContent({ content }) {
           If a movement takes reps and a weight it belongs here, and every lift
           you log is tracked the same way: personal records, estimated one rep
           max, and session history. The squat, bench press, deadlift and strict
-          press add one thing on top — strength ratings for your age, bodyweight
+          press add one thing on top: strength ratings for your age, bodyweight
           and sex, plus a progress guide of their own.
         </p>
         <ul className="mt-4 flex flex-wrap gap-2">

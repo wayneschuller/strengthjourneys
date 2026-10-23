@@ -38,6 +38,7 @@ export function CustomSetDraftRow({
   const [draftWeight, setDraftWeight] = useState(String(initialWeight));
   const [draftNotes, setDraftNotes] = useState(defaultNotes ?? "");
   const notesPointerFocusRef = useRef(false);
+  const panelRef = useRef(null);
   // The weight string the lifter has already been asked about once.
   const [queriedWeight, setQueriedWeight] = useState(null);
 
@@ -56,6 +57,8 @@ export function CustomSetDraftRow({
     // Only on opening; a later focusField change must not steal the caret.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
+
+  useKeepPanelAboveKeyboard(panelRef);
 
   const parsedReps = Number.parseInt(draftReps, 10);
   const parsedWeight = parseWeightInput(draftWeight);
@@ -121,7 +124,10 @@ export function CustomSetDraftRow({
   ]);
 
   return (
-    <div className="border-primary/35 bg-primary/5 rounded-lg border border-dashed px-2 py-3">
+    <div
+      ref={panelRef}
+      className="border-primary/35 bg-primary/5 rounded-lg border border-dashed px-2 py-3"
+    >
       {/* Phone: numbers, then notes, each full width and thumb sized. From md
           up they share one line. */}
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:gap-4">
@@ -248,9 +254,11 @@ export function CustomSetDraftRow({
                 Press Enter or the tick again to keep it.
               </span>
             </>
-          ) : heaviestWeight > 0
-              ? `${parsedWeight}${unitType} is a long way past your ${heaviestWeight}${unitType} best. Worth a glance at the digits.`
-              : `${parsedWeight}${unitType} is a huge ${liftType}. Worth a glance at the digits.`}
+          ) : heaviestWeight > 0 ? (
+            `${parsedWeight}${unitType} is a long way past your ${heaviestWeight}${unitType} best. Worth a glance at the digits.`
+          ) : (
+            `${parsedWeight}${unitType} is a huge ${liftType}. Worth a glance at the digits.`
+          )}
         </p>
       )}
 
@@ -276,6 +284,50 @@ export function CustomSetDraftRow({
       </div>
     </div>
   );
+}
+
+// A phone keyboard covers the lower part of the screen, and the browser only
+// scrolls the focused field into view, leaving Cancel and Save set behind the
+// keys (Android Chrome most of all). While a field in the panel has focus,
+// lift the page until the panel's foot clears the keyboard, never so far that
+// the field being typed in goes off the top.
+function useKeepPanelAboveKeyboard(panelRef) {
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    let frame = null;
+
+    const reveal = () => {
+      const panel = panelRef.current;
+      const active = document.activeElement;
+      if (!panel || !active || !panel.contains(active)) return;
+      const margin = 8;
+      const visibleTop = viewport.offsetTop;
+      const visibleBottom = viewport.offsetTop + viewport.height;
+      const overflow =
+        panel.getBoundingClientRect().bottom + margin - visibleBottom;
+      if (overflow <= 0) return;
+      const room = active.getBoundingClientRect().top - margin - visibleTop;
+      const distance = Math.min(overflow, room);
+      if (distance > 0) window.scrollBy({ top: distance, behavior: "smooth" });
+    };
+    // The keyboard is still opening when focus lands; wait for the viewport
+    // to settle on its new size before measuring.
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(reveal);
+    };
+
+    const panel = panelRef.current;
+    viewport.addEventListener("resize", schedule);
+    panel?.addEventListener("focusin", schedule);
+    schedule();
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener("resize", schedule);
+      panel?.removeEventListener("focusin", schedule);
+    };
+  }, [panelRef]);
 }
 
 // A slipped extra digit multiplies the weight by about ten, so anything past

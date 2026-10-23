@@ -438,9 +438,12 @@ export default function LogSessionPage({
     () => getNextSessionDate(sessionDates, sessionDate, todayIso),
     [sessionDates, sessionDate, todayIso],
   );
-  const sessionSwipeHandlers = useSessionSwipe({
+  const sessionSwipe = useSessionSwipe({
     onPrevious: prevSessionDate ? () => navigateToDate(prevSessionDate) : null,
     onNext: nextSessionDate ? () => navigateToDate(nextSessionDate) : null,
+    sessionDate,
+    slideDirection,
+    reducedMotion: prefersReducedMotion,
   });
   const addLiftChips = useMemo(() => {
     const seen = new Set();
@@ -729,7 +732,9 @@ export default function LogSessionPage({
           },
         ]}
       />
-      <div className="mx-auto max-w-[116rem] px-3 pb-24 sm:px-4">
+      {/* overflow-x-clip: a session dragged sideways must not widen the
+          page. Clip, not hidden, so the sticky date header still sticks. */}
+      <div className="mx-auto max-w-[116rem] overflow-x-clip px-3 pb-24 sm:px-4">
         <Head>
           <script type="application/ld+json">
             {JSON.stringify(LOG_PAGE_STRUCTURED_DATA)}
@@ -751,7 +756,12 @@ export default function LogSessionPage({
             </div>
           </aside>
 
-          <main className="min-w-0" {...sessionSwipeHandlers}>
+          {/* touch-pan-y: the browser keeps vertical scrolling and pinch
+              zoom, and a sideways drag comes to the swipe instead. */}
+          <main
+            className="min-w-0 touch-pan-y touch-pinch-zoom"
+            {...sessionSwipe.handlers}
+          >
             {/* mx-auto matters: below 2xl there is no grid, and from 2xl the
                 column is wider than this cap, so without it the session sits
                 left of centre in its own space. */}
@@ -787,140 +797,136 @@ export default function LogSessionPage({
                 </AppBanner>
               )}
 
-              {/* Keyed by date, so each turn of the page slides in from the
-                  side it came from. A date that changed by itself (the
-                  first paint settling on the lifter's own today) just
-                  appears: `initial={false}` also keeps the server render
-                  fully visible. */}
-              <motion.div
-                key={sessionDate}
-                initial={
-                  slideDirection && !prefersReducedMotion
-                    ? { opacity: 0, x: slideDirection * 28 }
-                    : false
-                }
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-              >
-                {showSessionBootstrap && <LogSessionSkeleton />}
-                {isPresumedDemo && (
-                  <div data-returning-visit="">
-                    <LogSessionSkeleton />
-                  </div>
-                )}
-
-                {!showSessionBootstrap && !isLoading && !hasSession && (
-                  <div data-first-visit={isPresumedDemo ? "" : undefined}>
-                    <EmptySessionState
-                      addLiftChips={addLiftChips}
-                      nextLiftPlan={nextLiftPlan}
-                      isAddBlocked={isWriteBlocked}
-                      isToday={isToday}
-                      onAddLift={handleAddLift}
-                      previewMode={previewMode}
-                      previewCta={previewLogCta}
-                      sessionDate={sessionDate}
-                    />
-                  </div>
-                )}
-
-                {/* A past meet gets a look back above its lifts. Never on the
-                  day itself: mid-meet, the log must stay the one they know. */}
-                {!showSessionBootstrap &&
-                  hasSession &&
-                  sessionDate < todayIso &&
-                  meetDays?.has(sessionDate) && (
-                    <MeetDayBanner
-                      meetDay={meetDays.get(sessionDate)}
-                      sessionDate={sessionDate}
-                      todayIso={todayIso}
-                      isMetric={isMetric}
-                    />
+              {/* The session follows a sideways drag and slides between
+                  dates (see useSessionSwipe). Inside, keyed by date, so a
+                  new session arrives whole instead of its lift cards
+                  collapsing and growing one by one. */}
+              <motion.div style={sessionSwipe.style}>
+                <div key={sessionDate}>
+                  {showSessionBootstrap && <LogSessionSkeleton />}
+                  {isPresumedDemo && (
+                    <div data-returning-visit="">
+                      <LogSessionSkeleton />
+                    </div>
                   )}
 
-                {!showSessionBootstrap && hasSession && (
-                  <div
-                    className="space-y-5"
-                    data-first-visit={isPresumedDemo ? "" : undefined}
-                  >
-                    <AnimatePresence initial={false}>
-                      {Object.entries(sessionLiftsWithPending).map(
-                        ([liftType, sets]) => (
-                          <motion.div
-                            key={`${sessionDate}-${liftType}`}
-                            id={getLiftAnchorId(liftType)}
-                            layout
-                            initial={liftCardInitial}
-                            animate={liftCardAnimate}
-                            exit={liftCardExit}
-                            transition={liftCardTransition}
-                            className="scroll-mt-24 overflow-y-hidden md:mx-[-1rem] lg:mx-[-1.5rem]"
-                          >
-                            <LiftBlock
-                              liftType={liftType}
-                              sets={sets}
-                              parsedData={parsedData}
-                              sessionDate={sessionDate}
-                              isMetric={isMetric}
-                              topLiftsByTypeAndReps={topLiftsByTypeAndReps}
-                              topLiftsByTypeAndRepsLast12Months={
-                                topLiftsByTypeAndRepsLast12Months
-                              }
-                              tonnageStats={
-                                perLiftTonnageStats?.[liftType] ?? null
-                              }
-                              dashboardStage={dashboardStage}
-                              sessionCount={sessionCount}
-                              isPastSession={!isToday}
-                              isWriteBlocked={isWriteBlocked}
-                              isDeleteCooldownActive={isDeleteCooldownActive}
-                              collapseSuggestions={
-                                activeNewLiftType !== null &&
-                                Boolean(
-                                  sessionLiftsWithPending[activeNewLiftType]
-                                    ?.length,
-                                ) &&
-                                activeNewLiftType !== liftType
-                              }
-                              previewMode={previewMode}
-                              onUpdateSet={previewMode ? undefined : updateSet}
-                              onDeleteSet={previewMode ? undefined : deleteSet}
-                              onAddSet={
-                                previewMode
-                                  ? undefined
-                                  : (prevSet) => addSet(liftType, prevSet)
-                              }
-                              onNavigateToDate={
-                                previewMode ? undefined : navigateToDate
-                              }
-                              usedSessionUrls={usedSessionUrls}
-                              onSessionUrlAccepted={handleSessionUrlAccepted}
-                              onSessionUrlReleased={handleSessionUrlReleased}
-                            />
-                          </motion.div>
-                        ),
-                      )}
-                    </AnimatePresence>
+                  {!showSessionBootstrap && !isLoading && !hasSession && (
+                    <div data-first-visit={isPresumedDemo ? "" : undefined}>
+                      <EmptySessionState
+                        addLiftChips={addLiftChips}
+                        nextLiftPlan={nextLiftPlan}
+                        isAddBlocked={isWriteBlocked}
+                        isToday={isToday}
+                        onAddLift={handleAddLift}
+                        previewMode={previewMode}
+                        previewCta={previewLogCta}
+                        sessionDate={sessionDate}
+                      />
+                    </div>
+                  )}
 
-                    {collapseAddLiftGallery ? (
-                      <div
-                        className={
-                          aiSessionReviewLink
-                            ? "grid grid-cols-1 gap-3 sm:grid-cols-3"
-                            : "grid grid-cols-1 gap-3 sm:grid-cols-2"
-                        }
-                      >
-                        {addLiftControl}
-                        {sessionFooter}
-                      </div>
-                    ) : (
-                      <>
-                        {addLiftControl}
-                        {sessionFooter}
-                      </>
+                  {/* A past meet gets a look back above its lifts. Never on the
+                  day itself: mid-meet, the log must stay the one they know. */}
+                  {!showSessionBootstrap &&
+                    hasSession &&
+                    sessionDate < todayIso &&
+                    meetDays?.has(sessionDate) && (
+                      <MeetDayBanner
+                        meetDay={meetDays.get(sessionDate)}
+                        sessionDate={sessionDate}
+                        todayIso={todayIso}
+                        isMetric={isMetric}
+                      />
                     )}
-                  </div>
-                )}
+
+                  {!showSessionBootstrap && hasSession && (
+                    <div
+                      className="space-y-5"
+                      data-first-visit={isPresumedDemo ? "" : undefined}
+                    >
+                      <AnimatePresence initial={false}>
+                        {Object.entries(sessionLiftsWithPending).map(
+                          ([liftType, sets]) => (
+                            <motion.div
+                              key={`${sessionDate}-${liftType}`}
+                              id={getLiftAnchorId(liftType)}
+                              layout
+                              initial={liftCardInitial}
+                              animate={liftCardAnimate}
+                              exit={liftCardExit}
+                              transition={liftCardTransition}
+                              className="scroll-mt-24 overflow-y-hidden md:mx-[-1rem] lg:mx-[-1.5rem]"
+                            >
+                              <LiftBlock
+                                liftType={liftType}
+                                sets={sets}
+                                parsedData={parsedData}
+                                sessionDate={sessionDate}
+                                isMetric={isMetric}
+                                topLiftsByTypeAndReps={topLiftsByTypeAndReps}
+                                topLiftsByTypeAndRepsLast12Months={
+                                  topLiftsByTypeAndRepsLast12Months
+                                }
+                                tonnageStats={
+                                  perLiftTonnageStats?.[liftType] ?? null
+                                }
+                                dashboardStage={dashboardStage}
+                                sessionCount={sessionCount}
+                                isPastSession={!isToday}
+                                isWriteBlocked={isWriteBlocked}
+                                isDeleteCooldownActive={isDeleteCooldownActive}
+                                collapseSuggestions={
+                                  activeNewLiftType !== null &&
+                                  Boolean(
+                                    sessionLiftsWithPending[activeNewLiftType]
+                                      ?.length,
+                                  ) &&
+                                  activeNewLiftType !== liftType
+                                }
+                                previewMode={previewMode}
+                                onUpdateSet={
+                                  previewMode ? undefined : updateSet
+                                }
+                                onDeleteSet={
+                                  previewMode ? undefined : deleteSet
+                                }
+                                onAddSet={
+                                  previewMode
+                                    ? undefined
+                                    : (prevSet) => addSet(liftType, prevSet)
+                                }
+                                onNavigateToDate={
+                                  previewMode ? undefined : navigateToDate
+                                }
+                                usedSessionUrls={usedSessionUrls}
+                                onSessionUrlAccepted={handleSessionUrlAccepted}
+                                onSessionUrlReleased={handleSessionUrlReleased}
+                              />
+                            </motion.div>
+                          ),
+                        )}
+                      </AnimatePresence>
+
+                      {collapseAddLiftGallery ? (
+                        <div
+                          className={
+                            aiSessionReviewLink
+                              ? "grid grid-cols-1 gap-3 sm:grid-cols-3"
+                              : "grid grid-cols-1 gap-3 sm:grid-cols-2"
+                          }
+                        >
+                          {addLiftControl}
+                          {sessionFooter}
+                        </div>
+                      ) : (
+                        <>
+                          {addLiftControl}
+                          {sessionFooter}
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               </motion.div>
 
               <div className="mt-10 hidden lg:block 2xl:hidden">

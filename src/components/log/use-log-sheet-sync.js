@@ -473,9 +473,11 @@ function getFailureToast({ op, reason }) {
   return {
     title: `${what} did not reach your sheet`,
     description:
-      reason === "rejected"
-        ? "Google Sheets turned the change down. The log shows your sheet as it stands."
-        : "Your sheet changed before it could save. The log shows your sheet as it stands, so make the change again and it will go through.",
+      reason === "forbidden"
+        ? "Google Sheets is not letting Strength Journeys write to this sheet. The log shows your sheet as it stands."
+        : reason === "rejected"
+          ? "Google Sheets turned the change down. The log shows your sheet as it stands."
+          : "Your sheet changed before it could save. The log shows your sheet as it stands, so make the change again and it will go through.",
     variant: "destructive",
     duration: 8000,
   };

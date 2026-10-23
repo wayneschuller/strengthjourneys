@@ -372,6 +372,7 @@ function createWorld({
     await clock.sleep(latency());
     if (mode === "lost-request") throw new TypeError("Failed to fetch");
     if (mode === "rate-limit") return respond({ status: 429, data: {} });
+    if (mode === "forbidden") return respond({ status: 403, data: {} });
     if (mode === "server-error") return respond({ status: 502, data: {} });
     if (mode === "late") {
       // The request is still on its way when the client gives up on it.
@@ -899,6 +900,34 @@ const scenarios = {
     lifter.checkSheet("lost request");
     assert.equal(world.sheetSession(TODAY).length, 7);
     assert.equal(world.failures.length, 0);
+  },
+
+  async "one refused write is a blip and the set still lands"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    world.script("forbidden");
+    lifter.add(TODAY, "Bench Press");
+    await settle(world, lifter, "one 403");
+    lifter.checkSheet("one 403");
+    assert.equal(world.sheetSession(TODAY).length, 7);
+    assert.equal(world.failures.length, 0);
+  },
+
+  async "a sheet that keeps refusing writes hands the set back"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    world.script("forbidden", "forbidden", "forbidden", "forbidden");
+    world.store.addSet({
+      date: TODAY,
+      liftType: "Bench Press",
+      fields: { reps: 5, weight: 60, unitType: "kg", notes: "", url: "" },
+    });
+    await world.clock.run();
+    assert.equal(getSyncSummary(world.store.getState()).pending, 0);
+    assert.equal(world.failures.length, 1);
+    assert.equal(world.failures[0].reason, "forbidden");
+    assert.equal(world.sheetSession(TODAY).length, 6);
   },
 
   async "an add that arrives late is still only one row"() {

@@ -61,6 +61,11 @@ const MAX_TRACKED_DATES = 30;
 // A closed tab's last request can still be finishing (it is sent keepalive).
 // Only a read begun this long after it left may conclude it never arrived.
 export const RECOVERY_SETTLE_MS = 60000;
+// Google says 403 when the sheet is no longer ours to write: access revoked,
+// the file moved out of reach. A blip gets a couple of tries; past that it is
+// a refusal, and retrying it forever would tell the lifter a set is on its
+// way when it never will be.
+const MAX_FORBIDDEN_ATTEMPTS = 3;
 
 export function createEngineState(ssid = null) {
   return {
@@ -552,7 +557,8 @@ export function markSending(state, opId, plan, now = null) {
  *   written. Read the sheet again before trying once more.
  * - ambiguous: the request may or may not have landed (network drop, timeout,
  *   5xx). Never resend blind; a fresh snapshot settles it.
- * - retry: refused before any write (auth, rate limit). Wait and resend.
+ * - retry: refused before any write (auth, rate limit). Wait and resend; a
+ *   403 that keeps coming is a refusal and the change goes back.
  * - fatal: the request itself is wrong. Give the change back.
  */
 export function applyOutcome(state, opId, result, now) {
@@ -619,6 +625,9 @@ export function applyOutcome(state, opId, result, now) {
   }
 
   if (result.kind === "retry") {
+    if (result.status === 403 && op.attempts >= MAX_FORBIDDEN_ATTEMPTS) {
+      return failOp(state, op, "forbidden");
+    }
     return {
       ...updateOp(state, opId, (current) => ({
         ...current,

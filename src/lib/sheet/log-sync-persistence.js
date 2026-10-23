@@ -162,7 +162,8 @@ function readRecords(ssid) {
 /**
  * Hand `take` the intents closed tabs left for this sheet, oldest first,
  * then forget them. `take` saves them as this tab's own (through
- * persistLogOutbox) before returning, so they are never in neither place.
+ * persistLogOutbox) before returning true, so they are never in neither
+ * place. When it returns false they were not taken and stay saved.
  */
 export async function adoptLogOutboxes(ssid, take) {
   if (typeof window === "undefined") return;
@@ -200,7 +201,7 @@ function adoptFrom(records, isAdoptable, take) {
     )
     .sort((a, b) => a.record.savedAt - b.record.savedAt)
     .flatMap(({ record }) => record.intents);
-  if (intents.length) take(intents);
+  if (intents.length && take(intents) === false) return;
   try {
     for (const { key } of adoptable) {
       // Without locks our own record is the one taken over, and `take` has

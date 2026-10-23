@@ -62,9 +62,9 @@ const REQUEST_TIMEOUT_MS = 25000;
  * @param {(event: object) => void} io.onFailure A change was handed back.
  * @param {(ssid: string, intents: object[]) => boolean} [io.persist] Saves
  *   what is still owed; returns false when it could not be saved.
- * @param {(ssid: string, take: (intents: object[]) => void) => Promise<void>} [io.adopt]
+ * @param {(ssid: string, take: (intents: object[]) => boolean) => Promise<void>} [io.adopt]
  *   Hands `take` whatever closed tabs left for this sheet, and forgets it
- *   once `take` has returned.
+ *   once `take` has returned true. False leaves it where it was.
  * @param {() => number} [io.wallNow] Epoch ms, for saved changes' timing.
  */
 export function createLogSyncStore(io) {
@@ -255,9 +255,13 @@ export function createLogSyncStore(io) {
     const notBefore = io.now();
     Promise.resolve(
       io.adopt(ssid, (intents) => {
-        if (state.ssid !== ssid || !intents.length) return;
+        // The lifter moved to another sheet while we looked. Decline, so the
+        // record stays for a page that links this one again.
+        if (state.ssid !== ssid) return false;
+        if (!intents.length) return true;
         setState(restoreIntents(state, intents, { notBefore, fromWall }));
         refresh.nextAt = Math.min(refresh.nextAt, io.now());
+        return true;
       }),
     )
       .catch(() => {})

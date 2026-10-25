@@ -14,7 +14,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
+import { load as loadYaml } from "js-yaml";
 
 import { renderArticleMarkdown } from "./articles.js";
 
@@ -55,7 +55,7 @@ function parseEntryFile(fileName) {
   );
   if (!match) fail("missing --- frontmatter block");
 
-  const data = yaml.load(match[1]) ?? {};
+  const data = loadYaml(match[1]) ?? {};
   const unknownFields = Object.keys(data).filter(
     (key) => !FRONTMATTER_FIELDS.has(key),
   );

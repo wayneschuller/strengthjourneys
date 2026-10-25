@@ -14,7 +14,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import yaml from "js-yaml";
+import { load as loadYaml } from "js-yaml";
 import { imageSize } from "image-size";
 import { unified } from "unified";
 import remarkParse from "remark-parse";
@@ -181,7 +181,7 @@ function parseArticleFile(fileName) {
   if (!SLUG_PATTERN.test(slug))
     fail("file name must be a lowercase-hyphenated slug");
 
-  const data = yaml.load(match[1]) ?? {};
+  const data = loadYaml(match[1]) ?? {};
   const unknownFields = Object.keys(data).filter(
     (key) => !FRONTMATTER_FIELDS.has(key),
   );

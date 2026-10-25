@@ -74,7 +74,7 @@
     "image-size": "^2.0.4",
     "js-yaml": "^4.3.2",
     "lucide-react": "^1.25.0",
-    "motion": "^12.42.2",
+    "motion": "^14.6.0",
     "nanoid": "^6.0.1",
     "next": "^16.4.2",
     "next-auth": "^4.24.15",

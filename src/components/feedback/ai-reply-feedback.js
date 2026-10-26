@@ -99,13 +99,14 @@ export function AiReplyFeedback({
     <div className="flex flex-col gap-1">
       <MessageActions>
         {children}
+        <span aria-hidden className="bg-border mx-1 h-4 w-px" />
         <MessageAction
           onClick={() => handleVote("up")}
           label="Good answer"
           tooltip="Good answer"
-          className={vote === "up" ? "text-green-600" : ""}
+          className={vote === "up" ? "text-green-600 hover:text-green-600" : ""}
         >
-          <ThumbsUp className="size-3" />
+          <ThumbsUp className={vote === "up" ? "fill-current/20" : ""} />
         </MessageAction>
         <MessageAction
           onClick={() => handleVote("down")}
@@ -113,9 +114,7 @@ export function AiReplyFeedback({
           tooltip="Could be better"
           className={vote === "down" ? "text-foreground" : ""}
         >
-          <ThumbsDown
-            className={vote === "down" ? "size-3 fill-current" : "size-3"}
-          />
+          <ThumbsDown className={vote === "down" ? "fill-current" : ""} />
         </MessageAction>
       </MessageActions>
       {vote && shareState !== "sent" && (

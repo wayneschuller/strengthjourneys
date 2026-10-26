@@ -107,7 +107,13 @@ export const MessageContent = ({ children, className, ...props }) => (
 );
 
 export const MessageActions = ({ className, children, ...props }) => (
-  <div className={cn("flex items-center gap-1", className)} {...props}>
+  <div
+    className={cn(
+      "text-muted-foreground -ml-2 flex items-center gap-0.5",
+      className,
+    )}
+    {...props}
+  >
     {children}
   </div>
 );
@@ -117,11 +123,21 @@ export const MessageAction = ({
   children,
   label,
   variant = "ghost",
-  size = "icon-sm",
+  size = "icon",
+  className,
   ...props
 }) => {
   const button = (
-    <Button size={size} type="button" variant={variant} {...props}>
+    <Button
+      size={size}
+      type="button"
+      variant={variant}
+      className={cn(
+        "hover:text-foreground size-8 rounded-full [&_svg]:size-4",
+        className,
+      )}
+      {...props}
+    >
       {children}
       <span className="sr-only">{label || tooltip}</span>
     </Button>

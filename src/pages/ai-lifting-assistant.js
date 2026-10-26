@@ -93,7 +93,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
-import { Bot, CopyIcon, RefreshCcwIcon, CheckIcon } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  CheckIcon,
+  CopyIcon,
+  RefreshCcwIcon,
+  Sparkles,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
@@ -574,11 +581,7 @@ function CopyButton({ text, ...props }) {
       tooltip={copied ? "Copied!" : "Copy"}
       {...props}
     >
-      {copied ? (
-        <CheckIcon className="size-3" />
-      ) : (
-        <CopyIcon className="size-3" />
-      )}
+      {copied ? <CheckIcon className="text-green-600" /> : <CopyIcon />}
     </MessageAction>
   );
 }
@@ -1315,9 +1318,10 @@ function AILiftingAssistantCard({
                                     }
                                   }}
                                   label="Retry"
+                                  tooltip="Retry"
                                   disabled={isChatUnavailable}
                                 >
-                                  <RefreshCcwIcon className="size-3" />
+                                  <RefreshCcwIcon />
                                 </MessageAction>
                                 <CopyButton
                                   text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
@@ -1328,21 +1332,23 @@ function AILiftingAssistantCard({
                         {message.role === "assistant" &&
                           isLastMessage &&
                           suggestedQuestions.length > 0 && (
-                            <div className="mt-3 max-w-3xl">
-                              <p className="text-muted-foreground mb-2 text-xs italic">
-                                Suggested follow-ups
-                              </p>
-                              <Suggestions>
-                                {suggestedQuestions.map((question) => (
+                            <div className="mt-4 max-w-3xl">
+                              <Suggestions className="gap-2.5">
+                                {suggestedQuestions.map((question, i) => (
                                   <Suggestion
                                     key={question}
-                                    className="border-border bg-muted/50 text-foreground hover:bg-muted hover:text-foreground disabled:bg-muted disabled:text-muted-foreground px-3"
+                                    className="group border-border/70 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground disabled:text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both h-auto min-h-9 gap-2 py-2 pr-3 pl-3.5 text-left whitespace-normal shadow-xs duration-500"
+                                    style={{ animationDelay: `${i * 90}ms` }}
                                     suggestion={question}
                                     disabled={isChatUnavailable}
                                     onClick={(suggestion) => {
                                       sendMessageWithMetadata(suggestion);
                                     }}
-                                  />
+                                  >
+                                    <Sparkles className="text-primary/70 group-hover:text-primary size-3.5 shrink-0 transition-colors" />
+                                    <span>{question}</span>
+                                    <ArrowRight className="text-primary size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+                                  </Suggestion>
                                 ))}
                               </Suggestions>
                             </div>

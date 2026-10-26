@@ -314,26 +314,6 @@
   }
 }
 
-@keyframes coach-glow-drift-a {
-  0%,
-  100% {
-    transform: translate(-70%, 0) scale(1);
-  }
-  50% {
-    transform: translate(-55%, 2.5rem) scale(1.12);
-  }
-}
-
-@keyframes coach-glow-drift-b {
-  0%,
-  100% {
-    transform: translate(-20%, 0) scale(1);
-  }
-  50% {
-    transform: translate(-40%, -2rem) scale(0.92);
-  }
-}
-
 .coach-bot-blink,
 .coach-bot-blink-double {
   transform-box: fill-box;
@@ -357,14 +337,6 @@
 .coach-bot-cheer {
   transform-origin: 50% 100%;
   animation: coach-bot-hop 0.6s ease-out 2;
-}
-
-.coach-glow-a {
-  animation: coach-glow-drift-a 16s ease-in-out infinite;
-}
-
-.coach-glow-b {
-  animation: coach-glow-drift-b 19s ease-in-out infinite;
 }
 
 .coach-bot-wiggle {

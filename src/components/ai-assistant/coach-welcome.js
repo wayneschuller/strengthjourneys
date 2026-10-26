@@ -1,24 +1,81 @@
 /**
  * The AI coach's welcome on an empty chat: a little robot that blinks, idles
  * with the odd wiggle, looks at the question under the pointer and hops when
- * one is picked, over a slowly drifting colour glow. A fresh PR in the latest
- * session gets a trophy pill and a cheering robot.
+ * one is picked, over a soft glow. A fresh PR in the latest session gets a
+ * trophy pill and a cheering robot.
  *
- * Also home to the pieces the chat shares with it: SuggestionChip (the opening
- * questions and the follow-ups under each answer) and the composer textarea
- * that types out example questions as its placeholder.
+ * Hovering any suggestion, here or in the follow-ups under an answer, types it
+ * into the composer for real, ready to edit or send with Enter. Needs the
+ * chat wrapped in PromptInputProvider.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowRight, Sparkles, Trophy } from "lucide-react";
 
 import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
-import { PromptInputTextarea } from "@/components/ai-elements/prompt-input";
+import { usePromptInputController } from "@/components/ai-elements/prompt-input";
 import { cn } from "@/lib/utils";
 
 const IDLE_MOVES = ["coach-bot-wiggle", "coach-bot-nod", "coach-bot-hop"];
 
 // Long enough to see the hop before the welcome gives way to the chat.
 const PICK_DELAY_MS = 320;
+
+// Typing a hovered suggestion: a couple of characters a frame reads as quick
+// typing without making the athlete wait.
+const TYPE_CHARS_PER_TICK = 2;
+const TYPE_TICK_MS = 16;
+
+/**
+ * Types a hovered suggestion into the composer. It only ever replaces an empty
+ * box or text it typed itself: once the athlete edits the box, it is theirs.
+ */
+function useTypeIntoComposer() {
+  const { value, setInput } = usePromptInputController().textInput;
+  const valueRef = useRef(value);
+  const typedRef = useRef("");
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
+
+  useEffect(() => () => clearTimeout(timerRef.current), []);
+
+  const isOurs = () =>
+    valueRef.current === "" || valueRef.current === typedRef.current;
+
+  const typeOut = useCallback(
+    (text) => {
+      clearTimeout(timerRef.current);
+      if (!isOurs()) return;
+      let expected = valueRef.current;
+      let length = 0;
+      const tick = () => {
+        length = Math.min(text.length, length + TYPE_CHARS_PER_TICK);
+        const next = text.slice(0, length);
+        const previous = expected;
+        // Leaves the box alone if the athlete typed in the meantime.
+        setInput((current) => (current === previous ? next : current));
+        typedRef.current = next;
+        expected = next;
+        if (length < text.length) {
+          timerRef.current = setTimeout(tick, TYPE_TICK_MS);
+        }
+      };
+      tick();
+    },
+    [setInput],
+  );
+
+  // Before sending a picked suggestion, empty the box if we filled it.
+  const release = useCallback(() => {
+    clearTimeout(timerRef.current);
+    if (isOurs()) setInput("");
+    typedRef.current = "";
+  }, [setInput]);
+
+  return { typeOut, release };
+}
 
 /**
  * A suggested question as a pill that fades up in turn, with a hover arrow.
@@ -73,6 +130,7 @@ export function CoachWelcome({
 }) {
   const robotRef = useRef(null);
   const pickedRef = useRef(false);
+  const { typeOut, release } = useTypeIntoComposer();
   const [look, setLook] = useState({ x: 0, y: 0 });
   const [isHappy, setIsHappy] = useState(false);
   const [move, setMove] = useState({ name: null, count: 0 });
@@ -102,7 +160,8 @@ export function CoachWelcome({
   }, [celebration, playMove]);
 
   // The eyes follow whichever chip the pointer or keyboard is on.
-  function lookAt(event) {
+  function lookAt(event, question) {
+    typeOut(question);
     const robot = robotRef.current?.getBoundingClientRect();
     const chip = event.currentTarget.getBoundingClientRect();
     if (!robot) return;
@@ -121,6 +180,7 @@ export function CoachWelcome({
   function pick(question) {
     if (pickedRef.current) return;
     pickedRef.current = true;
+    release();
     setIsHappy(true);
     playMove("coach-bot-hop");
     setTimeout(() => {
@@ -131,13 +191,11 @@ export function CoachWelcome({
 
   return (
     <div className="relative flex w-full flex-col items-center">
+      {/* A soft glow behind the greeting */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-x-0 -top-10 bottom-0 overflow-hidden"
-      >
-        <div className="coach-glow-a bg-chart-1/25 dark:bg-chart-1/15 absolute top-0 left-1/2 size-72 -translate-x-[70%] rounded-full blur-3xl" />
-        <div className="coach-glow-b bg-chart-2/25 dark:bg-chart-2/15 absolute top-16 left-1/2 size-64 -translate-x-[20%] rounded-full blur-3xl" />
-      </div>
+        className="bg-primary/10 pointer-events-none absolute top-1/4 left-1/2 size-72 -translate-x-1/2 rounded-full blur-3xl"
+      />
       <div className="relative flex w-full max-w-3xl flex-col items-center gap-3">
         <div
           ref={robotRef}
@@ -172,9 +230,9 @@ export function CoachWelcome({
                 icon={icon}
                 disabled={disabled}
                 onSelect={pick}
-                onPointerEnter={lookAt}
+                onPointerEnter={(event) => lookAt(event, text)}
                 onPointerLeave={lookAway}
-                onFocus={lookAt}
+                onFocus={(event) => lookAt(event, text)}
                 onBlur={lookAway}
               />
             ))}
@@ -270,79 +328,32 @@ function CoachRobot({ look, isHappy, isCelebrating, move }) {
   );
 }
 
-const TYPED_EXAMPLES = [
-  "How do I warm up for a heavy single?",
-  "Is my bench keeping pace with my squat?",
-  "Plan a lighter week for me",
-  "What should I eat before a big session?",
-  "Which accessory would help my deadlift lockout?",
-  "How many sets a week should I do for squats?",
-];
-
-const TYPE_MS = 45;
-const ERASE_MS = 18;
-const HOLD_MS = 2200;
-
 /**
- * The composer textarea, typing out example questions as its placeholder.
- * Its own component so the typing re-renders only the textarea, not the chat.
+ * The follow-up questions under the latest answer.
  * @param {Object} props
- * @param {boolean} props.isTyping False shows staticPlaceholder instead.
- * @param {string} props.staticPlaceholder
+ * @param {string[]} props.questions
+ * @param {boolean} [props.disabled]
+ * @param {(question: string) => void} props.onSelect
  */
-export function TypedPlaceholderTextarea({
-  isTyping,
-  staticPlaceholder,
-  ...props
-}) {
-  const [typed, setTyped] = useState("");
-
-  useEffect(() => {
-    if (!isTyping) return;
-    const reduceMotion = window.matchMedia?.(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    let phrase = Math.floor(Math.random() * TYPED_EXAMPLES.length);
-    let length = 0;
-    let erasing = false;
-    let timer;
-
-    const tick = () => {
-      const text = TYPED_EXAMPLES[phrase];
-      if (reduceMotion) {
-        setTyped(text);
-        phrase = (phrase + 1) % TYPED_EXAMPLES.length;
-        timer = setTimeout(tick, HOLD_MS * 2);
-        return;
-      }
-      if (!erasing) {
-        length += 1;
-        setTyped(text.slice(0, length));
-        if (length >= text.length) {
-          erasing = true;
-          timer = setTimeout(tick, HOLD_MS);
-          return;
-        }
-        timer = setTimeout(tick, TYPE_MS);
-        return;
-      }
-      length -= 1;
-      setTyped(text.slice(0, length));
-      if (length <= 0) {
-        erasing = false;
-        phrase = (phrase + 1) % TYPED_EXAMPLES.length;
-      }
-      timer = setTimeout(tick, length <= 0 ? 400 : ERASE_MS);
-    };
-
-    timer = setTimeout(tick, 900);
-    return () => clearTimeout(timer);
-  }, [isTyping]);
+export function FollowUpSuggestions({ questions, disabled, onSelect }) {
+  const { typeOut, release } = useTypeIntoComposer();
 
   return (
-    <PromptInputTextarea
-      placeholder={isTyping && typed ? typed : staticPlaceholder}
-      {...props}
-    />
+    <Suggestions className="gap-2.5">
+      {questions.map((question, i) => (
+        <SuggestionChip
+          key={question}
+          question={question}
+          index={i}
+          disabled={disabled}
+          onSelect={(picked) => {
+            release();
+            onSelect(picked);
+          }}
+          onPointerEnter={() => typeOut(question)}
+          onFocus={() => typeOut(question)}
+        />
+      ))}
+    </Suggestions>
   );
 }

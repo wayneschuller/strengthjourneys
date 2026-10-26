@@ -242,7 +242,7 @@ export function LiftingDataCard({
           keyName: "sessionData",
           label: "Recent sessions",
           detail:
-            "Every set of your last 20 sessions, with personal bests marked",
+            "Every set of your last 20 sessions, with personal bests marked and your notes",
         })}
         {renderTrainingOption({
           id: "records-checkbox",

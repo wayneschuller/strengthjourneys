@@ -32,6 +32,10 @@ const RECENT_SESSION_COUNT = 20;
 // Safety net for sessions with many lifts: session blocks stop at this many
 // characters, newest first, so they never crowd the other sections out.
 const RECENT_SESSIONS_MAX_CHARS = 7000;
+// The lifter's own words on a set: how it felt, a cue, a niggle. Long notes
+// are cut so one essay cannot eat the session budget.
+const NOTE_MAX_CHARS = 120;
+const NOTES_PER_LIFT = 4;
 const MAIN_LIFT_LIMIT = 6;
 const WEEKS_OF_SESSION_COUNTS = 12;
 const BIG_FOUR = ["Back Squat", "Bench Press", "Deadlift", "Strict Press"];
@@ -672,7 +676,8 @@ function keepBestE1RM(current, set, e1rm) {
 
 /**
  * One session, lift by lift. e1RMs and best-set notes only for main lifts:
- * for carries and accessories they would be noise.
+ * for carries and accessories they would be noise. The lifter's own set
+ * notes follow every lift, main or not.
  */
 function formatSessionBlock(date, sessionEntries, lifts, mainLifts, ctx) {
   const byLift = new Map();
@@ -706,8 +711,13 @@ function formatSessionBlock(date, sessionEntries, lifts, mainLifts, ctx) {
       highlights = describeHighlights(liftType, liftEntries, lifts, ctx);
     }
 
+    const notes = collectLifterNotes(liftEntries);
+    const notesText = notes.length
+      ? ` Lifter's notes: ${notes.map((note) => `"${note}"`).join("; ")}.`
+      : "";
+
     lines.push(
-      `  ${liftType}: ${collapseSets(sets)}. ${summary.join(", ")}.${highlights}`,
+      `  ${liftType}: ${collapseSets(sets)}. ${summary.join(", ")}.${highlights}${notesText}`,
     );
   });
 
@@ -747,6 +757,36 @@ function describeHighlights(liftType, liftEntries, lifts, ctx) {
   const unique = [...new Set(notes)];
   return unique.length ? ` ${unique.join("; ")}.` : "";
 }
+
+/**
+ * Distinct notes the lifter wrote on a lift's sets, in logged order. Import
+ * bookkeeping is dropped: the workout time and "(Hevy: Push · set 2)" style
+ * provenance that importers write into the notes column.
+ */
+function collectLifterNotes(liftEntries) {
+  const notes = [];
+  liftEntries.forEach((entry) => {
+    if (typeof entry.notes !== "string") return;
+    entry.notes
+      .replace(IMPORT_TIME_PREFIX, "")
+      .split(" | ")
+      .map((part) => part.replace(/\s+/g, " ").trim())
+      .filter((part) => part && !IMPORT_PROVENANCE.test(part))
+      .forEach((part) => {
+        const note =
+          part.length > NOTE_MAX_CHARS
+            ? `${part.slice(0, NOTE_MAX_CHARS - 3).trim()}...`
+            : part;
+        if (!notes.includes(note)) notes.push(note);
+      });
+  });
+  return notes.slice(0, NOTES_PER_LIFT);
+}
+
+// Written by the importers in src/lib/import/provenance.js.
+const IMPORT_TIME_PREFIX = /^([01]\d|2[0-3]):[0-5]\d(?:\s|$)/;
+const IMPORT_PROVENANCE =
+  /^\([^()]+(?: import \d{4}-\d{2}-\d{2}| import|: [^()]*)\)$/;
 
 function collapseSets(sets) {
   const groups = [];

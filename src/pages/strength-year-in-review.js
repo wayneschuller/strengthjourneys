@@ -52,7 +52,8 @@ export default function StrengthYearInReview() {
     "See your year of strength training in a Spotify Wrapped-style recap. Sessions, PRs, strength gains, your lifter type and more. Free.";
   const canonicalURL =
     "https://www.strengthjourneys.xyz/strength-year-in-review";
-  const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
+  const ogImageURL =
+    "https://www.strengthjourneys.xyz/strength_journeys_year_in_review_og.png";
   const keywords =
     "strength year in review, lifting recap, workout year in review, strength training recap";
 
@@ -67,7 +68,14 @@ export default function StrengthYearInReview() {
           title,
           description,
           type: "website",
-          images: [{ url: ogImageURL, alt: "Strength Year in Review" }],
+          images: [
+            {
+              url: ogImageURL,
+              width: 1200,
+              height: 630,
+              alt: "Strength Unwrapped: a fan of recap cards showing a lifter type, training calendar and strength gains",
+            },
+          ],
           site_name: "Strength Journeys",
         }}
         twitter={{

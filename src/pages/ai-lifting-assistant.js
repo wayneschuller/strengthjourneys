@@ -2,7 +2,7 @@
  * AI Lifting Assistant page. Builds an opt-in, compact lifting-context prompt
  * from local user data and streams model responses through the chat API.
  */
-import { format } from "date-fns";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -388,7 +388,6 @@ const GENERAL_LIFTING_PROMPTS = [
 
 const PLAYFUL_PROMPTS = [
   "Write me a motivational rap.",
-  "ME STRONG",
   "Give me a riddle about lifting weights.",
 ];
 
@@ -447,15 +446,26 @@ function buildTrainingDataPrompts({ hasSharedBioData, suggestionContext }) {
   return [
     AI_REVIEW_PROMPTS.week,
     AI_REVIEW_PROMPTS.month,
-    recentSessionDate
-      ? `Review my latest session from ${recentSessionDate}`
-      : "Review my latest session",
+    getLatestSessionReviewPrompt(recentSessionDate),
     primaryLift
       ? `What should I focus on next for ${primaryLift}?`
       : "What lift should I focus on next?",
     "Where is my training inconsistent?",
     hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
   ];
+}
+
+// Names the latest session by how long ago it was, in the lifter's local
+// calendar. The coach's context carries the exact date, so this stays clear.
+function getLatestSessionReviewPrompt(recentSessionDate) {
+  if (!recentSessionDate) return "Review my latest training session";
+  const daysAgo = differenceInCalendarDays(
+    new Date(),
+    parseISO(recentSessionDate),
+  );
+  if (daysAgo <= 0) return "Review today's training session";
+  if (daysAgo === 1) return "Review yesterday's training session";
+  return `Review my training session from ${daysAgo} days ago`;
 }
 
 function buildPartialTrainingDataPrompts({

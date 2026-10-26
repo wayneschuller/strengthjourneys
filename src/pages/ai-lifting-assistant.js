@@ -63,12 +63,11 @@ import {
   SourcesTrigger,
 } from "@/components/ai-elements/sources";
 import { Loader } from "@/components/ai-elements/loader";
-import { Suggestions, Suggestion } from "@/components/ai-elements/suggestion";
+import { Suggestions } from "@/components/ai-elements/suggestion";
 
 import {
   PromptInput,
   PromptInputBody,
-  PromptInputTextarea,
   PromptInputFooter,
   PromptInputSubmit,
   PromptInputTools,
@@ -94,21 +93,24 @@ import { Button } from "@/components/ui/button";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import {
-  ArrowRight,
   Bot,
   CheckIcon,
   CopyIcon,
   Dumbbell,
   HeartPulse,
   PartyPopper,
-  Sparkles,
   TrendingUp,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
 import { PersonalizationDialog } from "@/components/ai-assistant/personalization-dialog";
+import {
+  CoachWelcome,
+  SuggestionChip,
+  TypedPlaceholderTextarea,
+} from "@/components/ai-assistant/coach-welcome";
+import { toKg } from "@/lib/weight-units";
 import {
   ChatQuotaLimitNotice,
   ChatQuotaMeter,
@@ -257,9 +259,14 @@ function AILiftingAssistantMain({ relatedArticles }) {
       recentSessionDate: hasSharedTrainingData
         ? getMostRecentSessionDate(parsedData)
         : null,
+      latestSessionPR:
+        hasSharedTrainingData && isOwnData(dataSource)
+          ? getLatestSessionPR(parsedData)
+          : null,
     };
   }, [
     age,
+    dataSource,
     hasSharedTrainingData,
     liftTypes,
     parsedData,
@@ -446,7 +453,10 @@ function buildTrainingDataPrompts({ hasSharedBioData, suggestionContext }) {
   return [
     AI_REVIEW_PROMPTS.week,
     AI_REVIEW_PROMPTS.month,
-    getLatestSessionReviewPrompt(recentSessionDate),
+    getLatestSessionReviewPrompt(
+      recentSessionDate,
+      Boolean(suggestionContext?.latestSessionPR),
+    ),
     primaryLift
       ? `What should I focus on next for ${primaryLift}?`
       : "What lift should I focus on next?",
@@ -457,15 +467,17 @@ function buildTrainingDataPrompts({ hasSharedBioData, suggestionContext }) {
 
 // Names the latest session by how long ago it was, in the lifter's local
 // calendar. The coach's context carries the exact date, so this stays clear.
-function getLatestSessionReviewPrompt(recentSessionDate) {
-  if (!recentSessionDate) return "Review my latest training session";
-  const daysAgo = differenceInCalendarDays(
-    new Date(),
-    parseISO(recentSessionDate),
-  );
-  if (daysAgo <= 0) return "Review today's training session";
-  if (daysAgo === 1) return "Review yesterday's training session";
-  return `Review my training session from ${daysAgo} days ago`;
+function getLatestSessionReviewPrompt(recentSessionDate, hasPR) {
+  const session = hasPR ? "PR session" : "training session";
+  if (!recentSessionDate) return `Review my latest ${session}`;
+  const daysAgo = getDaysAgo(recentSessionDate);
+  if (daysAgo <= 0) return `Review today's ${session}`;
+  if (daysAgo === 1) return `Review yesterday's ${session}`;
+  return `Review my ${session} from ${daysAgo} days ago`;
+}
+
+function getDaysAgo(date) {
+  return differenceInCalendarDays(new Date(), parseISO(date));
 }
 
 function buildPartialTrainingDataPrompts({
@@ -571,45 +583,40 @@ function getSuggestionIcon(prompt) {
   return TrendingUp;
 }
 
-const COACH_BOT_MOVES = ["coach-bot-wiggle", "coach-bot-nod", "coach-bot-hop"];
+// A fresh PR is cheered for this many days after the session.
+const PR_CELEBRATION_DAYS = 3;
 
 /**
- * The robot head above the empty chat. Every few seconds, at a random gap, it
- * does a random little move (wiggle, nod or hop) so it feels alive.
+ * The welcome's greeting and line under it, plus the PR pill when the latest
+ * session set a record in the last few days.
  */
-function CoachBadge() {
-  const [move, setMove] = useState({ name: null, count: 0 });
-
-  useEffect(() => {
-    let timer;
-    const scheduleNext = () => {
-      timer = setTimeout(
-        () => {
-          setMove((previous) => ({
-            name: COACH_BOT_MOVES[
-              Math.floor(Math.random() * COACH_BOT_MOVES.length)
-            ],
-            count: previous.count + 1,
-          }));
-          scheduleNext();
-        },
-        2500 + Math.random() * 4500,
-      );
+function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
+  const daysAgo = latestSessionPR ? getDaysAgo(latestSessionPR.date) : Infinity;
+  if (latestSessionPR && daysAgo <= PR_CELEBRATION_DAYS) {
+    const { liftType, reps, weight, unitType } = latestSessionPR;
+    return {
+      greeting:
+        daysAgo <= 0
+          ? "A PR today, athlete! Let's talk about it."
+          : daysAgo === 1
+            ? "Yesterday's PR deserves a chat, athlete."
+            : `That PR ${daysAgo} days ago deserves a chat, athlete.`,
+      description: "Pick a question to start, or ask your own below.",
+      celebration: {
+        label: `${liftType} ${reps}@${weight}${unitType} PR`,
+      },
     };
-    scheduleNext();
-    return () => clearTimeout(timer);
-  }, []);
-
-  return (
-    <div className="animate-in fade-in zoom-in-75 border-primary/20 from-primary/15 to-primary/5 text-primary flex size-14 items-center justify-center rounded-2xl border bg-gradient-to-br shadow-sm duration-700">
-      {/* The key restarts the animation even when the same move repeats */}
-      <Bot
-        key={move.count}
-        className={cn("size-7", move.name)}
-        strokeWidth={1.75}
-      />
-    </div>
-  );
+  }
+  return {
+    greeting:
+      EMPTY_STATE_GREETINGS[
+        getStablePromptOffset(dateKey, EMPTY_STATE_GREETINGS.length)
+      ],
+    description: hasSharedTrainingData
+      ? "I can see your training. Pick a question to start, or ask your own below."
+      : "Pick a question to start, or ask your own below.",
+    celebration: null,
+  };
 }
 
 const EMPTY_STATE_GREETINGS = [
@@ -618,37 +625,6 @@ const EMPTY_STATE_GREETINGS = [
   "Ask me anything, athlete.",
   "Let's talk training, athlete.",
 ];
-
-/**
- * A suggested question as a pill that fades up in turn, with a hover arrow.
- * @param {Object} props
- * @param {string} props.question
- * @param {number} props.index Position in the set, for the staggered entrance.
- * @param {React.ComponentType} [props.icon] Leading icon, Sparkles by default.
- * @param {boolean} [props.disabled]
- * @param {(question: string) => void} props.onSelect
- */
-function SuggestionChip({
-  question,
-  index,
-  icon: Icon = Sparkles,
-  disabled,
-  onSelect,
-}) {
-  return (
-    <Suggestion
-      className="group border-border/70 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground disabled:text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both h-auto min-h-9 gap-2 py-2 pr-3 pl-3.5 text-left whitespace-normal shadow-xs duration-500 hover:-translate-y-px hover:shadow-sm"
-      style={{ animationDelay: `${index * 70}ms` }}
-      suggestion={question}
-      disabled={disabled}
-      onClick={onSelect}
-    >
-      <Icon className="text-primary/70 group-hover:text-primary size-3.5 shrink-0 transition-colors" />
-      <span>{question}</span>
-      <ArrowRight className="text-primary size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-    </Suggestion>
-  );
-}
 
 /**
  * One line appended to a copied reply, so a pasted answer says where it came
@@ -1282,44 +1258,24 @@ function AILiftingAssistantCard({
         <Conversation className="overflow-x-visible overflow-y-hidden">
           <ConversationContent>
             {messages.length === 0 ? (
-              <ConversationEmptyState className="relative justify-start px-0 pt-6 sm:justify-center sm:pt-0">
-                {/* A soft glow behind the greeting */}
-                <div
-                  aria-hidden
-                  className="bg-primary/10 pointer-events-none absolute top-1/4 left-1/2 size-72 -translate-x-1/2 rounded-full blur-3xl"
+              <ConversationEmptyState className="justify-start px-0 pt-6 sm:justify-center sm:pt-0">
+                <CoachWelcome
+                  {...getWelcomeCopy({
+                    dateKey: suggestionDateKey,
+                    hasSharedTrainingData,
+                    latestSessionPR: suggestionContext?.latestSessionPR,
+                  })}
+                  suggestions={
+                    isChatHydrated
+                      ? suggestedMessages.map((text) => ({
+                          text,
+                          icon: getSuggestionIcon(text),
+                        }))
+                      : null
+                  }
+                  disabled={isChatUnavailable}
+                  onSelect={sendMessageWithMetadata}
                 />
-                <div className="relative flex w-full max-w-3xl flex-col items-center gap-3">
-                  <CoachBadge />
-                  <h3 className="animate-in fade-in slide-in-from-bottom-1 text-xl font-semibold tracking-tight duration-700 sm:text-2xl">
-                    {
-                      EMPTY_STATE_GREETINGS[
-                        getStablePromptOffset(
-                          suggestionDateKey,
-                          EMPTY_STATE_GREETINGS.length,
-                        )
-                      ]
-                    }
-                  </h3>
-                  <p className="text-muted-foreground animate-in fade-in max-w-md text-sm duration-1000">
-                    {hasSharedTrainingData
-                      ? "I can see your training. Pick a question to start, or ask your own below."
-                      : "Pick a question to start, or ask your own below."}
-                  </p>
-                  {isChatHydrated && (
-                    <Suggestions className="mt-5 justify-center gap-2.5">
-                      {suggestedMessages.map((message, i) => (
-                        <SuggestionChip
-                          key={message}
-                          question={message}
-                          index={i + 3}
-                          icon={getSuggestionIcon(message)}
-                          disabled={isChatUnavailable}
-                          onSelect={sendMessageWithMetadata}
-                        />
-                      ))}
-                    </Suggestions>
-                  )}
-                </div>
               </ConversationEmptyState>
             ) : (
               <>
@@ -1478,9 +1434,12 @@ function AILiftingAssistantCard({
             onSubmit={handleSubmit}
           >
             <PromptInputBody>
-              <PromptInputTextarea
+              <TypedPlaceholderTextarea
                 className="disabled:opacity-70"
-                placeholder={
+                isTyping={
+                  messages.length === 0 && !isChatBlocked && isChatQuotaReady
+                }
+                staticPlaceholder={
                   isChatBlocked
                     ? isAnonymousQuotaBlocked
                       ? "Sign in to continue chatting..."
@@ -1526,6 +1485,46 @@ function FlickeringGridDemo() {
 
 function getMostRecentSessionDate(parsedData) {
   return parsedData?.[parsedData.length - 1]?.date ?? null;
+}
+
+/**
+ * The heaviest set in the latest session that beat an earlier best at its rep
+ * count. A first ever set at some rep count is flagged as a PR in the data but
+ * is no milestone, so it needs an earlier set to have beaten.
+ */
+function getLatestSessionPR(parsedData) {
+  const latestDate = getMostRecentSessionDate(parsedData);
+  if (!latestDate) return null;
+  const earlierKeys = new Set();
+  let best = null;
+  for (const entry of parsedData) {
+    const key = `${entry.liftType}-${entry.reps}`;
+    if (entry.date !== latestDate) {
+      earlierKeys.add(key);
+      continue;
+    }
+    if (
+      !entry.isHistoricalPR ||
+      !entry.liftType ||
+      entry.reps < 1 ||
+      entry.reps > 10 ||
+      !earlierKeys.has(key)
+    ) {
+      continue;
+    }
+    const weightKg = toKg(entry.weight, entry.unitType);
+    if (!best || weightKg > best.weightKg) {
+      best = {
+        date: entry.date,
+        liftType: entry.liftType,
+        reps: entry.reps,
+        weight: entry.weight,
+        unitType: entry.unitType,
+        weightKg,
+      };
+    }
+  }
+  return best;
 }
 
 function getPrioritizedLiftTypes({

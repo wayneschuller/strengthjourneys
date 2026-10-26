@@ -243,8 +243,9 @@
 }
 
 /*
- * The AI coach's robot head on the empty chat. CoachBadge picks one of these
- * at random every few seconds, so it feels alive without a fixed rhythm.
+ * The AI coach's robot head on the empty chat (coach-welcome.js). It picks
+ * one of the idle moves at random every few seconds, so it feels alive
+ * without a fixed rhythm, and cheers a fresh PR.
  */
 @keyframes coach-bot-wiggle {
   0%,
@@ -289,6 +290,81 @@
   75% {
     transform: translateY(0) scale(1.04, 0.96);
   }
+}
+
+@keyframes coach-bot-blink {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.1);
+  }
+}
+
+@keyframes coach-bot-antenna-glow {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes coach-glow-drift-a {
+  0%,
+  100% {
+    transform: translate(-70%, 0) scale(1);
+  }
+  50% {
+    transform: translate(-55%, 2.5rem) scale(1.12);
+  }
+}
+
+@keyframes coach-glow-drift-b {
+  0%,
+  100% {
+    transform: translate(-20%, 0) scale(1);
+  }
+  50% {
+    transform: translate(-40%, -2rem) scale(0.92);
+  }
+}
+
+.coach-bot-blink,
+.coach-bot-blink-double {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.coach-bot-blink {
+  animation: coach-bot-blink 0.18s ease-in-out;
+}
+
+.coach-bot-blink-double {
+  animation: coach-bot-blink 0.16s ease-in-out 2;
+}
+
+.coach-bot-antenna-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: coach-bot-antenna-glow 1.6s ease-in-out infinite;
+}
+
+.coach-bot-cheer {
+  transform-origin: 50% 100%;
+  animation: coach-bot-hop 0.6s ease-out 2;
+}
+
+.coach-glow-a {
+  animation: coach-glow-drift-a 16s ease-in-out infinite;
+}
+
+.coach-glow-b {
+  animation: coach-glow-drift-b 19s ease-in-out infinite;
 }
 
 .coach-bot-wiggle {

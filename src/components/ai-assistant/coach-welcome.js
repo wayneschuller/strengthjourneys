@@ -122,6 +122,8 @@ export function SuggestionChip({
  * @param {string} props.description
  * @param {{ label: string, prompt: string }|null} [props.celebration] A fresh
  *   PR to cheer: a chip showing the label that asks the coach the prompt.
+ * @param {React.ReactNode} props.composer The message box, centred under the
+ *   greeting until the chat starts.
  * @param {{ text: string, icon: React.ComponentType }[]|null} props.suggestions
  *   Null until the chat has hydrated, so the chips don't flash.
  * @param {boolean} [props.disabled]
@@ -131,6 +133,7 @@ export function CoachWelcome({
   greeting,
   description,
   celebration,
+  composer,
   suggestions,
   disabled,
   onSelect,
@@ -239,8 +242,11 @@ export function CoachWelcome({
         <p className="text-muted-foreground animate-in fade-in max-w-md text-center text-sm duration-1000">
           {description}
         </p>
+        <div className="animate-in fade-in slide-in-from-bottom-2 mt-4 w-full duration-700">
+          {composer}
+        </div>
         {suggestions && (
-          <Suggestions className="mt-5 justify-center gap-2.5">
+          <Suggestions className="mt-4 justify-center gap-2.5">
             {suggestions.map(({ text, icon }, i) => (
               <SuggestionChip
                 key={text}

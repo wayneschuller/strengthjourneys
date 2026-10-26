@@ -48,7 +48,6 @@ import { buildLiftingContext } from "@/lib/ai/lifting-context";
 import {
   Conversation,
   ConversationContent,
-  ConversationEmptyState,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
 import {
@@ -75,27 +74,15 @@ import {
   PromptInputTools,
 } from "@/components/ai-elements/prompt-input";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
-import {
-  PageContainer,
-  PageHeader,
-  PageHeaderHeading,
-  PageHeaderDescription,
-} from "@/components/page-header";
+import { PageContainer } from "@/components/page-header";
 
 import { Button } from "@/components/ui/button";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
+import { cn } from "@/lib/utils";
 import {
-  Bot,
+  DownloadIcon,
+  SquarePen,
   CheckIcon,
   CopyIcon,
   Dumbbell,
@@ -103,7 +90,6 @@ import {
   PartyPopper,
   TrendingUp,
 } from "lucide-react";
-import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
 import { LiftingDataCard } from "@/components/ai-assistant/lifting-data-card";
 import { PersonalizationDialog } from "@/components/ai-assistant/personalization-dialog";
@@ -320,13 +306,6 @@ function AILiftingAssistantMain({ relatedArticles }) {
 
   return (
     <PageContainer>
-      <PageHeader>
-        <PageHeaderHeading icon={Bot}>AI Lifting Assistant</PageHeaderHeading>
-        <PageHeaderDescription>
-          Free AI Lifting Assistant. Talk to your lifting data. The gym buddy
-          you never had.
-        </PageHeaderDescription>
-      </PageHeader>
       <AILiftingAssistantCard
         hasSharedBioData={dataSource !== "demo" && shareBioDetails}
         hasSharedFullTrainingData={
@@ -372,8 +351,8 @@ function AILiftingAssistantMain({ relatedArticles }) {
         }
         suggestionContext={suggestionContext}
         buildCoachContext={buildCoachContext}
+        relatedArticles={relatedArticles}
       />
-      <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );
 }
@@ -603,7 +582,7 @@ function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
           : daysAgo === 1
             ? `Yesterday's ${record} deserves a chat, athlete.`
             : `That ${record} ${daysAgo} days ago deserves a chat, athlete.`,
-      description: "Pick a question to start, or ask your own below.",
+      description: "Ask your own question, or pick one below.",
       celebration: getCelebrationChip({
         dateKey,
         daysAgo,
@@ -618,8 +597,8 @@ function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
         getStablePromptOffset(dateKey, EMPTY_STATE_GREETINGS.length)
       ],
     description: hasSharedTrainingData
-      ? "I can see your training. Pick a question to start, or ask your own below."
-      : "Pick a question to start, or ask your own below.",
+      ? "I can see your training. Ask your own question, or pick one below."
+      : "Ask your own question, or pick one below.",
     celebration: null,
   };
 }
@@ -763,6 +742,7 @@ function AILiftingAssistantCard({
   buildCoachContext,
   loggedLiftTypes,
   loggedSessionDates,
+  relatedArticles,
 }) {
   const router = useRouter();
   // Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
@@ -1196,6 +1176,7 @@ function AILiftingAssistantCard({
     setSentContext("");
     setSuggestionsByMessageId({});
     clearPromptQueryParams();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleDownloadChat = () => {
@@ -1258,6 +1239,18 @@ function AILiftingAssistantCard({
     URL.revokeObjectURL(url);
   };
 
+  // Starting (or restoring) a chat scrolls the one-screen panel to fill the
+  // window, past the site nav, the way a chat app opens.
+  const chatPanelRef = useRef(null);
+  const hasConversation = messages.length > 0;
+  useEffect(() => {
+    if (!hasConversation) return;
+    chatPanelRef.current?.scrollIntoView({
+      block: "start",
+      behavior: "smooth",
+    });
+  }, [hasConversation]);
+
   const modelSwitcherProps = {
     selectedId: selectedModelId,
     onSelect: setStoredModelId,
@@ -1272,264 +1265,256 @@ function AILiftingAssistantCard({
     },
   };
 
+  const composer = (
+    <div className="flex w-full flex-col gap-2">
+      <ChatQuotaLimitNotice quota={chatQuota} />
+      <PromptInput
+        className="[&_[data-slot=input-group]]:border-border/70 [&_[data-slot=input-group]]:bg-background [&_[data-slot=input-group]]:shadow-sm"
+        onSubmit={handleSubmit}
+      >
+        <PromptInputBody>
+          <PromptInputTextarea
+            className="disabled:opacity-70"
+            placeholder={
+              isChatBlocked
+                ? isAnonymousQuotaBlocked
+                  ? "Sign in to continue chatting..."
+                  : "AI quota exhausted."
+                : !isChatQuotaReady
+                  ? "Checking message quota..."
+                  : "Ask your coach anything..."
+            }
+            disabled={isChatUnavailable}
+          />
+        </PromptInputBody>
+        <PromptInputFooter>
+          <PromptInputTools className="gap-3">
+            <ModelSwitcher size="sm" {...modelSwitcherProps} />
+            <ChatQuotaMeter quota={chatQuota} />
+          </PromptInputTools>
+          <PromptInputSubmit
+            status={status}
+            onStop={stop}
+            disabled={isChatUnavailable}
+          />
+        </PromptInputFooter>
+      </PromptInput>
+      <p className="text-muted-foreground text-center text-xs">
+        Discussions are streamed to your device and not stored on our servers.
+      </p>
+    </div>
+  );
+
   return (
     // The provider lets a hovered suggestion type itself into the composer.
     <PromptInputProvider>
-      <Card className="bg-background text-foreground max-h-full">
-        <CardHeader className="flex flex-1 flex-col md:flex-row">
-          <div className="flex flex-1 flex-col">
-            <div className="flex flex-wrap items-center gap-3">
-              <CardTitle className="min-w-60 flex-1 text-2xl font-bold text-balance">
-                Your Personal Lifting AI Assistant
-              </CardTitle>
-              {personalizationControls}
-              <ModelSwitcher
-                className="ml-auto hidden shrink-0 pr-4 md:inline-flex"
-                {...modelSwitcherProps}
-              />
-            </div>
-            <CardDescription className="text-muted-foreground text-balance">
-              Discussions are streamed to your device and not stored on our
-              servers.
-            </CardDescription>
-            <ModelSwitcher
-              size="sm"
-              className="mt-1.5 self-start md:hidden"
-              {...modelSwitcherProps}
-            />
-          </div>
-          {messages.length > 0 && (
-            <div className="mr-4 flex items-start gap-2">
-              <Button variant="outline" size="sm" onClick={handleDownloadChat}>
-                Download chat
+      {/*
+        One screen tall once chatting, scrolled to fill the window, with the
+        conversation scrolling inside it above a composer pinned at the foot.
+        Empty, it is the welcome: greeting, composer and suggestions centred.
+      */}
+      <section
+        ref={chatPanelRef}
+        aria-label="Chat with the AI lifting coach"
+        className={cn(
+          "flex flex-col",
+          hasConversation ? "h-dvh" : "min-h-[calc(100dvh-7rem)]",
+        )}
+      >
+        <div className="flex items-center gap-2 py-2">
+          {personalizationControls}
+          {hasConversation && (
+            <div className="ml-auto flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={handleDownloadChat}>
+                <DownloadIcon className="size-4" />
+                <span className="hidden sm:inline">Download</span>
               </Button>
-              <Button variant="destructive" size="sm" onClick={handleResetChat}>
-                Reset chat
+              <Button variant="ghost" size="sm" onClick={handleResetChat}>
+                <SquarePen className="size-4" />
+                New chat
               </Button>
             </div>
           )}
-          <div className="hidden md:block">
-            <FlickeringGridDemo />
+        </div>
+        {!hasConversation ? (
+          <div className="flex flex-1 flex-col items-center justify-center py-8">
+            <CoachWelcome
+              {...getWelcomeCopy({
+                dateKey: suggestionDateKey,
+                hasSharedTrainingData,
+                latestSessionPR: suggestionContext?.latestSessionPR,
+              })}
+              composer={composer}
+              suggestions={
+                isChatHydrated
+                  ? suggestedMessages.map((text) => ({
+                      text,
+                      icon: getSuggestionIcon(text),
+                    }))
+                  : null
+              }
+              disabled={isChatUnavailable}
+              onSelect={sendMessageWithMetadata}
+            />
+            <div className="mt-12 max-w-md text-center">
+              <h1 className="text-sm font-semibold">AI Lifting Assistant</h1>
+              <p className="text-muted-foreground text-xs">
+                Free AI Lifting Assistant. Talk to your lifting data. The gym
+                buddy you never had.
+              </p>
+            </div>
           </div>
-        </CardHeader>
-        <CardContent className="flex h-[55vh] flex-col overflow-y-auto pb-5 align-middle">
-          <Conversation className="overflow-x-visible overflow-y-hidden">
-            <ConversationContent>
-              {messages.length === 0 ? (
-                <ConversationEmptyState className="justify-start px-0 pt-6 sm:justify-center sm:pt-0">
-                  <CoachWelcome
-                    {...getWelcomeCopy({
-                      dateKey: suggestionDateKey,
-                      hasSharedTrainingData,
-                      latestSessionPR: suggestionContext?.latestSessionPR,
-                    })}
-                    suggestions={
-                      isChatHydrated
-                        ? suggestedMessages.map((text) => ({
-                            text,
-                            icon: getSuggestionIcon(text),
-                          }))
-                        : null
-                    }
-                    disabled={isChatUnavailable}
-                    onSelect={sendMessageWithMetadata}
-                  />
-                </ConversationEmptyState>
-              ) : (
-                <>
-                  {messages
-                    .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
-                    .map((message) => {
-                      // Handle AI SDK v6 parts format
-                      const parts = message.parts || [];
-                      const isLastMessage =
-                        message.id === messages[messages.length - 1]?.id;
+        ) : (
+          <>
+            <h1 className="sr-only">AI Lifting Assistant</h1>
+            <Conversation className="min-h-0 flex-1">
+              <ConversationContent className="mx-auto w-full max-w-3xl px-0 py-6">
+                {messages
+                  .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
+                  .map((message) => {
+                    // Handle AI SDK v6 parts format
+                    const parts = message.parts || [];
+                    const isLastMessage =
+                      message.id === messages[messages.length - 1]?.id;
 
-                      // Show sources if there are any source-url parts
-                      const hasSources = parts.some(
-                        (part) => part.type === "source-url",
-                      );
-                      const suggestedQuestions =
-                        suggestionsByMessageId[message.id] ?? [];
+                    // Show sources if there are any source-url parts
+                    const hasSources = parts.some(
+                      (part) => part.type === "source-url",
+                    );
+                    const suggestedQuestions =
+                      suggestionsByMessageId[message.id] ?? [];
 
-                      // Get text content for actions (last text part or fallback to content)
-                      const lastTextPart = parts
-                        .filter((p) => p.type === "text")
-                        .pop();
-                      const textContent =
-                        lastTextPart?.text ||
-                        (typeof message.content === "string"
-                          ? message.content
-                          : null);
+                    // Get text content for actions (last text part or fallback to content)
+                    const lastTextPart = parts
+                      .filter((p) => p.type === "text")
+                      .pop();
+                    const textContent =
+                      lastTextPart?.text ||
+                      (typeof message.content === "string"
+                        ? message.content
+                        : null);
 
-                      return (
-                        <div key={message.id}>
-                          {message.role === "assistant" && hasSources && (
-                            <Sources>
-                              <SourcesTrigger
-                                count={
-                                  parts.filter(
-                                    (part) => part.type === "source-url",
-                                  ).length
-                                }
-                              />
-                              {parts
-                                .filter((part) => part.type === "source-url")
-                                .map((part, i) => (
-                                  <SourcesContent
-                                    key={`${message.id}-source-${i}`}
-                                  >
-                                    <Source href={part.url} title={part.url} />
-                                  </SourcesContent>
-                                ))}
-                            </Sources>
-                          )}
-                          <Message from={message.role}>
-                            <MessageContent
-                              className={
-                                message.role === "assistant"
-                                  ? COACH_ANSWER_CLASS
-                                  : undefined
+                    return (
+                      <div key={message.id}>
+                        {message.role === "assistant" && hasSources && (
+                          <Sources>
+                            <SourcesTrigger
+                              count={
+                                parts.filter(
+                                  (part) => part.type === "source-url",
+                                ).length
                               }
-                            >
-                              {parts.length > 0 ? (
-                                parts
-                                  .filter((part) => part.type === "text")
-                                  .map((part, i) => (
-                                    <MessageResponse
-                                      key={`${message.id}-${i}`}
-                                      remarkPlugins={
-                                        message.role === "assistant"
-                                          ? assistantRemarkPlugins
-                                          : undefined
-                                      }
-                                      rehypePlugins={
-                                        message.role === "assistant"
-                                          ? chatRehypePlugins
-                                          : undefined
-                                      }
-                                      className={
-                                        message.role === "assistant"
-                                          ? "sj-chat-answer"
-                                          : undefined
-                                      }
-                                    >
-                                      {part.text}
-                                    </MessageResponse>
-                                  ))
-                              ) : message.content ? (
-                                <MessageResponse
-                                  remarkPlugins={
-                                    message.role === "assistant"
-                                      ? assistantRemarkPlugins
-                                      : undefined
-                                  }
-                                  rehypePlugins={
-                                    message.role === "assistant"
-                                      ? chatRehypePlugins
-                                      : undefined
-                                  }
-                                  className={
-                                    message.role === "assistant"
-                                      ? "sj-chat-answer"
-                                      : undefined
-                                  }
+                            />
+                            {parts
+                              .filter((part) => part.type === "source-url")
+                              .map((part, i) => (
+                                <SourcesContent
+                                  key={`${message.id}-source-${i}`}
                                 >
-                                  {typeof message.content === "string"
-                                    ? message.content
-                                    : JSON.stringify(message.content)}
-                                </MessageResponse>
-                              ) : null}
-                            </MessageContent>
-                            {message.role === "assistant" &&
-                              isLastMessage &&
-                              textContent && (
-                                <AiReplyFeedback
-                                  message={message}
-                                  messages={messages}
-                                  userProvidedMetadata={sentContext}
-                                >
-                                  <CopyButton
-                                    text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
-                                  />
-                                </AiReplyFeedback>
-                              )}
-                          </Message>
+                                  <Source href={part.url} title={part.url} />
+                                </SourcesContent>
+                              ))}
+                          </Sources>
+                        )}
+                        <Message from={message.role}>
+                          <MessageContent
+                            className={
+                              message.role === "assistant"
+                                ? COACH_ANSWER_CLASS
+                                : undefined
+                            }
+                          >
+                            {parts.length > 0 ? (
+                              parts
+                                .filter((part) => part.type === "text")
+                                .map((part, i) => (
+                                  <MessageResponse
+                                    key={`${message.id}-${i}`}
+                                    remarkPlugins={
+                                      message.role === "assistant"
+                                        ? assistantRemarkPlugins
+                                        : undefined
+                                    }
+                                    rehypePlugins={
+                                      message.role === "assistant"
+                                        ? chatRehypePlugins
+                                        : undefined
+                                    }
+                                    className={
+                                      message.role === "assistant"
+                                        ? "sj-chat-answer"
+                                        : undefined
+                                    }
+                                  >
+                                    {part.text}
+                                  </MessageResponse>
+                                ))
+                            ) : message.content ? (
+                              <MessageResponse
+                                remarkPlugins={
+                                  message.role === "assistant"
+                                    ? assistantRemarkPlugins
+                                    : undefined
+                                }
+                                rehypePlugins={
+                                  message.role === "assistant"
+                                    ? chatRehypePlugins
+                                    : undefined
+                                }
+                                className={
+                                  message.role === "assistant"
+                                    ? "sj-chat-answer"
+                                    : undefined
+                                }
+                              >
+                                {typeof message.content === "string"
+                                  ? message.content
+                                  : JSON.stringify(message.content)}
+                              </MessageResponse>
+                            ) : null}
+                          </MessageContent>
                           {message.role === "assistant" &&
                             isLastMessage &&
-                            suggestedQuestions.length > 0 && (
-                              <div className="mt-4 max-w-3xl">
-                                <FollowUpSuggestions
-                                  questions={suggestedQuestions}
-                                  disabled={isChatUnavailable}
-                                  onSelect={sendMessageWithMetadata}
+                            textContent && (
+                              <AiReplyFeedback
+                                message={message}
+                                messages={messages}
+                                userProvidedMetadata={sentContext}
+                              >
+                                <CopyButton
+                                  text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
                                 />
-                              </div>
+                              </AiReplyFeedback>
                             )}
-                        </div>
-                      );
-                    })}
+                        </Message>
+                        {message.role === "assistant" &&
+                          isLastMessage &&
+                          suggestedQuestions.length > 0 && (
+                            <div className="mt-4 max-w-3xl">
+                              <FollowUpSuggestions
+                                questions={suggestedQuestions}
+                                disabled={isChatUnavailable}
+                                onSelect={sendMessageWithMetadata}
+                              />
+                            </div>
+                          )}
+                      </div>
+                    );
+                  })}
 
-                  {/* Show loader only while waiting */}
-                  {status === "submitted" && <Loader />}
-                </>
-              )}
-            </ConversationContent>
-            <ConversationScrollButton />
-          </Conversation>
-        </CardContent>
-        <CardFooter>
-          <div className="flex w-full flex-col gap-3">
-            <ChatQuotaLimitNotice quota={chatQuota} />
-            <PromptInput
-              className="[&_[data-slot=input-group]]:border-border/60 [&_[data-slot=input-group]]:shadow-none"
-              onSubmit={handleSubmit}
-            >
-              <PromptInputBody>
-                <PromptInputTextarea
-                  className="disabled:opacity-70"
-                  placeholder={
-                    isChatBlocked
-                      ? isAnonymousQuotaBlocked
-                        ? "Sign in to continue chatting..."
-                        : "AI quota exhausted."
-                      : !isChatQuotaReady
-                        ? "Checking message quota..."
-                        : "Type a message..."
-                  }
-                  disabled={isChatUnavailable}
-                />
-              </PromptInputBody>
-              <PromptInputFooter>
-                <PromptInputTools>
-                  <ChatQuotaMeter quota={chatQuota} />
-                </PromptInputTools>
-                <PromptInputSubmit
-                  status={status}
-                  onStop={stop}
-                  disabled={isChatUnavailable}
-                />
-              </PromptInputFooter>
-            </PromptInput>
-          </div>
-        </CardFooter>
-      </Card>
+                {/* Show loader only while waiting */}
+                {status === "submitted" && <Loader />}
+              </ConversationContent>
+              <ConversationScrollButton />
+            </Conversation>
+            <div className="animate-in fade-in slide-in-from-bottom-4 mx-auto w-full max-w-3xl pt-2 pb-3 duration-500">
+              {composer}
+            </div>
+          </>
+        )}
+      </section>
+      {!hasConversation && <RelatedArticles articles={relatedArticles} />}
     </PromptInputProvider>
-  );
-}
-
-// Decorative flickering grid animation shown in the chat card header on desktop.
-function FlickeringGridDemo() {
-  return (
-    <FlickeringGrid
-      squareSize={4}
-      gridGap={6}
-      color="#6B7280"
-      maxOpacity={0.5}
-      flickerChance={0.2}
-      height={70}
-      width={70}
-    />
   );
 }
 

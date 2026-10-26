@@ -14,6 +14,7 @@ import {
   remarkLiftGuideLinks,
   linkifyLiftGuideMarkdown,
 } from "@/lib/lift-guide-links";
+import { remarkItalicQuotes } from "@/lib/remark-italic-quotes";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   AI_REVIEW_PROMPTS,
@@ -606,10 +607,11 @@ function AILiftingAssistantCard({
 }) {
   const router = useRouter();
   // Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
-  // strikethrough) has to be kept explicitly alongside the lift guide links.
+  // strikethrough) has to be kept explicitly alongside our own plugins.
   const assistantRemarkPlugins = useMemo(
     () => [
       ...Object.values(defaultRemarkPlugins),
+      remarkItalicQuotes,
       [remarkLiftGuideLinks, { liftTypes: loggedLiftTypes }],
     ],
     [loggedLiftTypes],

@@ -21,7 +21,7 @@ const cornerVariants = {
   visible: (i) => ({
     x: 0,
     y: 0,
-    opacity: 0.7,
+    opacity: 1,
     scale: 1,
     transition: {
       type: "spring",
@@ -76,25 +76,31 @@ function CornerIcon({ liftType, index, isActive, variants }) {
       animate={isActive ? "visible" : "hidden"}
       variants={variants}
       custom={index}
-      className={`flex items-center justify-center rounded-lg p-2 ${ICON_BG_COLORS[index]}`}
+      // A solid plate under the tint, so the card's glow does not show through
+      // the drawing.
+      className="bg-card rounded-lg"
     >
-      <motion.div
-        initial={{ scale: 0.92 }}
-        animate={isActive ? { scale: 1 } : { scale: 0.92 }}
-        transition={{
-          type: "spring",
-          stiffness: 140,
-          damping: 14,
-          delay: isActive ? 0.35 + index * 0.05 : 0,
-        }}
-      >
-        <img
-          src={getLiftArtwork(liftType)}
-          alt=""
-          aria-hidden
-          className="h-24 w-24 [filter:opacity(0.9)] md:h-28 md:w-28"
-        />
-      </motion.div>
+      <div className={`rounded-lg p-2 ${ICON_BG_COLORS[index]}`}>
+        <motion.div
+          initial={{ scale: 0.92 }}
+          animate={isActive ? { scale: 1 } : { scale: 0.92 }}
+          transition={{
+            type: "spring",
+            stiffness: 140,
+            damping: 14,
+            delay: isActive ? 0.35 + index * 0.05 : 0,
+          }}
+        >
+          <img
+            src={getLiftArtwork(liftType)}
+            alt=""
+            aria-hidden
+            // The drawings are 5:3, so pin the height and let width follow
+            // rather than squashing them into a square.
+            className="h-[4.5rem] w-auto object-contain"
+          />
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
@@ -126,7 +132,7 @@ export function TitleCard({ year, isDemo, isActive = true }) {
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
-      <div className="mb-8 flex justify-center gap-10 md:gap-14">
+      <div className="mb-8 flex justify-center gap-5">
         {TOP_LIFTS.map((liftType, i) => (
           <CornerIcon
             key={liftType}
@@ -178,7 +184,7 @@ export function TitleCard({ year, isDemo, isActive = true }) {
           </motion.span>
         </span>
       </h2>
-      <div className="mt-8 flex justify-center gap-10 md:gap-14">
+      <div className="mt-8 flex justify-center gap-5">
         {BOTTOM_LIFTS.map((liftType, i) => (
           <CornerIcon
             key={liftType}

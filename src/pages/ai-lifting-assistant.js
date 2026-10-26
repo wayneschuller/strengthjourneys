@@ -14,7 +14,13 @@ import {
   remarkLiftGuideLinks,
   linkifyLiftGuideMarkdown,
 } from "@/lib/lift-guide-links";
-import { remarkItalicQuotes } from "@/lib/remark-italic-quotes";
+import {
+  chatRehypePlugins,
+  remarkHighlights,
+  remarkItalicQuotes,
+  remarkSessionDateLinks,
+  remarkSetChips,
+} from "@/lib/remark-chat-formatting";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
   AI_REVIEW_PROMPTS,
@@ -310,6 +316,11 @@ function AILiftingAssistantMain({ relatedArticles }) {
         hasSharedTrainingData={dataSource !== "demo" && hasSharedTrainingData}
         hasLiftingLog={isOwnData(dataSource)}
         loggedLiftTypes={dataSource === "demo" ? undefined : liftTypes}
+        loggedSessionDates={
+          dataSource === "demo"
+            ? undefined
+            : sessionTonnageLookup?.allSessionDates
+        }
         personalizationControls={
           <PersonalizationDialog
             enabled={
@@ -604,17 +615,28 @@ function AILiftingAssistantCard({
   suggestionContext,
   buildCoachContext,
   loggedLiftTypes,
+  loggedSessionDates,
 }) {
   const router = useRouter();
   // Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
   // strikethrough) has to be kept explicitly alongside our own plugins.
+  // Highlights go first so their == markers never split a quote or a set.
   const assistantRemarkPlugins = useMemo(
     () => [
       ...Object.values(defaultRemarkPlugins),
+      remarkHighlights,
       remarkItalicQuotes,
+      remarkSetChips,
+      [
+        remarkSessionDateLinks,
+        {
+          sessionDates: loggedSessionDates,
+          today: format(new Date(), "yyyy-MM-dd"),
+        },
+      ],
       [remarkLiftGuideLinks, { liftTypes: loggedLiftTypes }],
     ],
-    [loggedLiftTypes],
+    [loggedLiftTypes, loggedSessionDates],
   );
   const { status: authStatus } = useSession();
   const [chatQuota, setChatQuota] = useState(null);
@@ -1235,6 +1257,16 @@ function AILiftingAssistantCard({
                                         ? assistantRemarkPlugins
                                         : undefined
                                     }
+                                    rehypePlugins={
+                                      message.role === "assistant"
+                                        ? chatRehypePlugins
+                                        : undefined
+                                    }
+                                    className={
+                                      message.role === "assistant"
+                                        ? "sj-chat-answer"
+                                        : undefined
+                                    }
                                   >
                                     {part.text}
                                   </MessageResponse>
@@ -1244,6 +1276,16 @@ function AILiftingAssistantCard({
                                 remarkPlugins={
                                   message.role === "assistant"
                                     ? assistantRemarkPlugins
+                                    : undefined
+                                }
+                                rehypePlugins={
+                                  message.role === "assistant"
+                                    ? chatRehypePlugins
+                                    : undefined
+                                }
+                                className={
+                                  message.role === "assistant"
+                                    ? "sj-chat-answer"
                                     : undefined
                                 }
                               >

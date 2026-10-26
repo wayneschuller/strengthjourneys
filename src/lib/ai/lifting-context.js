@@ -2,7 +2,7 @@
  * Builds the lifting summary the AI assistant sends with each message.
  *
  * Written for a language model to read, not for a parser: every figure is
- * labelled in plain words, sets are always weight×reps, recent dates carry
+ * labelled in plain words, sets are always reps@weight, recent dates carry
  * "N days ago", and comparisons the model would otherwise get wrong (is this
  * a best? how does it rank against the standards? how many sessions a week?)
  * are worked out here. A short header states the conventions once.
@@ -237,7 +237,7 @@ function buildAboutSection({
     `Today is ${ctx.today} (${WEEKDAYS[parseDate(ctx.today).getUTCDay()]}), the lifter's local date.`,
     latestDate &&
       `Latest logged session: ${latestDate}, ${daysAgo(latestDate, ctx.today)}.`,
-    `All weights are in ${ctx.unit}. Sets are written weight×reps: 160×1 is one rep at 160${ctx.unit}. Repeated identical sets show a count: 100×5 (3 sets).`,
+    `All weights are in ${ctx.unit}. Sets are written reps@weight: 1@160 is one rep at 160${ctx.unit}. Repeated identical sets lead with a count: 3x5@100 is three sets of five at 100${ctx.unit}.`,
     `"Best N-rep set" is the heaviest set of exactly N reps ever logged, not a tested max, so a best 5-rep set can be heavier than a best 3-rep set when heavy triples were never done.`,
     `e1RM is an estimated one-rep max from a single set (${ctx.e1rmFormula} formula); comparing e1RMs is the fairest way to compare sets with different reps.`,
     `Tonnage is weight × reps added up over a session.`,
@@ -801,7 +801,7 @@ function collapseSets(sets) {
   return groups
     .map(
       ({ weight, reps, count }) =>
-        `${formatWeight(weight)}×${reps}${count > 1 ? ` (${count} sets)` : ""}`,
+        `${count > 1 ? `${count}x` : ""}${formatSet({ weight, reps })}`,
     )
     .join(", ");
 }
@@ -855,7 +855,7 @@ function combineSections(sections, maxChars) {
 }
 
 function formatSet(set) {
-  return `${formatWeight(set.weight)}×${set.reps}`;
+  return `${set.reps}@${formatWeight(set.weight)}`;
 }
 
 /** Bodyweight lifts are logged at 0 extra load. */

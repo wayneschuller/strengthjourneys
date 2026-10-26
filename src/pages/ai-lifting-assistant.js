@@ -93,7 +93,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
-import { ArrowRight, Bot, CheckIcon, CopyIcon, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Bot,
+  CheckIcon,
+  CopyIcon,
+  Dumbbell,
+  HeartPulse,
+  PartyPopper,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
@@ -530,6 +540,63 @@ function getStablePromptOffset(value, modulo) {
 
 function uniqueMessages(messages) {
   return [...new Set(messages.filter(Boolean))];
+}
+
+const BIO_PROMPT_PREFIXES = [
+  "Why does strength training matter",
+  "How should recovery change",
+];
+
+// Each opening prompt wears an icon for what it draws on: the lifter's log,
+// their body, general lifting knowledge, or just fun.
+function getSuggestionIcon(prompt) {
+  if (PLAYFUL_PROMPTS.includes(prompt)) return PartyPopper;
+  if (GENERAL_LIFTING_PROMPTS.includes(prompt)) return Dumbbell;
+  if (
+    BIO_DATA_FALLBACK_PROMPTS.includes(prompt) ||
+    BIO_PROMPT_PREFIXES.some((prefix) => prompt.startsWith(prefix))
+  ) {
+    return HeartPulse;
+  }
+  return TrendingUp;
+}
+
+const EMPTY_STATE_GREETINGS = [
+  "What are we lifting today, athlete?",
+  "Ready when you are, athlete.",
+  "Ask me anything, athlete.",
+  "Let's talk training, athlete.",
+];
+
+/**
+ * A suggested question as a pill that fades up in turn, with a hover arrow.
+ * @param {Object} props
+ * @param {string} props.question
+ * @param {number} props.index Position in the set, for the staggered entrance.
+ * @param {React.ComponentType} [props.icon] Leading icon, Sparkles by default.
+ * @param {boolean} [props.disabled]
+ * @param {(question: string) => void} props.onSelect
+ */
+function SuggestionChip({
+  question,
+  index,
+  icon: Icon = Sparkles,
+  disabled,
+  onSelect,
+}) {
+  return (
+    <Suggestion
+      className="group border-border/70 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground disabled:text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both h-auto min-h-9 gap-2 py-2 pr-3 pl-3.5 text-left whitespace-normal shadow-xs duration-500 hover:-translate-y-px hover:shadow-sm"
+      style={{ animationDelay: `${index * 70}ms` }}
+      suggestion={question}
+      disabled={disabled}
+      onClick={onSelect}
+    >
+      <Icon className="text-primary/70 group-hover:text-primary size-3.5 shrink-0 transition-colors" />
+      <span>{question}</span>
+      <ArrowRight className="text-primary size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
+    </Suggestion>
+  );
 }
 
 /**
@@ -1164,27 +1231,46 @@ function AILiftingAssistantCard({
         <Conversation className="overflow-x-visible overflow-y-hidden">
           <ConversationContent>
             {messages.length === 0 ? (
-              <ConversationEmptyState
-                title="No messages yet"
-                description="Enter your questions into the chat box below (or click a sample question)"
-                className="items-start px-0"
-              >
-                {isChatHydrated && (
-                  <div className="-mx-4 mt-6 w-full px-4">
-                    <Suggestions className="w-full">
-                      {suggestedMessages.map((message) => (
-                        <Suggestion
+              <ConversationEmptyState className="relative justify-start px-0 pt-6 sm:justify-center sm:pt-0">
+                {/* A soft glow behind the greeting */}
+                <div
+                  aria-hidden
+                  className="bg-primary/10 pointer-events-none absolute top-1/4 left-1/2 size-72 -translate-x-1/2 rounded-full blur-3xl"
+                />
+                <div className="relative flex w-full max-w-3xl flex-col items-center gap-3">
+                  <div className="animate-in fade-in zoom-in-75 border-primary/20 from-primary/15 to-primary/5 text-primary flex size-14 items-center justify-center rounded-2xl border bg-gradient-to-br shadow-sm duration-700">
+                    <Bot className="size-7" strokeWidth={1.75} />
+                  </div>
+                  <h3 className="animate-in fade-in slide-in-from-bottom-1 text-xl font-semibold tracking-tight duration-700 sm:text-2xl">
+                    {
+                      EMPTY_STATE_GREETINGS[
+                        getStablePromptOffset(
+                          suggestionDateKey,
+                          EMPTY_STATE_GREETINGS.length,
+                        )
+                      ]
+                    }
+                  </h3>
+                  <p className="text-muted-foreground animate-in fade-in max-w-md text-sm duration-1000">
+                    {hasSharedTrainingData
+                      ? "I can see your training. Pick a question to start, or ask your own below."
+                      : "Pick a question to start, or ask your own below."}
+                  </p>
+                  {isChatHydrated && (
+                    <Suggestions className="mt-5 justify-center gap-2.5">
+                      {suggestedMessages.map((message, i) => (
+                        <SuggestionChip
                           key={message}
-                          suggestion={message}
+                          question={message}
+                          index={i + 3}
+                          icon={getSuggestionIcon(message)}
                           disabled={isChatUnavailable}
-                          onClick={(suggestion) => {
-                            sendMessageWithMetadata(suggestion);
-                          }}
+                          onSelect={sendMessageWithMetadata}
                         />
                       ))}
                     </Suggestions>
-                  </div>
-                )}
+                  )}
+                </div>
               </ConversationEmptyState>
             ) : (
               <>
@@ -1312,20 +1398,13 @@ function AILiftingAssistantCard({
                             <div className="mt-4 max-w-3xl">
                               <Suggestions className="gap-2.5">
                                 {suggestedQuestions.map((question, i) => (
-                                  <Suggestion
+                                  <SuggestionChip
                                     key={question}
-                                    className="group border-border/70 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground disabled:text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both h-auto min-h-9 gap-2 py-2 pr-3 pl-3.5 text-left whitespace-normal shadow-xs duration-500"
-                                    style={{ animationDelay: `${i * 90}ms` }}
-                                    suggestion={question}
+                                    question={question}
+                                    index={i}
                                     disabled={isChatUnavailable}
-                                    onClick={(suggestion) => {
-                                      sendMessageWithMetadata(suggestion);
-                                    }}
-                                  >
-                                    <Sparkles className="text-primary/70 group-hover:text-primary size-3.5 shrink-0 transition-colors" />
-                                    <span>{question}</span>
-                                    <ArrowRight className="text-primary size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
-                                  </Suggestion>
+                                    onSelect={sendMessageWithMetadata}
+                                  />
                                 ))}
                               </Suggestions>
                             </div>

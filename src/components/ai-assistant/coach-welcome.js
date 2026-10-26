@@ -146,6 +146,9 @@ export function CoachWelcome({
     setMove((previous) => ({ name, count: previous.count + 1 }));
   }, []);
 
+  // A flag, not the object: the page rebuilds the celebration every render.
+  const isCelebrating = Boolean(celebration);
+
   // Idle: a random move after a random gap. A PR opens with a double hop.
   useEffect(() => {
     let timer;
@@ -155,7 +158,7 @@ export function CoachWelcome({
         scheduleNext(2500 + Math.random() * 4500);
       }, delay);
     };
-    if (celebration) {
+    if (isCelebrating) {
       timer = setTimeout(() => {
         playMove("coach-bot-cheer");
         scheduleNext(4000);
@@ -164,7 +167,7 @@ export function CoachWelcome({
       scheduleNext(2500 + Math.random() * 2500);
     }
     return () => clearTimeout(timer);
-  }, [celebration, playMove]);
+  }, [isCelebrating, playMove]);
 
   // The eyes follow whichever chip the pointer or keyboard is on.
   function lookAt(event, question) {
@@ -211,7 +214,7 @@ export function CoachWelcome({
           <CoachRobot
             look={look}
             isHappy={isHappy}
-            isCelebrating={Boolean(celebration)}
+            isCelebrating={isCelebrating}
             move={move}
           />
         </div>

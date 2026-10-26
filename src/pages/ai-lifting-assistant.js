@@ -603,16 +603,12 @@ function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
             ? `Yesterday's ${record} deserves a chat, athlete.`
             : `That ${record} ${daysAgo} days ago deserves a chat, athlete.`,
       description: "Pick a question to start, or ask your own below.",
-      celebration: {
-        label: `Celebrate my ${liftType} ${reps}@${weight}${unitType} ${kind === "year" ? "12-month PR" : "PR"}`,
-        prompt: `Celebrate my ${liftType} ${reps}@${weight}${unitType} ${record} ${
-          daysAgo <= 0
-            ? "today"
-            : daysAgo === 1
-              ? "yesterday"
-              : `from ${daysAgo} days ago`
-        } with me. What does it mean for my training?`,
-      },
+      celebration: getCelebrationChip({
+        dateKey,
+        daysAgo,
+        lift: `${liftType} ${reps}@${weight}${unitType}`,
+        kind,
+      }),
     };
   }
   return {
@@ -624,6 +620,57 @@ function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
       ? "I can see your training. Pick a question to start, or ask your own below."
       : "Pick a question to start, or ask your own below.",
     celebration: null,
+  };
+}
+
+// Verbs for the PR chip, rotated by day so a repeat visit reads fresh. Each
+// one reads as a request to the coach, both on the chip and as the question.
+const CELEBRATION_VERBS = [
+  "Celebrate",
+  "Unpack",
+  "Break down",
+  "Talk through",
+  "Relive",
+  "Toast",
+  "Analyze",
+  "Explore",
+  "Review",
+  "Decode",
+  "Dig into",
+  "Build on",
+  "Savor",
+  "Applaud",
+  "Reflect on",
+  "Learn from",
+  "Make sense of",
+  "Plan beyond",
+  "Show off",
+  "Hype up",
+];
+
+/**
+ * The PR chip: a verb-led label, and the fuller question it asks the coach.
+ * @param {Object} args
+ * @param {string} args.dateKey Today, for the daily verb.
+ * @param {number} args.daysAgo
+ * @param {string} args.lift e.g. "Back Squat 1@160kg"
+ * @param {"lifetime"|"year"} args.kind
+ */
+function getCelebrationChip({ dateKey, daysAgo, lift, kind }) {
+  const verb =
+    CELEBRATION_VERBS[
+      getStablePromptOffset(`${dateKey}|${lift}`, CELEBRATION_VERBS.length)
+    ];
+  const when =
+    daysAgo <= 0
+      ? "today"
+      : daysAgo === 1
+        ? "yesterday"
+        : `from ${daysAgo} days ago`;
+  const record = kind === "year" ? "12-month best" : "PR";
+  return {
+    label: `${verb} my ${lift} ${kind === "year" ? "12-month PR" : "PR"}`,
+    prompt: `${verb} my ${lift} ${record} ${when} with me. What does it mean for my training?`,
   };
 }
 

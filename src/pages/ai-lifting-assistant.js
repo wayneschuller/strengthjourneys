@@ -571,6 +571,47 @@ function getSuggestionIcon(prompt) {
   return TrendingUp;
 }
 
+const COACH_BOT_MOVES = ["coach-bot-wiggle", "coach-bot-nod", "coach-bot-hop"];
+
+/**
+ * The robot head above the empty chat. Every few seconds, at a random gap, it
+ * does a random little move (wiggle, nod or hop) so it feels alive.
+ */
+function CoachBadge() {
+  const [move, setMove] = useState({ name: null, count: 0 });
+
+  useEffect(() => {
+    let timer;
+    const scheduleNext = () => {
+      timer = setTimeout(
+        () => {
+          setMove((previous) => ({
+            name: COACH_BOT_MOVES[
+              Math.floor(Math.random() * COACH_BOT_MOVES.length)
+            ],
+            count: previous.count + 1,
+          }));
+          scheduleNext();
+        },
+        2500 + Math.random() * 4500,
+      );
+    };
+    scheduleNext();
+    return () => clearTimeout(timer);
+  }, []);
+
+  return (
+    <div className="animate-in fade-in zoom-in-75 border-primary/20 from-primary/15 to-primary/5 text-primary flex size-14 items-center justify-center rounded-2xl border bg-gradient-to-br shadow-sm duration-700">
+      {/* The key restarts the animation even when the same move repeats */}
+      <Bot
+        key={move.count}
+        className={cn("size-7", move.name)}
+        strokeWidth={1.75}
+      />
+    </div>
+  );
+}
+
 const EMPTY_STATE_GREETINGS = [
   "What are we lifting today, athlete?",
   "Ready when you are, athlete.",
@@ -1248,9 +1289,7 @@ function AILiftingAssistantCard({
                   className="bg-primary/10 pointer-events-none absolute top-1/4 left-1/2 size-72 -translate-x-1/2 rounded-full blur-3xl"
                 />
                 <div className="relative flex w-full max-w-3xl flex-col items-center gap-3">
-                  <div className="animate-in fade-in zoom-in-75 border-primary/20 from-primary/15 to-primary/5 text-primary flex size-14 items-center justify-center rounded-2xl border bg-gradient-to-br shadow-sm duration-700">
-                    <Bot className="size-7" strokeWidth={1.75} />
-                  </div>
+                  <CoachBadge />
                   <h3 className="animate-in fade-in slide-in-from-bottom-1 text-xl font-semibold tracking-tight duration-700 sm:text-2xl">
                     {
                       EMPTY_STATE_GREETINGS[

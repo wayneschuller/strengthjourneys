@@ -242,6 +242,70 @@
   animation: whats-new-wiggle 6s ease-in-out 3;
 }
 
+/*
+ * The AI coach's robot head on the empty chat. CoachBadge picks one of these
+ * at random every few seconds, so it feels alive without a fixed rhythm.
+ */
+@keyframes coach-bot-wiggle {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  20% {
+    transform: rotate(-14deg);
+  }
+  45% {
+    transform: rotate(11deg);
+  }
+  70% {
+    transform: rotate(-5deg);
+  }
+}
+
+@keyframes coach-bot-nod {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  30% {
+    transform: translateY(2px) rotate(4deg);
+  }
+  60% {
+    transform: translateY(-1px) rotate(-2deg);
+  }
+}
+
+@keyframes coach-bot-hop {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  15% {
+    transform: translateY(1px) scale(1.08, 0.9);
+  }
+  45% {
+    transform: translateY(-6px) scale(0.95, 1.06);
+  }
+  75% {
+    transform: translateY(0) scale(1.04, 0.96);
+  }
+}
+
+.coach-bot-wiggle {
+  transform-origin: 50% 80%;
+  animation: coach-bot-wiggle 0.7s ease-in-out;
+}
+
+.coach-bot-nod {
+  transform-origin: 50% 80%;
+  animation: coach-bot-nod 0.8s ease-in-out;
+}
+
+.coach-bot-hop {
+  transform-origin: 50% 100%;
+  animation: coach-bot-hop 0.7s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,

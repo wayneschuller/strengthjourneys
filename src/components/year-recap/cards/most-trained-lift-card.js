@@ -1,7 +1,7 @@
-import { useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "motion/react";
 import {
-  pickQuirkyPhrase,
+  pickRecapPhrase,
   MOST_TRAINED_LIFT_PHRASES,
   MOST_TRAINED_LIFT_LABELS,
 } from "@/components/year-recap/phrases";
@@ -19,19 +19,20 @@ import { LiftArtwork } from "@/components/lift-artwork";
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function MostTrainedLiftCard({ year, isDemo, isActive = true }) {
-  const phraseRef = useRef(null);
-  const label = pickQuirkyPhrase(
-    MOST_TRAINED_LIFT_LABELS,
-    phraseRef,
-    `most-trained-label-${year}`,
-  );
-  const phrase = pickQuirkyPhrase(
-    MOST_TRAINED_LIFT_PHRASES,
-    phraseRef,
-    `most-trained-${year}`,
-  );
-
   const { parsedData } = useUserLiftingData();
+  const seed = parsedData?.length ?? 0;
+  const label = pickRecapPhrase(
+    MOST_TRAINED_LIFT_LABELS,
+    "most-trained-label",
+    year,
+    seed,
+  );
+  const phrase = pickRecapPhrase(
+    MOST_TRAINED_LIFT_PHRASES,
+    "most-trained",
+    year,
+    seed,
+  );
   const stats = useMemo(
     () => computeMostTrainedLiftForYear(parsedData, year),
     [parsedData, year],

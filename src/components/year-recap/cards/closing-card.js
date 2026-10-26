@@ -1,9 +1,9 @@
-import { useRef } from "react";
 import { motion } from "motion/react";
 import {
-  pickQuirkyPhrase,
+  pickRecapPhrase,
   CLOSING_PHRASES,
 } from "@/components/year-recap/phrases";
+import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronRight } from "lucide-react";
@@ -17,11 +17,12 @@ import { ChevronRight } from "lucide-react";
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function ClosingCard({ year, isDemo, isActive = true }) {
-  const phraseRef = useRef(null);
-  const phrase = pickQuirkyPhrase(
+  const { parsedData } = useUserLiftingData();
+  const phrase = pickRecapPhrase(
     CLOSING_PHRASES,
-    phraseRef,
-    `closing-${year}`,
+    "closing",
+    year,
+    parsedData?.length ?? 0,
   );
 
   return (
@@ -57,7 +58,9 @@ export function ClosingCard({ year, isDemo, isActive = true }) {
       >
         Created with Strength Journeys
       </motion.p>
+      {/* Left out of saved images: a button means nothing in a story. */}
       <motion.div
+        data-html2canvas-ignore
         initial={{ opacity: 0, y: 20 }}
         animate={isActive ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
         transition={{

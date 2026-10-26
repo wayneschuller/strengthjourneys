@@ -1,4 +1,4 @@
-import { useRef, useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, animate } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
@@ -7,10 +7,11 @@ import {
 } from "@/lib/year-recap-stats";
 import { CircularProgressWithLetter } from "@/components/year-recap/cards/circular-progress-with-letter";
 import {
-  pickQuirkyPhrase,
+  pickRecapPhrase,
   SESSIONS_PHRASES,
   CONSISTENCY_PHRASES,
 } from "@/components/year-recap/phrases";
+import { useCountUp } from "@/components/year-recap/use-count-up";
 import { Calendar } from "lucide-react";
 
 const MERGED_PHRASES = [...SESSIONS_PHRASES, ...CONSISTENCY_PHRASES];
@@ -24,14 +25,13 @@ const MERGED_PHRASES = [...SESSIONS_PHRASES, ...CONSISTENCY_PHRASES];
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function SessionsCard({ year, isDemo, isActive = true }) {
-  const phraseRef = useRef(null);
-  const phrase = pickQuirkyPhrase(
-    MERGED_PHRASES,
-    phraseRef,
-    `sessions-${year}`,
-  );
-
   const { parsedData } = useUserLiftingData();
+  const phrase = pickRecapPhrase(
+    MERGED_PHRASES,
+    "sessions",
+    year,
+    parsedData?.length ?? 0,
+  );
   const stats = useMemo(
     () => computeSessionStatsForYear(parsedData, year),
     [parsedData, year],
@@ -45,6 +45,7 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
     consistencyPercentage,
     isPartialYear,
   } = stats;
+  const displayCount = useCountUp(count, isActive);
 
   const [animatedProgress, setAnimatedProgress] = useState(0);
   useEffect(() => {
@@ -115,7 +116,7 @@ export function SessionsCard({ year, isDemo, isActive = true }) {
             delay: isActive ? 0.05 : 0,
           }}
         >
-          {count}
+          {displayCount}
         </motion.p>
         <motion.p
           className="text-chart-2 mt-2 text-xl font-semibold"

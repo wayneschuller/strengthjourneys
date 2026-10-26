@@ -1,7 +1,7 @@
-import { useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import {
-  pickQuirkyPhrase,
+  pickRecapPhrase,
   NOTABLE_LIFTS_PHRASES,
   NOTABLE_LIFTS_EMPTY_PHRASES,
 } from "@/components/year-recap/phrases";
@@ -27,7 +27,6 @@ import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function NotableLiftsCard({ year, isDemo, isActive = true }) {
-  const phraseRef = useRef(null);
   const { parsedData } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const [e1rmFormula] = useLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, "Brzycki", {
@@ -48,10 +47,11 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
     );
   }, [year, parsedData, e1rmFormula]);
 
-  const phrase = pickQuirkyPhrase(
+  const phrase = pickRecapPhrase(
     prs.length > 0 ? NOTABLE_LIFTS_PHRASES : NOTABLE_LIFTS_EMPTY_PHRASES,
-    phraseRef,
-    prs.length > 0 ? `notable-lifts-${year}` : `notable-lifts-empty-${year}`,
+    "notable-lifts",
+    year,
+    parsedData?.length ?? 0,
   );
 
   const isCurrentYear = Number(year) === new Date().getFullYear();
@@ -110,7 +110,7 @@ export function NotableLiftsCard({ year, isDemo, isActive = true }) {
                 ) : null}
                 <span>
                   {pr.liftType} {pr.reps}@{getDisplayWeight(pr, isMetric).value}
-                  {getDisplayWeight(pr, isMetric).unit} —{" "}
+                  {getDisplayWeight(pr, isMetric).unit} ·{" "}
                   {getReadableDateString(pr.date)}
                 </span>
               </motion.li>

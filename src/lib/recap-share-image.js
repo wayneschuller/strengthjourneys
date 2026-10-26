@@ -11,6 +11,11 @@
 // rather than living in the card markup, so it appears in shared images without
 // cluttering the on-screen recap. It is styled in source pixels and therefore
 // scales with the export like everything else on the card.
+//
+// "Save all cards" captures a second copy of the deck that is laid out but kept
+// invisible on the page. html2canvas skips hidden elements, so a node inside a
+// [data-recap-capture-hidden] container is made visible in the cloned document
+// only, where nobody sees it.
 
 // Native story width. 1080x1920 is what Instagram, TikTok, and Snapchat expect.
 export const RECAP_EXPORT_WIDTH = 1080;
@@ -30,6 +35,9 @@ const MAX_CAPTURE_SCALE = 4;
  */
 export async function captureRecapSlideBlob(slideEl, options = {}) {
   const { targetWidth = RECAP_EXPORT_WIDTH } = options;
+  const isInHiddenDeck = Boolean(
+    slideEl?.closest?.("[data-recap-capture-hidden]"),
+  );
   if (!slideEl) throw new Error("No slide element to capture");
 
   const html2canvas = (await import("html2canvas-pro")).default;
@@ -45,6 +53,15 @@ export async function captureRecapSlideBlob(slideEl, options = {}) {
     const canvas = await html2canvas(slideEl, {
       backgroundColor: null,
       scale,
+      onclone: isInHiddenDeck
+        ? (clonedDocument) => {
+            clonedDocument
+              .querySelectorAll("[data-recap-capture-hidden]")
+              .forEach((el) => {
+                el.style.visibility = "visible";
+              });
+          }
+        : undefined,
     });
     const blob = await new Promise((resolve) => {
       canvas.toBlob(resolve, "image/png");

@@ -23,9 +23,11 @@ import {
   daysInMonth,
   formatDateToYmdLocal,
   getWeekKeyFromDateStr,
+  parseYmdUtc,
 } from "@/lib/date-utils";
 import { getGradeAndColor, getTargetSessions } from "@/lib/consistency-grades";
-import { LB_PER_KG } from "@/lib/weight-units";
+import { findBestE1RMInWindow } from "@/lib/lift-bests";
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 
 // The consistency grade assumes a 3-sessions-per-week training habit.
 
@@ -262,9 +264,349 @@ export function computeMostTrainedLiftForYear(parsedData, year) {
   };
 }
 
+export const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+export const WEEKDAY_NAMES = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
+/**
+ * Every day of a year laid out as twelve Monday-first month grids, each
+ * training day graded 1-4 by how many sets it held relative to the rest of the
+ * lifter's year. Also the busiest month, which the calendar card headlines.
+ *
+ * @param {Array} parsedData - Parsed lift entries.
+ * @param {number|string} year - Calendar year.
+ * @param {Map} [meetDays] - From the data provider; meet days are marked.
+ * @param {string} [todayYmd] - Override for "today" (testing).
+ * @returns {{months: Array<{monthIndex: number, name: string, leadingBlanks: number,
+ *   sessionCount: number, days: Array<{date: string, level: number, isMeet: boolean,
+ *   isFuture: boolean}>}>, busiestMonthIndex: number|null, busiestMonthCount: number,
+ *   trainingDays: number, meetCount: number}}
+ */
+export function computeTrainingCalendarForYear(
+  parsedData,
+  year,
+  meetDays,
+  todayYmd,
+) {
+  const yearNum = parseInt(year, 10);
+  const today = todayYmd || formatDateToYmdLocal(new Date());
+  const setsByDate = new Map();
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  (parsedData || []).forEach((entry) => {
+    if (!entry.date || entry.date < yearStart || entry.date > yearEnd) return;
+    setsByDate.set(entry.date, (setsByDate.get(entry.date) ?? 0) + 1);
+  });
+
+  // Quartile cut points over this year's training days, so a lifter who does
+  // twelve sets a session and one who does thirty both see the full range.
+  const counts = Array.from(setsByDate.values()).sort((a, b) => a - b);
+  const quantile = (q) =>
+    counts.length ? counts[Math.floor((counts.length - 1) * q)] : 0;
+  const cuts = [quantile(0.25), quantile(0.5), quantile(0.75)];
+  const levelFor = (n) => {
+    if (!n) return 0;
+    if (n <= cuts[0]) return 1;
+    if (n <= cuts[1]) return 2;
+    if (n <= cuts[2]) return 3;
+    return 4;
+  };
+
+  let meetCount = 0;
+  const months = MONTH_NAMES.map((name, monthIndex) => {
+    const month = monthIndex + 1;
+    const firstYmd = `${year}-${String(month).padStart(2, "0")}-01`;
+    const firstWeekday = (parseYmdUtc(firstYmd).getUTCDay() + 6) % 7;
+    const days = [];
+    let sessionCount = 0;
+    for (let d = 1; d <= daysInMonth(yearNum, month); d++) {
+      const date = `${year}-${String(month).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const sets = setsByDate.get(date) ?? 0;
+      const isMeet = Boolean(meetDays?.has?.(date));
+      if (sets > 0) sessionCount++;
+      if (isMeet) meetCount++;
+      days.push({
+        date,
+        level: levelFor(sets),
+        isMeet,
+        isFuture: date > today,
+      });
+    }
+    return {
+      monthIndex,
+      name,
+      leadingBlanks: firstWeekday,
+      sessionCount,
+      days,
+    };
+  });
+
+  const busiestMonthCount = Math.max(0, ...months.map((m) => m.sessionCount));
+  const busiestMonthIndex =
+    busiestMonthCount > 0
+      ? months.findIndex((m) => m.sessionCount === busiestMonthCount)
+      : null;
+
+  return {
+    months,
+    busiestMonthIndex,
+    busiestMonthCount,
+    trainingDays: setsByDate.size,
+    meetCount,
+  };
+}
+
+/**
+ * Best estimated one-rep max for each Big Four lift in a year, beside the same
+ * lift's best from the year before. Only lifts trained this year appear.
+ *
+ * @param {Array} parsedData - Parsed lift entries.
+ * @param {number|string} year - Calendar year.
+ * @param {string} [e1rmFormula] - e.g. "Brzycki".
+ * @returns {{rows: Array<{liftType: string, best: {weight: number, unitType: string},
+ *   prevBest: {weight: number, unitType: string}|null, gainKg: number|null}>,
+ *   gainedCount: number, comparableCount: number}}
+ */
+export function computeStrengthGainsForYear(parsedData, year, e1rmFormula) {
+  if (!parsedData || !year) {
+    return { rows: [], gainedCount: 0, comparableCount: 0 };
+  }
+  const prevYear = parseInt(year, 10) - 1;
+  const rows = [];
+  BIG_FOUR_LIFT_TYPES.forEach((liftType) => {
+    const thisYear = findBestE1RMInWindow(parsedData, liftType, {
+      sinceDate: `${year}-01-01`,
+      untilDate: `${year}-12-31`,
+      e1rmFormula,
+    });
+    if (!thisYear.bestLift || thisYear.bestE1RMWeight <= 0) return;
+    const lastYear = findBestE1RMInWindow(parsedData, liftType, {
+      sinceDate: `${prevYear}-01-01`,
+      untilDate: `${prevYear}-12-31`,
+      e1rmFormula,
+    });
+    const best = {
+      weight: thisYear.bestE1RMWeight,
+      unitType: thisYear.unitType,
+    };
+    const prevBest =
+      lastYear.bestLift && lastYear.bestE1RMWeight > 0
+        ? { weight: lastYear.bestE1RMWeight, unitType: lastYear.unitType }
+        : null;
+    const gainKg = prevBest
+      ? toKg(best.weight, best.unitType) -
+        toKg(prevBest.weight, prevBest.unitType)
+      : null;
+    rows.push({ liftType, best, prevBest, gainKg });
+  });
+  return {
+    rows,
+    // Half a kilo, so a rounding wobble between two equal bests is not a gain.
+    gainedCount: rows.filter((r) => r.gainKg != null && r.gainKg > 0.5).length,
+    comparableCount: rows.filter((r) => r.prevBest).length,
+  };
+}
+
+// Lifter types, checked in order; the first that fits names the year. Every
+// one is something to be proud of, including the fallback, because a recap is
+// a celebration and not an assessment.
+const LIFTER_TYPES = [
+  {
+    id: "competitor",
+    title: "The Competitor",
+    fits: (p) => p.meetCount > 0,
+    describe: (p) =>
+      p.meetCount === 1
+        ? "You took it to the platform this year."
+        : `You took it to the platform ${p.meetCount} times this year.`,
+  },
+  {
+    id: "metronome",
+    title: "The Metronome",
+    fits: (p) =>
+      p.sessionCount >= 40 &&
+      p.consistencyPercentage >= 90 &&
+      p.bestStreak >= 8,
+    describe: () => "Week in, week out. Your training ran like clockwork.",
+  },
+  {
+    id: "momentum",
+    title: "The Momentum Builder",
+    fits: (p) =>
+      p.prevYearCount >= 10 &&
+      p.sessionCount >= 30 &&
+      p.sessionCount >= p.prevYearCount * 1.5,
+    describe: (p) =>
+      `${Math.round((p.sessionCount / p.prevYearCount - 1) * 100)}% more sessions than the year before.`,
+  },
+  {
+    id: "heavy",
+    title: "The Heavy Hitter",
+    fits: (p) => p.bigFourSets >= 50 && p.heavyShare >= 0.35,
+    describe: (p) =>
+      `${Math.round(p.heavyShare * 100)}% of your main lift sets were singles, doubles or triples.`,
+  },
+  {
+    id: "volume",
+    title: "The Volume Builder",
+    fits: (p) => p.totalSets >= 100 && p.highRepShare >= 0.45,
+    describe: (p) =>
+      `Reps on reps. ${Math.round(p.highRepShare * 100)}% of your sets were 8 reps or more.`,
+  },
+  {
+    id: "specialist",
+    title: "The Specialist",
+    fits: (p) => p.totalSets >= 60 && p.topLiftShare >= 0.4,
+    describe: (p) =>
+      `${p.topLift} took ${Math.round(p.topLiftShare * 100)}% of your sets. Pure devotion.`,
+  },
+  {
+    id: "explorer",
+    title: "The Explorer",
+    fits: (p) => p.distinctLifts >= 25,
+    describe: (p) =>
+      `${p.distinctLifts} different lifts. You like to keep it interesting.`,
+  },
+  {
+    id: "weekend",
+    title: "The Weekend Lifter",
+    fits: (p) => p.sessionCount >= 12 && p.weekendShare >= 0.5,
+    describe: () => "Saturdays and Sundays belong to the barbell.",
+  },
+  {
+    id: "all-rounder",
+    title: "The All-Rounder",
+    fits: (p) => p.bigFourBalanced,
+    describe: () => "Squat, bench, deadlift and press. You trained the lot.",
+  },
+  {
+    id: "builder",
+    title: "The Steady Builder",
+    fits: () => true,
+    describe: () => "Session by session, you built something this year.",
+  },
+];
+
+/**
+ * The lifter's "type" for a year, Wrapped style, plus the training habits
+ * behind it: favourite weekday, most common set, how many lifts.
+ *
+ * @param {Array} parsedData - Parsed lift entries.
+ * @param {number|string} year - Calendar year.
+ * @param {Map} [meetDays] - From the data provider.
+ * @returns {null|{id: string, title: string, description: string,
+ *   favouriteWeekday: string|null, weekdayCounts: number[], favouriteReps: number|null,
+ *   distinctLifts: number, sessionCount: number}}
+ *   Null when the year has too few sessions to say anything honest.
+ */
+export function computeLifterTypeForYear(parsedData, year, meetDays) {
+  if (!parsedData || !year) return null;
+  const yearStart = `${year}-01-01`;
+  const yearEnd = `${year}-12-31`;
+  const sessionStats = computeSessionStatsForYear(parsedData, year);
+  if (sessionStats.count < 3) return null;
+
+  const sessionDates = new Set();
+  const setsByLift = {};
+  const repCounts = {};
+  let totalSets = 0;
+  let bigFourSets = 0;
+  let heavySets = 0;
+  let highRepSets = 0;
+  parsedData.forEach((entry) => {
+    if (!entry.date || entry.date < yearStart || entry.date > yearEnd) return;
+    const reps = entry.reps ?? 0;
+    if (reps < 1) return;
+    sessionDates.add(entry.date);
+    totalSets++;
+    setsByLift[entry.liftType] = (setsByLift[entry.liftType] ?? 0) + 1;
+    repCounts[reps] = (repCounts[reps] ?? 0) + 1;
+    if (reps >= 8) highRepSets++;
+    if (BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) {
+      bigFourSets++;
+      if (reps <= 3) heavySets++;
+    }
+  });
+
+  const weekdayCounts = [0, 0, 0, 0, 0, 0, 0];
+  sessionDates.forEach((date) => {
+    weekdayCounts[(parseYmdUtc(date).getUTCDay() + 6) % 7]++;
+  });
+  const maxWeekday = Math.max(...weekdayCounts);
+  const favouriteWeekday =
+    maxWeekday > 0 ? WEEKDAY_NAMES[weekdayCounts.indexOf(maxWeekday)] : null;
+
+  const favouriteRepsEntry = Object.entries(repCounts).sort(
+    (a, b) => b[1] - a[1] || a[0] - b[0],
+  )[0];
+  const topLiftEntry = Object.entries(setsByLift).sort(
+    (a, b) => b[1] - a[1],
+  )[0];
+  const bigFourShares = BIG_FOUR_LIFT_TYPES.map((lt) =>
+    bigFourSets ? (setsByLift[lt] ?? 0) / bigFourSets : 0,
+  );
+
+  const profile = {
+    sessionCount: sessionStats.count,
+    prevYearCount: sessionStats.prevYearCount ?? 0,
+    consistencyPercentage: sessionStats.consistencyPercentage,
+    bestStreak: sessionStats.bestStreak,
+    meetCount: meetDays
+      ? Array.from(meetDays.keys()).filter(
+          (d) => d >= yearStart && d <= yearEnd,
+        ).length
+      : 0,
+    totalSets,
+    bigFourSets,
+    heavyShare: bigFourSets ? heavySets / bigFourSets : 0,
+    highRepShare: totalSets ? highRepSets / totalSets : 0,
+    topLift: topLiftEntry?.[0] ?? null,
+    topLiftShare: topLiftEntry && totalSets ? topLiftEntry[1] / totalSets : 0,
+    distinctLifts: Object.keys(setsByLift).length,
+    weekendShare: sessionDates.size
+      ? (weekdayCounts[5] + weekdayCounts[6]) / sessionDates.size
+      : 0,
+    bigFourBalanced:
+      bigFourSets >= 40 && bigFourShares.every((share) => share >= 0.15),
+  };
+
+  const type = LIFTER_TYPES.find((t) => t.fits(profile));
+  return {
+    id: type.id,
+    title: type.title,
+    description: type.describe(profile),
+    favouriteWeekday,
+    weekdayCounts,
+    favouriteReps: favouriteRepsEntry ? Number(favouriteRepsEntry[0]) : null,
+    distinctLifts: profile.distinctLifts,
+    sessionCount: profile.sessionCount,
+  };
+}
+
 /**
  * Plain-text version of the recap, for pasting into Reddit, Discord, or X where
- * an image is the wrong shape of share. Deliberately short: five lines plus
+ * an image is the wrong shape of share. Deliberately short: a handful of lines plus
  * attribution, so it survives a tweet-sized box without being truncated.
  *
  * @param {Object} params
@@ -273,7 +615,12 @@ export function computeMostTrainedLiftForYear(parsedData, year) {
  * @param {boolean} params.isMetric - Display preference from useAthleteBio().
  * @returns {string}
  */
-export function buildRecapSummaryText({ parsedData, year, isMetric }) {
+export function buildRecapSummaryText({
+  parsedData,
+  year,
+  isMetric,
+  meetDays,
+}) {
   const stats = computeSessionStatsForYear(parsedData, year);
   const { tonnage, primaryUnit } = computeTonnageForYear(
     parsedData,
@@ -282,6 +629,7 @@ export function buildRecapSummaryText({ parsedData, year, isMetric }) {
   );
   const { mostTrainedLift } = computeMostTrainedLiftForYear(parsedData, year);
   const prs = getLifetimePRsAchievedInYear(parsedData, year);
+  const lifterType = computeLifterTypeForYear(parsedData, year, meetDays);
 
   const lines = [
     stats.isPartialYear
@@ -314,6 +662,10 @@ export function buildRecapSummaryText({ parsedData, year, isMetric }) {
     lines.push(`⭐ Most trained: ${mostTrainedLift}`);
   }
 
+  if (lifterType) {
+    lines.push(`🧬 Lifter type: ${lifterType.title}`);
+  }
+
   if (prs.length > 0) {
     const shown = prs.slice(0, 3).map((pr) => {
       const { value, unit } = getDisplayWeight(pr, isMetric);
@@ -325,7 +677,7 @@ export function buildRecapSummaryText({ parsedData, year, isMetric }) {
     );
   }
 
-  lines.push("", `Made with Strength Journeys — ${RECAP_URL}`);
+  lines.push("", `Made with Strength Journeys: ${RECAP_URL}`);
 
   return lines.join("\n");
 }

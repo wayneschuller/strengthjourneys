@@ -1,10 +1,12 @@
-import { useRef, useMemo } from "react";
+import { useMemo } from "react";
 import { motion } from "motion/react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Dumbbell } from "lucide-react";
 import { computeTonnageForYear } from "@/lib/year-recap-stats";
 import { getLiftArtwork } from "@/components/lift-artwork";
+import { pickRecapPhrase } from "@/components/year-recap/phrases";
+import { useCountUp } from "@/components/year-recap/use-count-up";
 
 /**
  * Recap slide displaying total weight moved (tonnage) for the year, a fun real-world equivalent comparison, and per-lift bar chart for the Big Four lifts.
@@ -15,8 +17,6 @@ import { getLiftArtwork } from "@/components/lift-artwork";
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function TonnageCard({ year, isDemo, isActive = true }) {
-  const equivRef = useRef(null);
-
   const { parsedData } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
@@ -25,12 +25,10 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
     [parsedData, year, isMetric],
   );
 
-  const equiv = pickTonnageEquivalent(
-    tonnage,
-    primaryUnit,
-    equivRef,
-    `tonnage-${year}`,
-  );
+  const equiv = pickTonnageEquivalent(tonnage, primaryUnit, year);
+  const displayTonnage = useCountUp(Math.round(tonnage), isActive, {
+    duration: 1.4,
+  });
 
   const showPrevYearComparison = useMemo(() => {
     const now = new Date();
@@ -95,7 +93,7 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
           delay: isActive ? 0.08 : 0,
         }}
       >
-        {formatYearTonnageTitle(tonnage)} {primaryUnit}
+        {formatYearTonnageTitle(displayTonnage)} {primaryUnit}
       </motion.p>
       <motion.p
         className="text-chart-2 mt-2 text-xl font-semibold"
@@ -230,23 +228,22 @@ const YEARLY_TONNAGE_EQUIVALENTS = {
   ],
 };
 
-function pickTonnageEquivalent(tonnage, unitType, ref, key) {
+// Hashed rather than random so the saved image names the same animal as the
+// card on screen.
+function pickTonnageEquivalent(tonnage, unitType, year) {
   const equivalents =
     YEARLY_TONNAGE_EQUIVALENTS[unitType] ?? YEARLY_TONNAGE_EQUIVALENTS.lb;
   const valid = equivalents.filter((eq) => tonnage / eq.weight >= 0.1);
   const candidates = valid.length > 0 ? valid : equivalents;
-
-  if (ref.current && ref.current[key]) {
-    return ref.current[key];
-  }
-
-  const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-  const result = {
+  const chosen = pickRecapPhrase(
+    candidates,
+    "tonnage",
+    year,
+    Math.round(tonnage),
+  );
+  return {
     name: chosen.name,
     count: tonnage / chosen.weight,
     emoji: chosen.emoji,
   };
-  if (!ref.current) ref.current = {};
-  ref.current[key] = result;
-  return result;
 }

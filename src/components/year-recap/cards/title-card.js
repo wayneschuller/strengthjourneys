@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { useSession } from "next-auth/react";
 import { getLiftArtwork } from "@/components/lift-artwork";
 
 const TOP_LIFTS = ["Back Squat", "Bench Press"];
@@ -99,6 +100,19 @@ function CornerIcon({ liftType, index, isActive, variants }) {
 }
 
 /**
+ * The athlete's first name from their Google profile, for "Wayne's Strength
+ * Unwrapped". Null when signed out or when the name is missing or long enough
+ * to crowd the title.
+ * @param {Object|null} session - From useSession().
+ * @returns {string|null}
+ */
+export function getRecapFirstName(session) {
+  const first = session?.user?.name?.trim().split(/\s+/)[0];
+  if (!first || first.length > 14) return null;
+  return first;
+}
+
+/**
  * Opening recap slide displaying the "Strength Unwrapped" title and recap year, flanked by four animated lift icons.
  * Each lift icon springs in from its corner when the slide becomes active.
  * @param {Object} props
@@ -107,6 +121,9 @@ function CornerIcon({ liftType, index, isActive, variants }) {
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function TitleCard({ year, isDemo, isActive = true }) {
+  const { data: session } = useSession();
+  const firstName = isDemo ? null : getRecapFirstName(session);
+
   return (
     <div className="flex flex-1 flex-col items-center justify-center text-center">
       <div className="mb-8 flex justify-center gap-10 md:gap-14">
@@ -122,6 +139,17 @@ export function TitleCard({ year, isDemo, isActive = true }) {
       </div>
       <h2 className="text-3xl leading-tight font-bold tracking-tight [filter:drop-shadow(0_1px_2px_rgba(0,0,0,0.06))] md:text-5xl">
         <span className="block">
+          {firstName && (
+            <motion.span
+              variants={wordVariants}
+              initial="hidden"
+              animate={isActive ? "visible" : "hidden"}
+              custom={-1}
+              className="text-muted-foreground mb-1 block text-xl font-semibold md:text-2xl"
+            >
+              {firstName}&apos;s
+            </motion.span>
+          )}
           <motion.span
             variants={wordVariants}
             initial="hidden"

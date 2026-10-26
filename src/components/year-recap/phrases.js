@@ -1,21 +1,27 @@
 /** @format */
 
+// Phrases for the Strength Unwrapped cards.
+//
+// Picks are hashed rather than random. A random pick changed every time a card
+// mounted, so the phrase on screen and the phrase in the saved image could
+// disagree, and "save all cards" renders a second copy of the deck. Seeding by
+// card, year and the size of the log keeps one lifter's deck stable while two
+// lifters still read different lines.
+
 /**
- * Pick a quirky phrase from an array, persisting the choice in ref to avoid re-randomizing on re-render.
- * @param {string[]} phrases - Array of phrase options
- * @param {React.MutableRefObject<Object>} ref - useRef to persist choice
- * @param {string} key - Unique key for this card/context
+ * Pick a phrase deterministically from a set.
+ * @param {string[]} phrases - Phrase options
+ * @param {...(string|number)} seedParts - Anything that should change the pick
  * @returns {string}
  */
-export function pickQuirkyPhrase(phrases, ref, key) {
+export function pickRecapPhrase(phrases, ...seedParts) {
   if (!phrases || phrases.length === 0) return "";
-  if (ref.current && ref.current[key] !== undefined) {
-    return ref.current[key];
+  const seed = seedParts.join("|");
+  let hash = 0;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
   }
-  const chosen = phrases[Math.floor(Math.random() * phrases.length)];
-  if (!ref.current) ref.current = {};
-  ref.current[key] = chosen;
-  return chosen;
+  return phrases[Math.abs(hash) % phrases.length];
 }
 
 export const SESSIONS_PHRASES = [
@@ -174,27 +180,18 @@ export const PR_HIGHLIGHTS_PHRASES = [
   "The main event",
 ];
 
+// "{month}" is replaced with the busiest month's name.
 export const SEASONAL_PHRASES = [
-  "March was your month",
-  "Summer grind paid off",
-  "Winter warrior",
-  "April showers, April gains",
-  "Peak season",
-  "That month hit different",
-  "You owned that month",
-  "Busiest month of the year",
-  "When the iron called, you answered",
-  "Peak performance",
-  "That's when the magic happened",
-  "Your strongest month",
-  "The grind was real",
-  "No slacking that month",
-  "Peak lifting season",
-  "You showed up big time",
-  "That month defined your year",
-  "Consistency king/queen",
+  "{month} was your month",
+  "You owned {month}",
+  "{month} hit different",
   "The month you locked in",
-  "Nothing could stop you",
+  "When the iron called, you answered",
+  "Peak season",
+  "{month} set the tone",
+  "That's when the magic happened",
+  "Nothing could stop you in {month}",
+  "You showed up big time",
 ];
 
 export const CLOSING_PHRASES = [
@@ -218,4 +215,31 @@ export const CLOSING_PHRASES = [
   "More PRs incoming",
   "Stay consistent",
   "Cheers to the next chapter",
+];
+
+export const STRENGTH_GAINS_PHRASES = [
+  "Stronger than last year you",
+  "The work shows",
+  "Every session paid in",
+  "Proof it adds up",
+  "Strength, banked",
+  "The bar noticed",
+  "Built, not bought",
+  "Slow and heavy wins",
+];
+
+export const STRENGTH_BESTS_PHRASES = [
+  "Your top sets this year",
+  "The heaviest work you did",
+  "Your strongest sets",
+  "Where the year peaked",
+  "The numbers you earned",
+];
+
+export const SUMMARY_PHRASES = [
+  "A year well lifted",
+  "One year, one card",
+  "The whole year at a glance",
+  "Your year in strength",
+  "Every rep, summed up",
 ];

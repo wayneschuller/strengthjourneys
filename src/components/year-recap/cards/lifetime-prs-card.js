@@ -1,6 +1,6 @@
-import { useRef, useMemo } from "react";
+import { useMemo } from "react";
 import {
-  pickQuirkyPhrase,
+  pickRecapPhrase,
   PR_HIGHLIGHTS_PHRASES,
   PR_EMPTY_PHRASES,
 } from "@/components/year-recap/phrases";
@@ -24,7 +24,6 @@ import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
  * @param {boolean} [props.isActive] - Controls entrance animations; should be true only when this carousel slide is visible.
  */
 export function LifetimePRsCard({ year, isDemo, isActive = true }) {
-  const phraseRef = useRef(null);
   const { parsedData } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
   const prs = useMemo(
@@ -32,10 +31,11 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
     [year, parsedData],
   );
 
-  const phrase = pickQuirkyPhrase(
+  const phrase = pickRecapPhrase(
     prs.length > 0 ? PR_HIGHLIGHTS_PHRASES : PR_EMPTY_PHRASES,
-    phraseRef,
-    prs.length > 0 ? `lifetime-prs-${year}` : `lifetime-prs-empty-${year}`,
+    "lifetime-prs",
+    year,
+    parsedData?.length ?? 0,
   );
 
   const isCurrentYear = Number(year) === new Date().getFullYear();
@@ -93,7 +93,7 @@ export function LifetimePRsCard({ year, isDemo, isActive = true }) {
                 ) : null}
                 <span>
                   {pr.liftType} {pr.reps}@{getDisplayWeight(pr, isMetric).value}
-                  {getDisplayWeight(pr, isMetric).unit} —{" "}
+                  {getDisplayWeight(pr, isMetric).unit} ·{" "}
                   {getReadableDateString(pr.date)}
                 </span>
               </motion.li>

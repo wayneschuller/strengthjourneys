@@ -46,7 +46,7 @@ export default function StrengthYearInReview() {
   const title =
     "Strength Year in Review | Your Lifting Recap | Strength Journeys";
   const description =
-    "See your year of strength training in a Spotify Wrapped-style recap. Sessions, tonnage, PRs, and more. Free.";
+    "See your year of strength training in a Spotify Wrapped-style recap. Sessions, PRs, strength gains, your lifter type and more. Free.";
   const canonicalURL =
     "https://www.strengthjourneys.xyz/strength-year-in-review";
   const ogImageURL = "https://www.strengthjourneys.xyz/202409-og-image.png";
@@ -152,8 +152,8 @@ function RecapCustomiseSidebar() {
         <p className="text-muted-foreground text-sm leading-snug">
           Choose a theme below to match your style, then use{" "}
           <Share2 className="mx-0.5 -mt-0.5 inline h-3.5 w-3.5" aria-hidden />{" "}
-          on any card to copy it, save it as a 1080&times;1920 image, or grab a
-          text summary.
+          on any card to copy it, save it as a 1080&times;1920 image, share the
+          whole deck at once, or grab a text summary.
         </p>
       </div>
       <div className="flex flex-col gap-1.5">
@@ -284,7 +284,7 @@ function StrengthYearInReviewMain() {
         </PageHeaderHeading>
         <PageHeaderDescription>
           See your year of strength training in a Spotify Wrapped-style recap.
-          Sessions, tonnage, PRs, and more.
+          Sessions, PRs, strength gains, your lifter type and more.
         </PageHeaderDescription>
       </PageHeader>
 

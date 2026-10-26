@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useMemo } from "react";
+import { createPortal } from "react-dom";
 import {
   Carousel,
   CarouselContent,
@@ -29,14 +30,33 @@ import { ShareCopyButton } from "@/components/share-copy-button";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
 import { RECAP_CARDS } from "@/components/year-recap/recap-cards";
 import { cn } from "@/lib/utils";
-import { Copy, Download, MoreHorizontal, Type } from "lucide-react";
+import {
+  Copy,
+  Download,
+  GalleryHorizontal,
+  Loader2,
+  MoreHorizontal,
+  Share2,
+  Type,
+  X,
+} from "lucide-react";
 
 // How long the recap sits untouched before the next arrow points out that there
-// are seven more cards behind the title. Long enough to read the title card,
-// short enough to catch someone before they leave.
+// are more cards behind the title. Long enough to read the title card, short
+// enough to catch someone before they leave.
 const NUDGE_DELAY_MS = 4500;
 
-function fireTitleConfetti() {
+// Cards that open with confetti: the title, and the lifter type reveal.
+const CONFETTI_CARD_IDS = new Set(["title", "lifter-type"]);
+
+// The hidden deck plays every card's entrance at once; the slowest (the lifter
+// type) settles at about 1.5s, so capture waits a little past that.
+const BATCH_SETTLE_MS = 1900;
+
+// Downloads fired back to back get collapsed or blocked by some browsers.
+const BATCH_DOWNLOAD_GAP_MS = 300;
+
+function fireConfetti() {
   import("canvas-confetti").then((confetti) => {
     const fn = confetti.default;
     const opts = { origin: { x: 0.46, y: 0.6 }, spread: 70, zIndex: 9999 };
@@ -47,10 +67,12 @@ function fireTitleConfetti() {
 }
 
 /**
- * Full-screen carousel of Strength Unwrapped recap slides for a given year.
- * Fires confetti on the title slide and offers four ways to share the active
- * slide: the native share sheet (mobile), clipboard image, a 1080x1920 PNG
- * download, and a plain-text summary for text-first places like Reddit or X.
+ * Story-style carousel of Strength Unwrapped recap slides for a given year.
+ * Segments across the top show progress and jump to a card; tapping the right
+ * of a card moves on and the left goes back, like a story. Confetti greets the
+ * title and the lifter type reveal. Sharing covers the active card (native
+ * share sheet, clipboard, 1080x1920 PNG), every card at once, and a plain-text
+ * summary for text-first places like Reddit or X.
  * @param {Object} props
  * @param {number|string} props.year - The recap year to display across all slide cards.
  * @param {boolean} props.isDemo - When true, suppresses confetti and hides sharing in favour of a "Demo mode" label.
@@ -64,7 +86,7 @@ export function YearRecapCarousel({ year, isDemo }) {
     useTransientSuccess();
   const { toast } = useToast();
 
-  const { parsedData } = useUserLiftingData();
+  const { parsedData, meetDays } = useUserLiftingData();
   const { isMetric } = useAthleteBio();
 
   // Feature-detected after mount: navigator.canShare must not run during render
@@ -74,10 +96,10 @@ export function YearRecapCarousel({ year, isDemo }) {
     setCanNativeShare(canNativeShareFiles());
   }, []);
 
-  const hasFiredConfettiRef = useRef(false);
+  const firedConfettiRef = useRef(new Set());
 
   // The carousel is the whole page here: nothing else on screen says there are
-  // eight cards. If nobody has touched it after a few seconds, the next arrow
+  // more cards. If nobody has touched it after a few seconds, the next arrow
   // starts nudging and keeps nudging (see .recap-next-nudge in globals.css).
   // Any interaction at all retires it for the rest of the visit — once someone
   // knows the deck moves, pointing at the arrow is just noise.
@@ -115,30 +137,42 @@ export function YearRecapCarousel({ year, isDemo }) {
   }, [year]);
 
   useEffect(() => {
-    if (year) hasFiredConfettiRef.current = false;
+    firedConfettiRef.current = new Set();
   }, [year]);
 
-  useEffect(() => {
-    if (isDemo) return;
-    if (selectedIndex === 0 && !hasFiredConfettiRef.current) {
-      hasFiredConfettiRef.current = true;
-      const timer = setTimeout(fireTitleConfetti, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedIndex, year, isDemo]);
-
   const activeSlideId = RECAP_CARDS[selectedIndex]?.id;
+
+  useEffect(() => {
+    if (isDemo || !CONFETTI_CARD_IDS.has(activeSlideId)) return;
+    if (firedConfettiRef.current.has(activeSlideId)) return;
+    firedConfettiRef.current.add(activeSlideId);
+    // The lifter type lands its title at about 0.7s; the title card sooner.
+    const timer = setTimeout(
+      fireConfetti,
+      activeSlideId === "lifter-type" ? 900 : 600,
+    );
+    return () => clearTimeout(timer);
+  }, [activeSlideId, year, isDemo]);
+
+  // Embla swallows the click that ends a swipe, so this only sees real taps.
+  const handleSlideTap = (event) => {
+    if (!api) return;
+    if (event.target.closest("a, button")) return;
+    const rect = event.currentTarget.getBoundingClientRect();
+    if (event.clientX - rect.left < rect.width / 3) api.scrollPrev();
+    else api.scrollNext();
+  };
 
   const trackShare = (action) =>
     gaTrackShareCopy("year_recap", {
       page: "/strength-year-in-review",
-      slide: activeSlideId,
+      slide: action === "share_all" ? "all" : activeSlideId,
       action,
     });
 
   const summaryText = useMemo(
-    () => buildRecapSummaryText({ parsedData, year, isMetric }),
-    [parsedData, year, isMetric],
+    () => buildRecapSummaryText({ parsedData, year, isMetric, meetDays }),
+    [parsedData, year, isMetric, meetDays],
   );
 
   // Capture whichever slide is currently on screen. Every image path goes
@@ -233,10 +267,94 @@ export function YearRecapCarousel({ year, isDemo }) {
     }
   };
 
+  // --- Every card at once ---
+  //
+  // A second copy of the deck renders hidden with every card active, so all the
+  // entrances play together and finish together. Once it settles, each card is
+  // captured in turn. On a phone the share sheet then needs a fresh tap: the
+  // captures take longer than a browser keeps a tap's permission alive, so the
+  // footer offers "Share all" rather than calling share straight away.
+  const [batch, setBatch] = useState(null); // { status, done, files }
+  const batchRef = useRef(null);
+
+  useEffect(() => {
+    if (batch?.status !== "rendering") return;
+    let cancelled = false;
+
+    const run = async () => {
+      await new Promise((resolve) => setTimeout(resolve, BATCH_SETTLE_MS));
+      const slides =
+        batchRef.current?.querySelectorAll("[data-recap-slide]") ?? [];
+      const files = [];
+      for (let i = 0; i < slides.length; i++) {
+        if (cancelled) return;
+        const blob = await captureRecapSlideBlob(slides[i]);
+        const name = recapImageFileName(
+          year,
+          `${String(i + 1).padStart(2, "0")}-${RECAP_CARDS[i].id}`,
+        );
+        files.push(new File([blob], name, { type: "image/png" }));
+        setBatch((prev) => prev && { ...prev, done: i + 1 });
+      }
+      if (cancelled) return;
+
+      const canShareAll =
+        canNativeShare && navigator.canShare?.({ files }) === true;
+      if (canShareAll) {
+        setBatch({ status: "ready", done: files.length, files });
+        return;
+      }
+      for (const file of files) {
+        downloadBlob(file, file.name);
+        await new Promise((resolve) =>
+          setTimeout(resolve, BATCH_DOWNLOAD_GAP_MS),
+        );
+      }
+      setBatch(null);
+      toast({ title: `Saved ${files.length} images` });
+    };
+
+    run().catch((error) => {
+      console.error("Save all error:", error);
+      if (!cancelled) {
+        setBatch(null);
+        toast({ variant: "destructive", title: "Could not save the cards" });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [batch?.status, year, canNativeShare, toast]);
+
+  const handleShareAllReady = async () => {
+    const files = batch?.files;
+    if (!files) return;
+    try {
+      await navigator.share({
+        files,
+        title: `Strength Unwrapped ${year}`,
+      });
+      setBatch(null);
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      console.error("Share all error:", error);
+      for (const file of files) {
+        downloadBlob(file, file.name);
+        await new Promise((resolve) =>
+          setTimeout(resolve, BATCH_DOWNLOAD_GAP_MS),
+        );
+      }
+      setBatch(null);
+      toast({ title: `Saved ${files.length} images` });
+    }
+  };
+
   const runShareAction = (action, handler) => {
     trackShare(action);
     handler();
   };
+
+  const isBatchBusy = batch?.status === "rendering";
 
   return (
     <div className="relative">
@@ -244,21 +362,39 @@ export function YearRecapCarousel({ year, isDemo }) {
         ref={shareRef}
         className="bg-card mx-auto max-w-[360px] rounded-xl border"
       >
+        <nav className="flex gap-1 px-3 pt-3 pb-2" aria-label="Recap cards">
+          {RECAP_CARDS.map(({ id, label }, index) => (
+            <button
+              key={id}
+              type="button"
+              aria-current={index === selectedIndex ? "step" : undefined}
+              aria-label={`Card ${index + 1}: ${label}`}
+              className="group flex h-4 flex-1 items-center"
+              onClick={() => api?.scrollTo(index)}
+            >
+              <span className="bg-muted-foreground/20 block h-1 w-full overflow-hidden rounded-full">
+                <span
+                  className={cn(
+                    "bg-primary block h-full rounded-full transition-[width] duration-500 ease-out",
+                    index <= selectedIndex ? "w-full" : "w-0",
+                  )}
+                />
+              </span>
+            </button>
+          ))}
+        </nav>
+
         <Carousel setApi={setApi} className="w-full">
           <CarouselContent className="-ml-0">
-            {RECAP_CARDS.map(({ id, Component }, index) => (
-              <CarouselItem key={id} className="pl-0">
-                <div
-                  data-recap-slide
-                  className="border-border bg-card relative flex aspect-[9/16] w-full items-center justify-center rounded-xl border p-6"
-                >
-                  <Component
-                    key={`${id}-${year}`}
-                    year={year}
-                    isDemo={isDemo}
-                    isActive={selectedIndex === index}
-                  />
-                </div>
+            {RECAP_CARDS.map((card, index) => (
+              <CarouselItem key={card.id} className="pl-0">
+                <RecapSlide
+                  card={card}
+                  year={year}
+                  isDemo={isDemo}
+                  isActive={selectedIndex === index}
+                  onClick={handleSlideTap}
+                />
               </CarouselItem>
             ))}
           </CarouselContent>
@@ -280,6 +416,13 @@ export function YearRecapCarousel({ year, isDemo }) {
           </span>
           {isDemo ? (
             <DemoModeBadge size="sm" />
+          ) : batch ? (
+            <BatchStatus
+              batch={batch}
+              total={RECAP_CARDS.length}
+              onShare={handleShareAllReady}
+              onCancel={() => setBatch(null)}
+            />
           ) : (
             <div className="flex items-center gap-1.5">
               <ShareCopyButton
@@ -308,6 +451,16 @@ export function YearRecapCarousel({ year, isDemo }) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onSelect={() =>
+                      runShareAction("share_all", () =>
+                        setBatch({ status: "rendering", done: 0 }),
+                      )
+                    }
+                  >
+                    <GalleryHorizontal className="mr-2 h-4 w-4" />
+                    {canNativeShare ? "Share all cards" : "Save all cards"}
+                  </DropdownMenuItem>
                   {canNativeShare && (
                     <DropdownMenuItem
                       onSelect={() =>
@@ -338,6 +491,101 @@ export function YearRecapCarousel({ year, isDemo }) {
           )}
         </div>
       </div>
+
+      {isBatchBusy &&
+        createPortal(
+          <div
+            ref={batchRef}
+            data-recap-capture-hidden
+            aria-hidden
+            className="pointer-events-none fixed top-0 left-0 w-[360px]"
+            style={{ visibility: "hidden" }}
+          >
+            {RECAP_CARDS.map((card) => (
+              <div key={card.id} className="absolute inset-x-0 top-0">
+                <RecapSlide card={card} year={year} isDemo={isDemo} isActive />
+              </div>
+            ))}
+          </div>,
+          document.body,
+        )}
     </div>
+  );
+}
+
+/**
+ * One 9:16 recap slide: the theme glow behind, the card on top. Shared by the
+ * carousel and the hidden deck that "save all cards" captures, so the saved
+ * images match the screen.
+ */
+function RecapSlide({ card, year, isDemo, isActive, onClick }) {
+  const { id, accent, Component } = card;
+  return (
+    <div
+      data-recap-slide
+      onClick={onClick}
+      className="border-border bg-card relative flex aspect-[9/16] w-full items-center justify-center overflow-hidden rounded-xl border p-6"
+    >
+      <RecapBackdrop accent={accent} />
+      <div className="relative flex w-full justify-center">
+        <Component
+          key={`${id}-${year}`}
+          year={year}
+          isDemo={isDemo}
+          isActive={isActive}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Two soft pools of the theme's chart colours in opposite corners. Plain
+// radial gradients with element opacity, because html2canvas paints those
+// faithfully where blur filters and masks come out wrong.
+function RecapBackdrop({ accent = [1, 2] }) {
+  const [first, second] = accent;
+  return (
+    <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div
+        className="absolute -top-1/4 -left-1/3 h-3/4 w-[140%] opacity-30"
+        style={{
+          background: `radial-gradient(closest-side, var(--chart-${first}), transparent)`,
+        }}
+      />
+      <div
+        className="absolute -right-1/3 -bottom-1/4 h-3/4 w-[140%] opacity-25"
+        style={{
+          background: `radial-gradient(closest-side, var(--chart-${second}), transparent)`,
+        }}
+      />
+    </div>
+  );
+}
+
+function BatchStatus({ batch, total, onShare, onCancel }) {
+  if (batch.status === "ready") {
+    return (
+      <div className="flex items-center gap-1.5">
+        <Button size="sm" onClick={onShare}>
+          <Share2 className="mr-1.5 h-4 w-4" />
+          Share all {batch.files.length}
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9"
+          aria-label="Cancel sharing all cards"
+          onClick={onCancel}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+    );
+  }
+  return (
+    <span className="text-muted-foreground flex items-center gap-2 text-sm">
+      <Loader2 className="h-4 w-4 animate-spin" />
+      {batch.done > 0 ? `Preparing ${batch.done} of ${total}` : "Preparing"}
+    </span>
   );
 }

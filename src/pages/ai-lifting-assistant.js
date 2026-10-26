@@ -604,14 +604,14 @@ function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
             : `That ${record} ${daysAgo} days ago deserves a chat, athlete.`,
       description: "Pick a question to start, or ask your own below.",
       celebration: {
-        label: `${liftType} ${reps}@${weight}${unitType} ${kind === "year" ? "12-month PR" : "PR"}`,
-        prompt: `Talk me through my ${liftType} ${reps}@${weight}${unitType} ${record} ${
+        label: `Celebrate my ${liftType} ${reps}@${weight}${unitType} ${kind === "year" ? "12-month PR" : "PR"}`,
+        prompt: `Celebrate my ${liftType} ${reps}@${weight}${unitType} ${record} ${
           daysAgo <= 0
             ? "today"
             : daysAgo === 1
               ? "yesterday"
               : `from ${daysAgo} days ago`
-        }. What does it mean for my training?`,
+        } with me. What does it mean for my training?`,
       },
     };
   }

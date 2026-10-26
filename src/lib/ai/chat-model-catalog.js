@@ -23,8 +23,8 @@
  * goes stale the day another model ships.
  *
  * Under the blurb the switcher shows two plain facts. `openWeights` says
- * whether anyone can download and run the model (DeepSeek V4 Flash is MIT
- * licensed on Hugging Face; the rest are closed). `cost` is what an answer
+ * whether anyone can download and run the model (DeepSeek publishes its
+ * weights on Hugging Face; the rest are closed). `cost` is what an answer
  * costs the site to produce, in broad bands from the benchmarks above: under
  * $1 per 1,000 answers is low, $1 to $10 is mid, above that is the highest.
  *
@@ -43,6 +43,18 @@
  * deepseek-v4.1-flash was quicker (1.1s, 2.9-7.2s) at $1.01-1.39 and was
  * offered briefly, then dropped: two DeepSeek entries confused the menu.
  * The plain deepseek-v4-flash was never offered: $0.50 and no quicker.
+ *
+ * Oct 26 2026: Claude Haiku 5.5 joined for everyone, and DeepSeek V4.1 Flash
+ * 1017 replaced V4 Flash 0731. Smoke test, one short coaching question with
+ * reasoning off, first word and full answer over two runs: haiku-5.5 0.9-1.6s
+ * 2.7-3.8s, v4.1-flash-1017 0.8-2.1s 2.2-3.6s, v4-flash-0731 1.6-2.3s
+ * 5.7-6.0s. Both list at about GPT-6 Luna's price, so an estimated $0.30-0.80
+ * per 1,000 answers on the live prompt (not yet benchmarked on it). The 1017
+ * build doubles its price in two weekday windows, 01:00-04:00 and
+ * 06:00-10:00 UTC, which stays low cost.
+ * gpt-6.1-sol was tried as an upgrade for gpt-6-sol and held back: it cannot
+ * turn reasoning off, and on "low" took 1.3-6.4s to the first word and
+ * 7.0-11.6s in full, against 0.7-1.3s and 3.6-4.6s.
  *
  * `access` gates a model: "everyone", or "signed-in", which doubles as a
  * sign-in nudge in the switcher. The server enforces it (lib/ai/models.js);
@@ -93,6 +105,16 @@ export const CHAT_MODELS = [
     access: "everyone",
   },
   {
+    id: "claude-haiku-5.5",
+    label: "Claude Haiku 5.5",
+    provider: "anthropic",
+    gatewayId: "anthropic/claude-haiku-5.5",
+    blurb: "Quick, well-organized answers",
+    openWeights: false,
+    cost: "Low cost",
+    access: "everyone",
+  },
+  {
     id: "claude-sonnet-5.5",
     label: "Claude Sonnet 5.5",
     provider: "anthropic",
@@ -103,13 +125,13 @@ export const CHAT_MODELS = [
     access: "signed-in",
   },
   {
-    id: "deepseek-v4-flash-0731",
-    label: "DeepSeek V4 Flash",
+    id: "deepseek-v4.1-flash-1017",
+    label: "DeepSeek V4.1 Flash",
     provider: "deepseek",
-    gatewayId: "deepseek/deepseek-v4-flash-0731",
-    blurb: "Detailed, conversational answers at a steady pace",
+    gatewayId: "deepseek/deepseek-v4.1-flash-1017",
+    blurb: "Quick, conversational answers",
     openWeights: true,
-    cost: "Lowest cost",
+    cost: "Low cost",
     access: "everyone",
   },
 ];
@@ -127,6 +149,20 @@ export const PROVIDER_NAMES = {
  */
 export function canUseChatModel(model, isSignedIn) {
   return model.access === "everyone" || isSignedIn;
+}
+
+// Retired catalog IDs and the model that took their place, so a lifter's
+// remembered pick carries over instead of falling back to the default.
+const REPLACED_CHAT_MODEL_IDS = {
+  "deepseek-v4-flash-0731": "deepseek-v4.1-flash-1017",
+};
+
+/**
+ * @param {string} id A catalog ID, possibly a retired one.
+ * @returns {string} The ID to use now.
+ */
+export function resolveChatModelId(id) {
+  return REPLACED_CHAT_MODEL_IDS[id] ?? id;
 }
 
 /**

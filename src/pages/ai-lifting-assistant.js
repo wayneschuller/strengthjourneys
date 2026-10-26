@@ -41,6 +41,7 @@ import {
   DEFAULT_CHAT_MODEL_ID,
   canUseChatModel,
   findChatModel,
+  resolveChatModelId,
 } from "@/lib/ai/chat-model-catalog";
 import { buildLiftingContext } from "@/lib/ai/lifting-context";
 
@@ -941,12 +942,12 @@ function AILiftingAssistantCard({
   // A signed-out lifter who picked a signed-in model gets the default until
   // they sign in; the server would fall back the same way.
   const isSignedIn = authStatus === "authenticated";
-  const storedModel = findChatModel(storedModelId);
+  const storedModel = findChatModel(resolveChatModelId(storedModelId));
   const selectedModelId =
     storedModel &&
     canUseChatModel(storedModel, isSignedIn) &&
-    (!coach || coach.availableModels?.includes(storedModelId))
-      ? storedModelId
+    (!coach || coach.availableModels?.includes(storedModel.id))
+      ? storedModel.id
       : (coach?.defaultModel ?? DEFAULT_CHAT_MODEL_ID);
 
   const isChatBlocked = Boolean(chatQuota?.blocked);

@@ -18,6 +18,7 @@ import {
   DEFAULT_CHAT_MODEL_ID,
   canUseChatModel,
   findChatModel,
+  resolveChatModelId,
 } from "@/lib/ai/chat-model-catalog";
 
 // Anthropic and DeepSeek have no key of their own: they are reached through
@@ -63,8 +64,9 @@ export function getChatModel(requestedId, { isSignedIn = false } = {}) {
   const available = getAvailableChatModelIds().filter((id) =>
     canUseChatModel(findChatModel(id), isSignedIn),
   );
-  const id = available.includes(requestedId)
-    ? requestedId
+  const resolvedId = resolveChatModelId(requestedId);
+  const id = available.includes(resolvedId)
+    ? resolvedId
     : available.includes(DEFAULT_CHAT_MODEL_ID)
       ? DEFAULT_CHAT_MODEL_ID
       : available[0];

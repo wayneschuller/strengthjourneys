@@ -218,11 +218,14 @@ export function CoachWelcome({
             move={move}
           />
         </div>
+        <h3 className="animate-in fade-in slide-in-from-bottom-1 text-center text-xl font-semibold tracking-tight duration-700 sm:text-2xl">
+          {greeting}
+        </h3>
         {celebration && (
           <SuggestionChip
             question={celebration.prompt}
             label={celebration.label}
-            index={1}
+            index={2}
             icon={Trophy}
             disabled={disabled}
             onSelect={pick}
@@ -230,12 +233,9 @@ export function CoachWelcome({
             onPointerLeave={lookAway}
             onFocus={(event) => lookAt(event, celebration.prompt)}
             onBlur={lookAway}
-            className="border-primary/40 bg-primary/10 hover:bg-primary/15 mt-1 font-semibold"
+            className="border-primary/40 bg-primary/10 hover:bg-primary/15 my-1 font-semibold"
           />
         )}
-        <h3 className="animate-in fade-in slide-in-from-bottom-1 text-center text-xl font-semibold tracking-tight duration-700 sm:text-2xl">
-          {greeting}
-        </h3>
         <p className="text-muted-foreground animate-in fade-in max-w-md text-center text-sm duration-1000">
           {description}
         </p>

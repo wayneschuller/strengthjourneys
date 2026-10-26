@@ -19,7 +19,7 @@ import {
 } from "@/lib/ai/chat-quota";
 import { isAllowedOrigin } from "@/lib/ai/chat-origin";
 import { getActivePromptEdition } from "@/lib/ai/prompt-editions";
-import { getChatModel } from "@/lib/ai/models";
+import { getChatModel, getFallbackChatModel } from "@/lib/ai/models";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { MAX_CHAT_METADATA_CHARS as MAX_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
@@ -189,14 +189,15 @@ export default async function handler(req, res) {
     });
 
   // A picked model that fails before writing anything (its provider is down,
-  // or the AI Gateway is out of credit) hands the question to the default
-  // model, so the lifter still gets an answer. The opening chunks are held
+  // or the AI Gateway is out of credit) hands the question to the fallback
+  // model, which skips the gateway, so the lifter still gets an answer. The opening chunks are held
   // back until then, because they name the model and must name the one that
   // actually answers.
-  const defaultModel = getChatModel(undefined, {
+  const fallbackModel = getFallbackChatModel({
     isSignedIn: Boolean(session?.user),
   });
-  const canFallBack = Boolean(defaultModel) && defaultModel.id !== chatModel.id;
+  const canFallBack =
+    Boolean(fallbackModel) && fallbackModel.id !== chatModel.id;
 
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -214,7 +215,7 @@ export default async function handler(req, res) {
 
         if (value.type === "error") {
           reader.cancel().catch(() => {});
-          reader = streamReplyFrom(defaultModel).getReader();
+          reader = streamReplyFrom(fallbackModel).getReader();
           held = null;
           continue;
         }

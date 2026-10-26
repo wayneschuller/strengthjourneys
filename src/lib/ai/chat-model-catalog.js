@@ -13,11 +13,19 @@
  * gpt-5.6-luna 3.9s $0.81, gpt-6-sol 4.3s $6.06. grok-4.7 was left out: it
  * always reasons (15.7s, $12.67).
  *
- * GPT-6 Luna is the default: on a "Review my training this month" run with
- * real data it was fastest (4.4s median full answer, vs 7.5s Grok 4.20 and
- * 7.9s GPT-5.6 Luna), steadiest between runs, and cheapest. The switcher
- * marks the default as "Recommended", so changing it here moves the badge.
- * The menu lists providers in catalog order, so OpenAI comes first.
+ * Claude Haiku 5.5 is the default since Oct 26 2026. On the 2026-10-26c
+ * edition (which asks for depth matched to the question), five general
+ * questions, medians: haiku-5.5 0.9s first word, 2.7s full, 174 words,
+ * $0.68 per 1,000 answers; gpt-6-luna 1.0s, 3.3s, 91 words, $0.10 with its
+ * prompt cached and $0.39 without. Haiku's longer answers were the more
+ * useful: asked for a 4-week plan, Luna only asked questions, Haiku asked
+ * the same and laid out the plan's shape. Anthropic prompt caching was left
+ * off: its cache lasts 5 minutes, and at our traffic most requests would pay
+ * the cache-write premium for nothing. GPT-6 Luna was the default before,
+ * and is now the fallback (FALLBACK_CHAT_MODEL_ID) because it does not need
+ * the gateway. The switcher marks the default as "Recommended", so changing
+ * it here moves the badge. The menu lists providers in catalog order, so
+ * Anthropic comes first.
  *
  * Blurbs describe how a model answers, never how recent it is: "newest"
  * goes stale the day another model ships.
@@ -62,12 +70,37 @@
  * a third value here plus a server-side check of who is asking.
  */
 
-export const DEFAULT_CHAT_MODEL_ID = "gpt-6-luna";
+export const DEFAULT_CHAT_MODEL_ID = "claude-haiku-5.5";
+
+// Answers when the picked model fails before writing anything. On its own
+// OpenAI key, not the gateway, so an empty gateway balance or a gateway
+// outage still leaves every lifter an answer.
+export const FALLBACK_CHAT_MODEL_ID = "gpt-6-luna";
 
 /**
  * @type {{ id: string, label: string, provider: "xai"|"openai"|"anthropic"|"deepseek", blurb: string, openWeights: boolean, cost: string, access: "everyone"|"signed-in", gatewayId?: string }[]}
  */
 export const CHAT_MODELS = [
+  {
+    id: "claude-haiku-5.5",
+    label: "Claude Haiku 5.5",
+    provider: "anthropic",
+    gatewayId: "anthropic/claude-haiku-5.5",
+    blurb: "Quick, well-organized answers",
+    openWeights: false,
+    cost: "Low cost",
+    access: "everyone",
+  },
+  {
+    id: "claude-sonnet-5.5",
+    label: "Claude Sonnet 5.5",
+    provider: "anthropic",
+    gatewayId: "anthropic/claude-sonnet-5.5",
+    blurb: "The most thorough answers, laid out step by step",
+    openWeights: false,
+    cost: "Highest cost",
+    access: "signed-in",
+  },
   {
     id: "gpt-6-luna",
     label: "GPT-6 Luna",
@@ -103,26 +136,6 @@ export const CHAT_MODELS = [
     openWeights: false,
     cost: "Mid cost",
     access: "everyone",
-  },
-  {
-    id: "claude-haiku-5.5",
-    label: "Claude Haiku 5.5",
-    provider: "anthropic",
-    gatewayId: "anthropic/claude-haiku-5.5",
-    blurb: "Quick, well-organized answers",
-    openWeights: false,
-    cost: "Low cost",
-    access: "everyone",
-  },
-  {
-    id: "claude-sonnet-5.5",
-    label: "Claude Sonnet 5.5",
-    provider: "anthropic",
-    gatewayId: "anthropic/claude-sonnet-5.5",
-    blurb: "The most thorough answers, laid out step by step",
-    openWeights: false,
-    cost: "Highest cost",
-    access: "signed-in",
   },
   {
     id: "deepseek-v4.1-flash-1017",

@@ -16,6 +16,7 @@ import { xai } from "@ai-sdk/xai";
 import {
   CHAT_MODELS,
   DEFAULT_CHAT_MODEL_ID,
+  FALLBACK_CHAT_MODEL_ID,
   canUseChatModel,
   findChatModel,
   resolveChatModelId,
@@ -88,6 +89,16 @@ export function getChatModel(requestedId, { isSignedIn = false } = {}) {
     model: openai(id),
     providerOptions: { openai: { reasoningEffort: "none" } },
   };
+}
+
+/**
+ * The model that answers when the picked one fails before writing anything:
+ * the fallback model, or the default if the fallback's key is missing.
+ *
+ * @param {{ isSignedIn?: boolean }} [requester]
+ */
+export function getFallbackChatModel(requester) {
+  return getChatModel(FALLBACK_CHAT_MODEL_ID, requester);
 }
 
 /**

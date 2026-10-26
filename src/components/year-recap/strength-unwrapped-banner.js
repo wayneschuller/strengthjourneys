@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSession } from "next-auth/react";
@@ -51,6 +51,9 @@ export function getRecapSeasonYear(now = new Date()) {
 export function StrengthUnwrappedBanner() {
   const router = useRouter();
   const isClient = useIsClient();
+  // Hides it straight away, including under the preview flag, which ignores
+  // the stored snooze.
+  const [isClosed, setIsClosed] = useState(false);
   const { data: session } = useSession();
   const { parsedData, meetDays, dataSource } = useUserLiftingData();
   const [snoozedAt, setSnoozedAt] = useLocalStorage(
@@ -72,6 +75,7 @@ export function StrengthUnwrappedBanner() {
   // flash before their own.
   const shouldShow =
     isClient &&
+    !isClosed &&
     seasonYear != null &&
     router.pathname !== "/strength-year-in-review" &&
     (forceShow ||
@@ -157,7 +161,10 @@ export function StrengthUnwrappedBanner() {
             size="icon"
             className="text-muted-foreground h-8 w-8"
             aria-label="Hide Strength Unwrapped for a few days"
-            onClick={() => setSnoozedAt(Date.now())}
+            onClick={() => {
+              setSnoozedAt(Date.now());
+              setIsClosed(true);
+            }}
           >
             <X className="h-4 w-4" />
           </Button>

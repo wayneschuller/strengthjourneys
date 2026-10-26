@@ -6,6 +6,8 @@
  * - ==text== becomes a highlight, which the prompt reserves for real
  *   milestones.
  * - A date the lifter trained on ("October 12") links to that day in the log.
+ * - The closing takeaway's "Takeaway:" label becomes one of a set of labels,
+ *   so the card does not read the same at the end of every answer.
  *
  * Like the lift guide links, these are done here rather than asked of the
  * model wherever we can: exact, no tokens, and the same for every model. Only
@@ -74,6 +76,14 @@ function replaceInText(tree, pattern, build, skip = SKIPPED_NODE_TYPES) {
   visit(tree);
 }
 
+/** The plain text of a node and its children. */
+function toString(node) {
+  if (typeof node.value === "string") return node.value;
+  return Array.isArray(node.children)
+    ? node.children.map(toString).join("")
+    : "";
+}
+
 /** A span with one class, which mdast-util-to-hast renders from `data`. */
 function span(className, value) {
   return {
@@ -116,13 +126,40 @@ export function remarkItalicQuotes() {
 
 // Longest form first: 3x5@100kg, 1@160kg, then the older weight×reps (160×1,
 // only with the real times sign, so "2x bodyweight" never matches) and bare
-// sets×reps (3x5). Digit counts are capped so a screen size never matches.
-const SET_PATTERN =
-  /(?<![\p{L}\p{N}.@])(?:(?:\d{1,2}\s?[x×]\s?)?\d{1,3}\s?@\s?\d{1,4}(?:\.\d{1,2})?\s?(?:kg|lbs?)?|\d{1,4}(?:\.\d{1,2})?×\d{1,2}|\d{1,2}[x×]\d{1,2})(?![\p{L}\p{N}@×]|\.\d)/gu;
+// sets×reps (3x5). Set and rep counts may be ranges (2-3x4@137.5kg). Digit
+// counts are capped so a screen size never matches.
+const SET =
+  /(?:(?:\d{1,2}(?:-\d{1,2})?\s?[x×]\s?)?\d{1,3}(?:-\d{1,3})?\s?@\s?\d{1,4}(?:\.\d{1,2})?\s?(?:kg|lbs?)?|\d{1,4}(?:\.\d{1,2})?×\d{1,2}|\d{1,2}(?:-\d{1,2})?[x×]\d{1,2}(?:-\d{1,2})?)/;
+const SET_PATTERN = new RegExp(
+  String.raw`(?<![\p{L}\p{N}.@-])${SET.source}(?![\p{L}\p{N}@×-]|\.\d)`,
+  "gu",
+);
+const WHOLE_SET_PATTERN = new RegExp(`^${SET.source}$`, "u");
+
+/**
+ * GFM reads a set with a decimal weight (1@162.5kg) as an email address and
+ * links it. Turns those links back into text so they become chips instead.
+ */
+function unlinkSetsReadAsEmail(node) {
+  if (!Array.isArray(node.children)) return;
+  node.children = node.children.map((child) => {
+    if (
+      child.type === "link" &&
+      child.url?.startsWith("mailto:") &&
+      WHOLE_SET_PATTERN.test(toString(child))
+    ) {
+      return { type: "text", value: toString(child) };
+    }
+    unlinkSetsReadAsEmail(child);
+    return child;
+  });
+}
 
 export function remarkSetChips() {
-  return (tree) =>
+  return (tree) => {
+    unlinkSetsReadAsEmail(tree);
     replaceInText(tree, SET_PATTERN, (match) => span("sj-chat-set", match[0]));
+  };
 }
 
 // -----------------------------------------------------------------------------
@@ -198,6 +235,60 @@ export function remarkSessionDateLinks({ sessionDates, today } = {}) {
         url: iso === today ? "/log" : `/log?date=${iso}`,
         children: [{ type: "text", value: match[0] }],
       };
+    });
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Takeaway labels
+// -----------------------------------------------------------------------------
+
+// The prompt asks for a plain "Takeaway:" label; the reader sees one of these.
+const TAKEAWAY_LABELS = [
+  "The takeaway:",
+  "Bottom line:",
+  "Coach's note:",
+  "What to remember:",
+  "In short:",
+  "The big picture:",
+  "Where you stand:",
+  "Carry this forward:",
+  "From the coach:",
+  "The short version:",
+  "What this means:",
+  "Worth holding onto:",
+];
+
+const TAKEAWAY_LABEL_PATTERN = /^\s*(?:the\s+)?takeaway\s*:?\s*$/i;
+
+/**
+ * Picks the label from everything written before the takeaway. The takeaway
+ * comes last, so that text is settled by the time it streams in and the label
+ * never flickers, while different answers still get different labels.
+ */
+function pickTakeawayLabel(seed) {
+  let hash = 5381;
+  for (let i = 0; i < seed.length; i += 1) {
+    hash = ((hash << 5) + hash + seed.charCodeAt(i)) | 0;
+  }
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b);
+  hash ^= hash >>> 16;
+  return TAKEAWAY_LABELS[Math.abs(hash) % TAKEAWAY_LABELS.length];
+}
+
+export function remarkTakeawayLabels() {
+  return (tree) => {
+    tree.children.forEach((node, index) => {
+      if (node.type !== "blockquote") return;
+      const label = node.children[0]?.children?.[0];
+      if (
+        label?.type !== "strong" ||
+        !TAKEAWAY_LABEL_PATTERN.test(toString(label))
+      ) {
+        return;
+      }
+      const seed = tree.children.slice(0, index).map(toString).join("\n");
+      label.children = [{ type: "text", value: pickTakeawayLabel(seed) }];
     });
   };
 }

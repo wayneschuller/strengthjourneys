@@ -20,6 +20,7 @@ import {
   remarkItalicQuotes,
   remarkSessionDateLinks,
   remarkSetChips,
+  remarkTakeawayLabels,
 } from "@/lib/remark-chat-formatting";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
@@ -627,6 +628,7 @@ function AILiftingAssistantCard({
       remarkHighlights,
       remarkItalicQuotes,
       remarkSetChips,
+      remarkTakeawayLabels,
       [
         remarkSessionDateLinks,
         {

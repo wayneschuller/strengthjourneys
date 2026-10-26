@@ -93,14 +93,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useLocalStorage, useReadLocalStorage } from "usehooks-ts";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
-import {
-  ArrowRight,
-  Bot,
-  CheckIcon,
-  CopyIcon,
-  RefreshCcwIcon,
-  Sparkles,
-} from "lucide-react";
+import { ArrowRight, Bot, CheckIcon, CopyIcon, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import FlickeringGrid from "@/components/magicui/flickering-grid";
 import { BioDetailsCard } from "@/components/ai-assistant/bio-details-card";
@@ -819,15 +812,14 @@ function AILiftingAssistantCard({
   const queryPromptKey =
     typeof aiPromptKeyQuery === "string" ? aiPromptKeyQuery.trim() : "";
 
-  const { messages, setMessages, sendMessage, status, stop, regenerate } =
-    useChat({
-      api: "/api/chat",
-      fetch: chatFetch,
-      onError: (error) => {
-        console.error("(useChat() error: ", error);
-        loadChatQuota({ allowRollback: true });
-      },
-    });
+  const { messages, setMessages, sendMessage, status, stop } = useChat({
+    api: "/api/chat",
+    fetch: chatFetch,
+    onError: (error) => {
+      console.error("(useChat() error: ", error);
+      loadChatQuota({ allowRollback: true });
+    },
+  });
   // The lifting summary sent with the latest message, built at send time.
   // Kept (and saved with the chat) so shared feedback shows exactly what the
   // coach saw.
@@ -1308,21 +1300,6 @@ function AILiftingAssistantCard({
                                 messages={messages}
                                 userProvidedMetadata={sentContext}
                               >
-                                <MessageAction
-                                  onClick={() => {
-                                    if (!isChatUnavailable) {
-                                      reserveQuotaLocally();
-                                      regenerate({
-                                        body: buildChatRequestBody(),
-                                      });
-                                    }
-                                  }}
-                                  label="Retry"
-                                  tooltip="Retry"
-                                  disabled={isChatUnavailable}
-                                >
-                                  <RefreshCcwIcon />
-                                </MessageAction>
                                 <CopyButton
                                   text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
                                 />

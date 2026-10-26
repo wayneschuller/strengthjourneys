@@ -605,6 +605,13 @@ function getWelcomeCopy({ dateKey, hasSharedTrainingData, latestSessionPR }) {
       description: "Pick a question to start, or ask your own below.",
       celebration: {
         label: `${liftType} ${reps}@${weight}${unitType} ${kind === "year" ? "12-month PR" : "PR"}`,
+        prompt: `Talk me through my ${liftType} ${reps}@${weight}${unitType} ${record} ${
+          daysAgo <= 0
+            ? "today"
+            : daysAgo === 1
+              ? "yesterday"
+              : `from ${daysAgo} days ago`
+        }. What does it mean for my training?`,
       },
     };
   }

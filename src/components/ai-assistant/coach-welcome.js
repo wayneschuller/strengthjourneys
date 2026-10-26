@@ -81,6 +81,7 @@ function useTypeIntoComposer() {
  * A suggested question as a pill that fades up in turn, with a hover arrow.
  * @param {Object} props
  * @param {string} props.question
+ * @param {React.ReactNode} [props.label] Shown in place of the question.
  * @param {number} props.index Position in the set, for the staggered entrance.
  * @param {React.ComponentType} [props.icon] Leading icon, Sparkles by default.
  * @param {boolean} [props.disabled]
@@ -88,15 +89,20 @@ function useTypeIntoComposer() {
  */
 export function SuggestionChip({
   question,
+  label,
   index,
   icon: Icon = Sparkles,
   disabled,
   onSelect,
+  className,
   ...props
 }) {
   return (
     <Suggestion
-      className="group border-border/70 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground disabled:text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both h-auto min-h-9 gap-2 py-2 pr-3 pl-3.5 text-left whitespace-normal shadow-xs duration-500 hover:-translate-y-px hover:shadow-sm"
+      className={cn(
+        "group border-border/70 bg-background text-foreground hover:border-primary/50 hover:bg-primary/5 hover:text-foreground disabled:text-muted-foreground animate-in fade-in slide-in-from-bottom-2 fill-mode-both h-auto min-h-9 gap-2 py-2 pr-3 pl-3.5 text-left whitespace-normal shadow-xs duration-500 hover:-translate-y-px hover:shadow-sm",
+        className,
+      )}
       style={{ animationDelay: `${index * 70}ms` }}
       suggestion={question}
       disabled={disabled}
@@ -104,7 +110,7 @@ export function SuggestionChip({
       {...props}
     >
       <Icon className="text-primary/70 group-hover:text-primary size-3.5 shrink-0 transition-colors" />
-      <span>{question}</span>
+      <span>{label ?? question}</span>
       <ArrowRight className="text-primary size-3.5 shrink-0 -translate-x-1 opacity-0 transition-all group-hover:translate-x-0 group-hover:opacity-100" />
     </Suggestion>
   );
@@ -114,7 +120,8 @@ export function SuggestionChip({
  * @param {Object} props
  * @param {string} props.greeting
  * @param {string} props.description
- * @param {{ label: string }|null} [props.celebration] A fresh PR to cheer.
+ * @param {{ label: string, prompt: string }|null} [props.celebration] A fresh
+ *   PR to cheer: a chip showing the label that asks the coach the prompt.
  * @param {{ text: string, icon: React.ComponentType }[]|null} props.suggestions
  *   Null until the chat has hydrated, so the chips don't flash.
  * @param {boolean} [props.disabled]
@@ -209,10 +216,19 @@ export function CoachWelcome({
           />
         </div>
         {celebration && (
-          <div className="animate-in fade-in zoom-in-90 border-primary/30 bg-primary/10 text-foreground mt-1 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium duration-700">
-            <Trophy className="text-primary size-3.5" />
-            {celebration.label}
-          </div>
+          <SuggestionChip
+            question={celebration.prompt}
+            label={celebration.label}
+            index={1}
+            icon={Trophy}
+            disabled={disabled}
+            onSelect={pick}
+            onPointerEnter={(event) => lookAt(event, celebration.prompt)}
+            onPointerLeave={lookAway}
+            onFocus={(event) => lookAt(event, celebration.prompt)}
+            onBlur={lookAway}
+            className="border-primary/40 bg-primary/10 hover:bg-primary/15 mt-1 font-semibold"
+          />
         )}
         <h3 className="animate-in fade-in slide-in-from-bottom-1 text-center text-xl font-semibold tracking-tight duration-700 sm:text-2xl">
           {greeting}

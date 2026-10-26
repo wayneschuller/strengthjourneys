@@ -14,6 +14,7 @@ import { AppBackground } from "@/components/ui-shell/app-background";
 import { FeedbackWidget } from "@/components/feedback";
 import { HomeImportMergeNudge } from "@/components/home-dashboard/home-import-merge-nudge";
 import { ThemeRewardUnlockBanner } from "@/components/ui-shell/theme-reward-unlock-banner";
+import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
 import {
   SheetConnectionNotice,
   isRetryableSheetError,
@@ -339,6 +340,7 @@ export function Layout({ children }) {
         {router.pathname === "/" && <HomeImportMergeNudge />}
         <SheetConnectionNotice />
         <ThemeRewardUnlockBanner suppress={dataSource === "import"} />
+        <StrengthUnwrappedBanner />
         <SheetSetupDialogLoader />
         <main
           className={cn(

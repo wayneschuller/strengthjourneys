@@ -1,6 +1,5 @@
 import { Children, isValidElement } from "react";
 import { cn } from "@/lib/utils";
-import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 /**
  * Centered page wrapper. Tailwind v4 container does not center by default; uses mx-auto per docs.
@@ -38,7 +37,7 @@ export function PageContainer({ className, wide, children, ...props }) {
  * @param {React.ReactNode} props.children - Header content. Use PageHeaderRight as a child
  *   for right-aligned content (e.g. diagram, controls).
  */
-export function PageHeader({ className, children, hideRecapBanner, ...props }) {
+export function PageHeader({ className, children, ...props }) {
   const childArray = Children.toArray(children);
   const rightSections = childArray.filter(
     (child) => isValidElement(child) && child.type === PageHeaderRight,
@@ -63,14 +62,7 @@ export function PageHeader({ className, children, hideRecapBanner, ...props }) {
       )}
       {...props}
     >
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        {content}
-        <StrengthUnwrappedBanner
-          className="mt-6"
-          placement="header"
-          hidden={hideRecapBanner}
-        />
-      </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-1">{content}</div>
       {rightSection}
     </section>
   );

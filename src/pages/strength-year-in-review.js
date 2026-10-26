@@ -294,7 +294,7 @@ function StrengthYearInReviewMain() {
 
   return (
     <PageContainer>
-      <PageHeader hideRecapBanner>
+      <PageHeader>
         <PageHeaderHeading icon={Sparkles}>
           Your Strength Year in Review
         </PageHeaderHeading>

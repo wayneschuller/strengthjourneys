@@ -257,7 +257,7 @@ function GorillaStrengthMain({ relatedArticles }) {
 
   return (
     <PageContainer>
-      <PageHeader hideRecapBanner>
+      <PageHeader>
         <PageHeaderHeading icon={GorillaIcon}>
           How Strong Are You Compared to a Gorilla?
         </PageHeaderHeading>

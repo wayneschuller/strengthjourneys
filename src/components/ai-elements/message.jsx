@@ -11,8 +11,6 @@ import {
 import { cn } from "@/lib/utils";
 import { cjk } from "@streamdown/cjk";
 import { code } from "@streamdown/code";
-import { math } from "@streamdown/math";
-import { mermaid } from "@streamdown/mermaid";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import {
   createContext,
@@ -313,7 +311,7 @@ export const MessageResponse = memo(
       )}
       components={{ a: MessageLink }}
       linkSafety={{ enabled: false }}
-      plugins={{ cjk, code, math, mermaid }}
+      plugins={{ cjk, code }}
       {...props}
     />
   ),

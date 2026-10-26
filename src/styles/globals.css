@@ -1309,15 +1309,44 @@ html:not([data-restoring]) [data-returning-visit] {
   white-space: nowrap;
 }
 
-/* A highlighter stroke across the lower half of the line. */
+/*
+ * A highlighter stroke under the lower part of the letters. Warm marker yellow
+ * tinted by the theme, since a neutral --primary read as a strikethrough.
+ */
 .sj-chat-highlight {
+  --sj-highlight: color-mix(
+    in oklab,
+    color-mix(in oklab, oklch(0.9 0.16 92) 80%, var(--primary)) 65%,
+    transparent
+  );
+  padding-inline: 0.12em;
+  margin-inline: -0.12em;
+  border-radius: 0.2em;
   background: linear-gradient(
-    transparent 55%,
-    color-mix(in oklab, var(--primary) 38%, transparent) 55%
+    transparent 62%,
+    var(--sj-highlight) 62%,
+    var(--sj-highlight) 94%,
+    transparent 94%
   );
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
   font-weight: 600;
+}
+
+:where(
+    .dark,
+    .neo-brutalism-dark,
+    .retro-arcade-dark,
+    .starry-night-dark,
+    .blueprint-dark,
+    .evergreen-dark
+  )
+  .sj-chat-highlight {
+  --sj-highlight: color-mix(
+    in oklab,
+    color-mix(in oklab, oklch(0.8 0.14 85) 70%, var(--primary)) 35%,
+    transparent
+  );
 }
 
 /* The lifter's own words, a shade apart from the coach's. */

@@ -1,6 +1,6 @@
 import { Children, isValidElement } from "react";
 import { cn } from "@/lib/utils";
-import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
+import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 /**
  * Centered page wrapper. Tailwind v4 container does not center by default; uses mx-auto per docs.
@@ -65,8 +65,9 @@ export function PageHeader({ className, children, hideRecapBanner, ...props }) {
     >
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {content}
-        <StrengthUnwrappedDecemberBanner
+        <StrengthUnwrappedBanner
           className="mt-6"
+          placement="header"
           hidden={hideRecapBanner}
         />
       </div>

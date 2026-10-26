@@ -1,6 +1,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useMemo, useState, useEffect } from "react";
+import { useLocalStorage } from "usehooks-ts";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
+import { getRecapSeasonYear } from "@/components/year-recap/strength-unwrapped-banner";
 import { NextSeo } from "next-seo";
 import { useTheme } from "next-themes";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
@@ -266,6 +269,19 @@ function StrengthYearInReviewMain() {
 
   const showYearSelector = hasMultipleYears;
   const showCarousel = !!effectiveYear;
+
+  // Watching this season's recap moves the Strength Unwrapped banner off page
+  // headers and lets the home page reveal the lifter type it teased.
+  const [, setRecapViewedYear] = useLocalStorage(
+    LOCAL_STORAGE_KEYS.RECAP_VIEWED_YEAR,
+    null,
+    { initializeWithValue: false },
+  );
+  useEffect(() => {
+    if (!showCarousel || !isOwnData(dataSource)) return;
+    if (effectiveYear === getRecapSeasonYear())
+      setRecapViewedYear(effectiveYear);
+  }, [showCarousel, dataSource, effectiveYear, setRecapViewedYear]);
 
   const handleYearSelect = (year) => {
     setSelectedYear(year);

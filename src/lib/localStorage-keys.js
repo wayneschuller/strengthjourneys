@@ -91,6 +91,10 @@ export const LOCAL_STORAGE_KEYS = {
   // state machine.
   PENDING_SHEET_ACTION: "SJ_pendingSheetAction",
   DISMISSED_DATA_QUALITY_WARNINGS: "SJ_dismissedDataQualityWarnings",
+  // Strength Unwrapped season: the recap year whose banner the lifter hid, and
+  // the recap year they last watched with their own data.
+  RECAP_BANNER_DISMISSED_YEAR: "SJ_recapBannerDismissedYear",
+  RECAP_VIEWED_YEAR: "SJ_recapViewedYear",
   SSID: "ssid", // deprecated — migrated to SHEET_INFO
   SHEET_URL: "sheetURL", // deprecated — migrated to SHEET_INFO
   SHEET_FILENAME: "sheetFilename", // deprecated — migrated to SHEET_INFO

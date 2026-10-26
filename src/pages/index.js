@@ -83,7 +83,7 @@ import { HomeWelcome } from "@/components/homepage/home-welcome";
 import { BigFourLiftCards } from "@/components/homepage/big-four-lift-cards";
 import { BigFourSubtitle } from "@/components/homepage/big-four-subtitle";
 import { GorillaIcon } from "@/components/gorilla-icon";
-import { StrengthUnwrappedDecemberBanner } from "@/components/year-recap/strength-unwrapped-banner";
+import { StrengthUnwrappedBanner } from "@/components/year-recap/strength-unwrapped-banner";
 
 // Landing page tiers: group feature cards by purpose for visual hierarchy.
 // "Your Training" tools become richer with user data, "Calculators & Standards"
@@ -393,7 +393,7 @@ export default function Home({ starterArticles = [] }) {
           )}
         </div>
 
-        <StrengthUnwrappedDecemberBanner className="mt-8 mb-6" />
+        <StrengthUnwrappedBanner className="mt-8 mb-6" />
 
         {/* The welcome state promotes these into the hero slot, so skip the
             second copy rather than showing the same four cards twice. */}

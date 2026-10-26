@@ -21,7 +21,7 @@ below). Do not add Canny links back.
 
 ```
 content/changelog/<date>.md             one entry, e.g. 2026-09-14.md
-content/changelog/drafts/<date>.md      drafts, never built
+content/changelog/drafts/<date>.md      drafts: on /changelog in next dev only, badged
 public/changelog/<date>/image-N.webp    that entry's images
 
 src/lib/changelog.js                    reads, validates and renders entries
@@ -80,6 +80,13 @@ node -e 'require("sharp")(process.argv[1]).resize({ width: 1600, withoutEnlargem
 ```
 
 The Canny migration came out around 65 KB per image this way.
+
+### Previewing a draft
+
+`next dev` reads `content/changelog/drafts/` too and shows each draft in date
+order with a "Draft, localhost only" badge, so a draft can be checked at
+localhost:3000/changelog before it goes out. Production builds never read the
+folder. The "What's new" dot ignores drafts.
 
 ### Publishing
 

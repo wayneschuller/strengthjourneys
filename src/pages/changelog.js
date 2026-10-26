@@ -100,6 +100,7 @@ export default function ChangelogPage({ entries }) {
                   <a href={`#${entry.slug}`} className="hover:underline">
                     {entry.title}
                   </a>
+                  {entry.isDraft && <DraftBadge />}
                 </h2>
               </header>
               <EntryBody html={entry.html} />
@@ -121,7 +122,10 @@ export default function ChangelogPage({ entries }) {
                 >
                   <EntryDateTile date={entry.date} />
                   <div className="min-w-0 flex-1">
-                    <h2 className={ENTRY_TITLE_CLASS}>{entry.title}</h2>
+                    <h2 className={ENTRY_TITLE_CLASS}>
+                      {entry.title}
+                      {entry.isDraft && <DraftBadge />}
+                    </h2>
                     {entry.sections.length > 0 && (
                       <p className="text-muted-foreground mt-2 line-clamp-2 text-sm text-pretty group-open:hidden md:text-base">
                         {entry.sections.join(" · ")}
@@ -197,4 +201,13 @@ function useOpenLinkedEntry() {
     window.addEventListener("hashchange", openTarget);
     return () => window.removeEventListener("hashchange", openTarget);
   }, []);
+}
+
+// Only next dev reads drafts, so this only ever shows on localhost.
+function DraftBadge() {
+  return (
+    <span className="ml-2 inline-block rounded-full border border-amber-400 bg-amber-100 px-2 py-0.5 align-middle text-xs font-semibold text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+      Draft, localhost only
+    </span>
+  );
 }

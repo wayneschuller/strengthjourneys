@@ -41,23 +41,27 @@ function useTypeIntoComposer() {
 
   useEffect(() => () => clearTimeout(timerRef.current), []);
 
-  const isOurs = () =>
-    valueRef.current === "" || valueRef.current === typedRef.current;
+  // Any start of what we typed counts as ours: the box trails a tick behind
+  // while typing, and a re-hover mid-word must not mistake that for an edit.
+  const isOurs = (value, typed = typedRef.current) =>
+    value === "" || typed.startsWith(value);
 
   const typeOut = useCallback(
     (text) => {
       clearTimeout(timerRef.current);
-      if (!isOurs()) return;
-      let expected = valueRef.current;
-      let length = 0;
+      if (!isOurs(valueRef.current)) return;
+      // Hovering the same chip again carries on rather than starting over.
+      let length =
+        valueRef.current && text.startsWith(typedRef.current)
+          ? typedRef.current.length
+          : 0;
       const tick = () => {
         length = Math.min(text.length, length + TYPE_CHARS_PER_TICK);
         const next = text.slice(0, length);
-        const previous = expected;
+        const typed = typedRef.current;
         // Leaves the box alone if the athlete typed in the meantime.
-        setInput((current) => (current === previous ? next : current));
+        setInput((current) => (isOurs(current, typed) ? next : current));
         typedRef.current = next;
-        expected = next;
         if (length < text.length) {
           timerRef.current = setTimeout(tick, TYPE_TICK_MS);
         }
@@ -70,7 +74,7 @@ function useTypeIntoComposer() {
   // Before sending a picked suggestion, empty the box if we filled it.
   const release = useCallback(() => {
     clearTimeout(timerRef.current);
-    if (isOurs()) setInput("");
+    if (isOurs(valueRef.current)) setInput("");
     typedRef.current = "";
   }, [setInput]);
 

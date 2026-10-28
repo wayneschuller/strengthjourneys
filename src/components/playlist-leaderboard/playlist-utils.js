@@ -1,4 +1,12 @@
-import { kv } from "@/lib/kv";
+/**
+ * Playlist constants, URL checks and sanitising, shared by the leaderboard
+ * components (browser) and the playlist API routes (server).
+ *
+ * The components ship this whole file to the browser, so keep server-only
+ * imports such as the KV client out of it. KV reads live in
+ * lib/playlists/playlist-store.js.
+ */
+
 import { devLog } from "@/lib/processing-utils";
 import validator from "validator";
 import { sanitizeUrl } from "@braintree/sanitize-url";
@@ -10,46 +18,6 @@ if (typeof window !== "undefined") {
   DOMPurify = require("dompurify");
 }
 
-// Fetch playlists and merge in separate vote data along the way.
-// Abstracted to use in both api route and also in ISR getStaticProps build step
-export async function fetchPlaylists() {
-  try {
-    const playlists = (await kv.hgetall("playlists")) || {};
-    const reportCounts = (await kv.hgetall("playlist-reports")) || {};
-
-    const playlistsWithVotes = await Promise.all(
-      Object.entries(playlists).map(async ([id, storedPlaylist]) => {
-        const playlist = parseStoredPlaylist(storedPlaylist);
-        const votes = await kv.hmget(`playlists:${id}`, "upVotes", "downVotes");
-        const upVotes = parseInt(votes?.upVotes) || 0;
-        const downVotes = parseInt(votes?.downVotes) || 0;
-
-        // Cover art only reaches the public page once it is approved. Records written before
-        // image moderation existed have no status and stay grandfathered in — the admin
-        // banner's sweep is how those get a real verdict.
-        const thumbnailStatus = playlist.thumbnailUrl
-          ? playlist.thumbnailStatus || "legacy"
-          : null;
-        const isArtPublic =
-          thumbnailStatus === "approved" || thumbnailStatus === "legacy";
-
-        return {
-          ...playlist,
-          thumbnailUrl: isArtPublic ? playlist.thumbnailUrl : null,
-          thumbnailStatus,
-          upVotes: upVotes,
-          downVotes: downVotes,
-          reportCount: parseInt(reportCounts[id]) || 0,
-        };
-      }),
-    );
-
-    return playlistsWithVotes;
-  } catch (error) {
-    console.error("Error fetching playlist(s):", error);
-    throw new Error("Error fetching playlist(s)");
-  }
-}
 // Whitelist of acceptable music sites
 
 export const WHITELISTED_SITES = [

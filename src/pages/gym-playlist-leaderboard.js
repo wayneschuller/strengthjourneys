@@ -11,10 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import {
-  fetchPlaylists,
-  PLAYLIST_CATEGORIES,
-} from "@/components/playlist-leaderboard/playlist-utils";
+import { PLAYLIST_CATEGORIES } from "@/components/playlist-leaderboard/playlist-utils";
+import { fetchPlaylists } from "@/lib/playlists/playlist-store";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { PlaylistCard } from "@/components/playlist-leaderboard/playlist-card";
 import { PlaylistPodium } from "@/components/playlist-leaderboard/playlist-podium";

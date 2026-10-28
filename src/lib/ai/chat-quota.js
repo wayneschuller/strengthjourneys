@@ -4,18 +4,28 @@
  * Anonymous visitors get a limited daily allowance keyed by an HttpOnly cookie;
  * signed-in users get a higher daily cap keyed by email. Counts live in KV so
  * limits cannot be bypassed by trimming the client message array.
+ *
+ * SERVER ONLY: import this from API routes, never from a page or component.
+ * It imports Node's crypto and the KV client, and the bundler ships both to
+ * the browser for any page that imports it, even for one constant. Pages read
+ * the limits and the quota object from chat-quota-limits.js, which this file
+ * re-exports so the API routes keep one import.
  */
 
 import { createHash, randomUUID } from "crypto";
 import { kv } from "@/lib/kv";
 import { devLog } from "@/lib/processing-utils";
+import {
+  AI_CHAT_ANON_LIMIT,
+  AI_CHAT_ANON_IP_LIMIT,
+  AI_CHAT_ANON_WARN_AT_REMAINING,
+  AI_CHAT_AUTH_DAILY_LIMIT,
+  buildAiChatQuota,
+} from "@/lib/ai/chat-quota-limits";
+
+export * from "@/lib/ai/chat-quota-limits";
 
 export const AI_CHAT_ANON_COOKIE = "sj_ai_anon";
-export const AI_CHAT_ANON_LIMIT = 50;
-export const AI_CHAT_ANON_IP_LIMIT = 150;
-export const AI_CHAT_ANON_WARN_AT_REMAINING = 10;
-export const AI_CHAT_AUTH_DAILY_LIMIT = 100;
-export const AI_CHAT_AUTH_WARN_AT_REMAINING = 15;
 
 const ANON_COOKIE_TTL_SECONDS = 60 * 60 * 24 * 365;
 const ANON_USAGE_TTL_SECONDS = 60 * 60 * 48;
@@ -23,42 +33,6 @@ const AUTH_TTL_SECONDS = 60 * 60 * 48;
 
 export function getUtcDateKey(date = new Date()) {
   return date.toISOString().slice(0, 10);
-}
-
-export function buildAiChatQuota({ tier, limit, used }) {
-  const safeUsed = Math.max(0, Number(used) || 0);
-  const safeLimit = Math.max(1, Number(limit) || 1);
-  const remaining = Math.max(0, safeLimit - safeUsed);
-  const warnThreshold =
-    tier === "anonymous"
-      ? AI_CHAT_ANON_WARN_AT_REMAINING
-      : AI_CHAT_AUTH_WARN_AT_REMAINING;
-
-  return {
-    tier,
-    limit: safeLimit,
-    used: safeUsed,
-    remaining,
-    warn: remaining > 0 && remaining <= warnThreshold,
-    blocked: remaining <= 0,
-    code:
-      remaining <= 0
-        ? tier === "anonymous"
-          ? "SIGN_IN_REQUIRED"
-          : "DAILY_LIMIT_REACHED"
-        : null,
-  };
-}
-
-export function parseAiChatQuotaFromHeaders(headers) {
-  const tier = headers.get("X-AI-Chat-Tier");
-  if (!tier) return null;
-
-  return buildAiChatQuota({
-    tier,
-    limit: headers.get("X-AI-Chat-Limit"),
-    used: headers.get("X-AI-Chat-Used"),
-  });
 }
 
 export function appendAiChatQuotaHeaders(res, quota) {

@@ -357,12 +357,19 @@ function AILiftingAssistantMain({ relatedArticles }) {
   );
 }
 
+// Health, food and recovery questions, wearing the heart icon.
 const BIO_DATA_FALLBACK_PROMPTS = [
   "How much protein should I eat?",
   "Should I lift every day?",
   "Can I lift weights and still lose weight?",
+  "How important is sleep for getting stronger?",
+  "What should I eat before a workout?",
+  "How do I recover faster between sessions?",
+  "Is lifting good for my bones and joints?",
 ];
 
+// Questions anyone can ask with no log or bio. The welcome draws a few fresh
+// each visit, so a returning athlete rarely sees the same set twice.
 const GENERAL_LIFTING_PROMPTS = [
   "Why lift weights?",
   "What should I do in my first gym session?",
@@ -371,78 +378,142 @@ const GENERAL_LIFTING_PROMPTS = [
   "How do I choose a gym?",
   "Isn't deadlifting dangerous?",
   "What are the health benefits for women who lift?",
+  "Can I start lifting in my 50s?",
+  "Write me a simple three-day beginner program",
+  "How many sets and reps should a beginner do?",
+  "What is progressive overload?",
+  "How long until I notice strength gains?",
+  "Should I test my one-rep max?",
+  "Should I wear a lifting belt?",
+  "How do I warm up for a heavy squat?",
+  "How deep should I squat?",
+  "Free weights or machines for a beginner?",
+  "How do I get my bench press moving again?",
+  "How long should I rest between sets?",
+  "What does RPE mean?",
+  "Strength or hypertrophy training: what's the difference?",
+  "How do I fit lifting into a busy week?",
+  "What makes a good deadlift setup?",
+  "How do I train for my first powerlifting meet?",
+  "Low bar or high bar squat?",
+  "What's a good first strength goal?",
 ];
 
 const PLAYFUL_PROMPTS = [
   "Write me a motivational rap.",
   "Give me a riddle about lifting weights.",
+  "Hype me up for leg day.",
+  "Write a haiku about the deadlift.",
+  "Tell me your best gym dad joke.",
+  "Narrate my squat like a nature documentary.",
+  "Write a pep talk from my barbell.",
+  "Invent a new lifting holiday.",
 ];
 
+/**
+ * The welcome's suggested questions. The reviews a lifter comes back for
+ * always lead; the rest are a seeded draw from larger pools, so each visit
+ * (and each new chat) opens with a different mix.
+ * @param {Object} args
+ * @param {string} args.seed Fresh per visit; the same seed gives the same set.
+ */
 function getAssistantSuggestions({
-  dateKey,
+  seed,
   hasSharedBioData,
   hasSharedFullTrainingData,
   hasSharedTrainingData,
   suggestionContext,
 }) {
-  const trainingPrompts = buildTrainingDataPrompts({
-    hasSharedBioData,
-    suggestionContext,
-  });
-  const partialTrainingPrompts = buildPartialTrainingDataPrompts({
-    hasSharedBioData,
-    suggestionContext,
-  });
+  const pick = (pool, count, salt) =>
+    pickPrompts(pool, `${seed}|${salt}`, count);
   const bioPrompts = buildBioDataPrompts(suggestionContext);
+  const bioPicks = hasSharedBioData ? pick(bioPrompts, 1, "bio") : [];
 
   if (hasSharedFullTrainingData) {
     return uniqueMessages([
-      ...trainingPrompts,
-      ...(hasSharedBioData ? bioPrompts.slice(0, 2) : []),
-      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 1),
-      ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
+      ...buildTrainingAnchorPrompts(suggestionContext),
+      ...pick(
+        buildTrainingPromptPool({ hasSharedBioData, suggestionContext }),
+        3,
+        "training",
+      ),
+      ...bioPicks,
+      ...pick(GENERAL_LIFTING_PROMPTS, 1, "general"),
+      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
     ]);
   }
 
   if (hasSharedTrainingData) {
     return uniqueMessages([
-      ...partialTrainingPrompts,
-      ...(hasSharedBioData ? bioPrompts.slice(0, 2) : []),
-      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 3),
+      "Review the training data I've shared",
+      ...pick(
+        buildPartialTrainingPromptPool({ hasSharedBioData, suggestionContext }),
+        2,
+        "training",
+      ),
+      ...bioPicks,
+      ...pick(GENERAL_LIFTING_PROMPTS, 2, "general"),
+      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
     ]);
   }
 
   if (hasSharedBioData) {
     return uniqueMessages([
-      ...bioPrompts,
-      ...getRotatedPrompts(GENERAL_LIFTING_PROMPTS, dateKey, 4),
-      ...getRotatedPrompts(PLAYFUL_PROMPTS, dateKey, 1),
+      ...pick(bioPrompts, 3, "bio"),
+      ...pick(GENERAL_LIFTING_PROMPTS, 3, "general"),
+      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
     ]);
   }
 
-  return uniqueMessages([
-    ...GENERAL_LIFTING_PROMPTS,
-    ...BIO_DATA_FALLBACK_PROMPTS,
-    ...PLAYFUL_PROMPTS,
-  ]);
+  // A first visit: a shuffled handful across all three kinds.
+  return pick(
+    [
+      ...pick(GENERAL_LIFTING_PROMPTS, 4, "general"),
+      ...pick(BIO_DATA_FALLBACK_PROMPTS, 2, "bio"),
+      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
+    ],
+    7,
+    "order",
+  );
 }
 
-function buildTrainingDataPrompts({ hasSharedBioData, suggestionContext }) {
-  const { primaryLift, recentSessionDate } = suggestionContext ?? {};
-
+// Always first for a lifter sharing their whole log.
+function buildTrainingAnchorPrompts(suggestionContext) {
+  const { recentSessionDate, latestSessionPR } = suggestionContext ?? {};
   return [
+    getLatestSessionReviewPrompt(recentSessionDate, Boolean(latestSessionPR)),
     AI_REVIEW_PROMPTS.week,
     AI_REVIEW_PROMPTS.month,
-    getLatestSessionReviewPrompt(
-      recentSessionDate,
-      Boolean(suggestionContext?.latestSessionPR),
-    ),
+  ];
+}
+
+// Questions the coach can answer from the full lifting summary: per-lift
+// bests and six-week trends, rep-range records, consistency and tonnage.
+function buildTrainingPromptPool({ hasSharedBioData, suggestionContext }) {
+  const { primaryLift, secondaryLift } = suggestionContext ?? {};
+  return [
     primaryLift
       ? `What should I focus on next for ${primaryLift}?`
       : "What lift should I focus on next?",
+    primaryLift && `Is my ${primaryLift} still climbing?`,
+    primaryLift &&
+      `Set me a realistic ${primaryLift} goal for the next three months`,
+    primaryLift && `Which rep ranges could I explore on ${primaryLift}?`,
+    primaryLift &&
+      secondaryLift &&
+      `Compare my ${primaryLift} and ${secondaryLift} progress`,
     "Where is my training inconsistent?",
+    "What am I doing well right now?",
+    "Which lift has the most room to grow?",
+    "Which lift has improved the most this year?",
+    "How has my training load changed this year?",
+    "Am I training often enough to keep progressing?",
+    "Do I need a deload?",
+    "Which PRs could I chase next?",
+    "Tell me something I might not have noticed about my training",
     hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
-  ];
+    hasSharedBioData && "Which of my lifts is strongest for my bodyweight?",
+  ].filter(Boolean);
 }
 
 // Names the latest session by how long ago it was, in the lifter's local
@@ -460,23 +531,19 @@ function getDaysAgo(date) {
   return differenceInCalendarDays(new Date(), parseISO(date));
 }
 
-function buildPartialTrainingDataPrompts({
+function buildPartialTrainingPromptPool({
   hasSharedBioData,
   suggestionContext,
 }) {
   const { primaryLift, secondaryLift } = suggestionContext ?? {};
-  const liftFocus = primaryLift
-    ? `What does my ${primaryLift} data suggest?`
-    : "What does my shared training data suggest?";
-  const comparisonPrompt =
+  return [
+    primaryLift
+      ? `What does my ${primaryLift} data suggest?`
+      : "What does my shared training data suggest?",
     primaryLift && secondaryLift
       ? `Compare my ${primaryLift} and ${secondaryLift} progress`
-      : "What should I focus on next from my shared data?";
-
-  return [
-    "Review the training data I've shared",
-    liftFocus,
-    comparisonPrompt,
+      : "What should I focus on next from my shared data?",
+    "What am I doing well right now?",
     hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
   ];
 }
@@ -488,9 +555,7 @@ function buildBioDataPrompts(suggestionContext) {
   return [
     `Why does strength training matter${ageSuffix}?`,
     `How should recovery change${ageSuffix}?`,
-    "How much protein should I eat?",
-    "Should I lift every day?",
-    "Can I lift weights and still lose weight?",
+    ...BIO_DATA_FALLBACK_PROMPTS,
   ];
 }
 
@@ -517,16 +582,42 @@ function hasAllSharedTrainingData(userLiftingMetadata) {
   );
 }
 
-function getRotatedPrompts(prompts, dateKey, count) {
-  if (!Array.isArray(prompts) || prompts.length === 0 || count <= 0) {
-    return [];
+// A seeded shuffle: the first `count` of the pool in an order fixed by the
+// seed, so a render never reshuffles what the athlete is reading.
+function pickPrompts(pool, seed, count) {
+  const next = seededRandoms(hashString(seed));
+  const shuffled = [...pool];
+  for (let i = shuffled.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(next() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
+  return shuffled.slice(0, count);
+}
 
-  const offset = getStablePromptOffset(dateKey, prompts.length);
-  return Array.from({ length: Math.min(count, prompts.length) }, (_, index) => {
-    const promptIndex = (offset + index) % prompts.length;
-    return prompts[promptIndex];
-  });
+function hashString(text) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+// A stream of numbers in [0, 1) from one seed (mulberry32).
+function seededRandoms(seed) {
+  let a = seed;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// One per visit, and a new one for each new chat. Suggestions render only
+// after hydration, so the server's draw never has to match.
+function newSuggestionSeed() {
+  return Math.random().toString(36).slice(2);
 }
 
 function getStablePromptOffset(value, modulo) {
@@ -771,19 +862,14 @@ function AILiftingAssistantCard({
   const [isChatQuotaReady, setIsChatQuotaReady] = useState(false);
   const [isChatHydrated, setIsChatHydrated] = useState(false);
   const [suggestionDateKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
-  const suggestionRotationKey = [
-    suggestionDateKey,
-    hasSharedBioData ? "bio" : "no-bio",
-    hasSharedTrainingData ? "training" : "no-training",
-    hasSharedFullTrainingData ? "full-training" : "partial-training",
-  ].join("|");
+  const [suggestionSeed, setSuggestionSeed] = useState(newSuggestionSeed);
   const pendingAiPromptRef = useRef(null);
   const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
   const suggestedMessages = useMemo(
     () =>
       getAssistantSuggestions({
-        dateKey: suggestionRotationKey,
+        seed: suggestionSeed,
         hasSharedBioData,
         hasSharedFullTrainingData,
         hasSharedTrainingData,
@@ -793,7 +879,7 @@ function AILiftingAssistantCard({
       hasSharedBioData,
       hasSharedFullTrainingData,
       hasSharedTrainingData,
-      suggestionRotationKey,
+      suggestionSeed,
       suggestionContext,
     ],
   );
@@ -1175,6 +1261,7 @@ function AILiftingAssistantCard({
     setMessages([]);
     setSentContext("");
     setSuggestionsByMessageId({});
+    setSuggestionSeed(newSuggestionSeed());
     clearPromptQueryParams();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };

@@ -77,6 +77,12 @@
  * JSON rather than JS so the files stay pure content that scripts and
  * next-sitemap.config.js can read too. Rationale that would have been a code
  * comment goes in a field instead (a video's title, standardsRef.note).
+ *
+ * BROWSER COPY. Every page ships this registry, so lift-stub-loader.js trims
+ * the browser copy of each file: guide becomes {} and strengthLevels becomes
+ * { pageTitle }. Server code, getStaticProps included, reads the whole file.
+ * So read a page block's contents only in getStaticProps and pass it to the
+ * page as props; in browser code a block only tells you the page exists.
  */
 
 import backSquat from "@/lib/lifts/back-squat.json";

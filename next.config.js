@@ -63,6 +63,21 @@ const nextConfig = {
     },
   },
 
+  // The browser copy of each lift file drops its page blocks, which only the
+  // guide and strength levels pages render, and they get them from
+  // getStaticProps. Server code reads the full file. See the loader's comment.
+  // Keep the extension key plus a path condition: a path glob as the key
+  // ("src/lib/lifts/*.json") silently never matched the JSON files.
+  turbopack: {
+    rules: {
+      "*.json": {
+        condition: { all: ["browser", { path: /src\/lib\/lifts\// }] },
+        loaders: [require.resolve("./src/lib/lifts/lift-stub-loader.js")],
+        as: "*.js",
+      },
+    },
+  },
+
   // Added by WS 20240901
   images: {
     remotePatterns: [

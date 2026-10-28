@@ -135,8 +135,12 @@ export async function getStaticProps({ params }) {
     })),
   };
 
+  // The page renders the guide block but never the strength levels block, so
+  // leave that out of the page data every visitor downloads.
+  const { strengthLevels: _strengthLevels, ...guideLift } = lift;
+
   return {
-    props: { lift, slug: lift.slug, relatedArticles, variations },
+    props: { lift: guideLift, slug: lift.slug, relatedArticles, variations },
   };
 }
 

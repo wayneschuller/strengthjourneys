@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
 import {
   DrivePicker,
   DrivePickerDocsView,
@@ -36,7 +37,23 @@ export function DrivePickerContainer({
   const [showPicker, setShowPicker] = useState(false);
   const hasCalledReady = useRef(false);
 
-  const openPicker = useCallback(() => {
+  // The picker is the one place the browser uses the session's own Google
+  // token, and that token lasts about an hour. _app turns off next-auth's
+  // session refetch on tab return, so a tab open since morning can hold an
+  // expired one. Refresh the session first: the server's jwt callback renews
+  // the token, and oauthToken re-renders before the picker mounts. A failed
+  // refresh still opens the picker with the token we have. A ref, because
+  // onReady hands openPicker out once and would otherwise keep a stale update.
+  const { update } = useSession();
+  const updateRef = useRef(update);
+  useEffect(() => {
+    updateRef.current = update;
+  }, [update]);
+
+  const openPicker = useCallback(async () => {
+    try {
+      await updateRef.current?.();
+    } catch {}
     setShowPicker(true);
     onPickerOpen?.();
   }, [onPickerOpen]);

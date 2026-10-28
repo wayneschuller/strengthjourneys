@@ -93,7 +93,15 @@ export default function App({ Component, pageProps, session }) {
           // Keep theme changes instant; transitions remain enabled for now.
           // disableTransitionOnChange
         >
-          <SessionProvider session={session}>
+          {/* No session refetch on every tab return. Lifters sign in once per
+              device and stay signed in, so that request was always "yes, still
+              you" and was ~45% of all function calls (Oct 29 2026). Full page
+              loads still fetch the session, server routes renew the cookie and
+              refresh the Google token through getServerSession, sign-out still
+              reaches other tabs through next-auth's broadcast, and
+              DrivePickerContainer refreshes the session before it opens, the
+              one place the browser's own Google token is used. */}
+          <SessionProvider session={session} refetchOnWindowFocus={false}>
             {/* Must stay first inside SessionProvider: every useSession()
                 reads through it, so patchy data never looks like a sign-out. */}
             <ResilientSession>

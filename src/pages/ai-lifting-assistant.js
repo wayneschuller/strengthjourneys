@@ -1368,7 +1368,10 @@ function AILiftingAssistantCard({
           <>
             <h1 className="sr-only">AI Lifting Assistant</h1>
             <Conversation className="min-h-0 flex-1">
-              <ConversationContent className="mx-auto w-full max-w-3xl px-0 py-6">
+              <ConversationContent
+                className="mx-auto w-full max-w-3xl px-0 py-6"
+                scrollClassName="scrollbar-themed"
+              >
                 {messages
                   .filter((msg) => msg.role !== "suggestions") // Skip suggestions in main chat
                   .map((message) => {

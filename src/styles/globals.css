@@ -1226,6 +1226,54 @@ html:not([data-restoring]) [data-returning-visit] {
     animation: long-game-cell-pop 560ms both;
   }
 
+  /* A slim pill scrollbar drawn from the theme's own muted ink, for inner
+     scroll panes like the AI chat. No theme sets color-scheme, so the native
+     bar renders light with arrow buttons even on dark themes. The thumb
+     floats on a clear track and firms up while the pointer is over the pane.
+     Chrome ignores the ::-webkit-scrollbar rules once the standard
+     scrollbar-color is set, so the standard pair is kept to Firefox. */
+  .scrollbar-themed {
+    --scrollbar-thumb: color-mix(
+      in oklab,
+      var(--muted-foreground) 28%,
+      transparent
+    );
+  }
+  .scrollbar-themed:hover {
+    --scrollbar-thumb: color-mix(
+      in oklab,
+      var(--muted-foreground) 55%,
+      transparent
+    );
+  }
+  .scrollbar-themed::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  .scrollbar-themed::-webkit-scrollbar-track,
+  .scrollbar-themed::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  .scrollbar-themed::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+  }
+  .scrollbar-themed::-webkit-scrollbar-thumb:active {
+    background-color: color-mix(
+      in oklab,
+      var(--muted-foreground) 75%,
+      transparent
+    );
+  }
+  @supports not selector(::-webkit-scrollbar) {
+    .scrollbar-themed {
+      scrollbar-width: thin;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
+  }
+
   .shadow-2xs {
     box-shadow: var(--shadow-2xs);
   }

@@ -615,6 +615,19 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       // Be explicit about mobile resume behavior. Chrome on Android may keep
       // the page alive, then trigger focus/reconnect revalidation on return.
       revalidateOnFocus: true,
+      // Re-read on a tab return at most every 2 minutes (SWR's default is 5s).
+      // Focus re-reads date from when lifters edited the sheet in another tab;
+      // now nearly every change comes through our own log, which updates
+      // optimistically and re-reads after each write, so a set added here is
+      // never stale. Toggling between a music tab and the log every set cost
+      // a function call each time (plus a session check), almost always a 304.
+      // The catch: a change made elsewhere (phone, or the sheet itself) is not
+      // seen if the lifter returns within 2 minutes of the last focus check,
+      // and stays unseen until the next return after the window, a reconnect,
+      // a write or a reload. Writes do not restart the 2-minute clock; only
+      // focus checks do. Added Oct 29 2026: REVIEW around Feb 2027. If any
+      // lifter reports data that looked out of date, drop this line first.
+      focusThrottleInterval: 2 * 60 * 1000,
       revalidateOnReconnect: true,
       revalidateIfStale: true,
       revalidateOnMount: true,

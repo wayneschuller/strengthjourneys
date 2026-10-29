@@ -18,7 +18,8 @@ calls for them:
 - `docs/agents/themes.md` when adding or changing a theme, theme background, or
   `dark:` behaviour
 - `docs/agents/ai-prompts.md` when changing, comparing, or rolling back the AI
-  coach's system prompt, or reading its thumbs feedback
+  coach's system prompt, reading its thumbs feedback, or changing or reading the
+  opening suggestions
 
 ---
 

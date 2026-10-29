@@ -63,3 +63,33 @@ Every create and activate, plus a daily systemd user timer
 Run `node scripts/ai-prompt-editions.mjs backup` for fresh numbers, then read
 the folder: `diff editions/2026-07-10.txt editions/2026-07-10b.txt` compares two
 editions. Timer logs: `journalctl --user -u sj-prompt-backup`.
+
+## Opening suggestions
+
+The chips on the blank chat page live in `src/lib/ai/opening-suggestions.js`.
+Each audience (first visit, bio only, part of the log, whole log) has four
+fixed prompts and a few adaptive slots, filled per visit by Thompson sampling
+over how often each prompt started a chat when shown. Prompts with no data, or
+little, still get their turn; strong ones show more.
+
+Counts go to KV through `/api/chat/openers` (sent by `navigator.sendBeacon`,
+counts only, rate limited per hashed IP; the dev server does not count):
+
+| Key | Holds |
+| --- | --- |
+| `sj:ai:openers:<YYYY-MM>` | hash of `<audience>\|views`, `<audience>\|typed`, `<audience>\|shown\|<prompt>` and `<audience>\|picked\|<prompt>` |
+
+A prompt is stored as its template with registry lift names filled in, so
+"for Bench Press" and "for Deadlift" count apart. `{age}` and `{session}` stay
+placeholders, and a custom lift name is stored as `{lift}`. The page reads the
+last three months, summed per template, through `getStaticProps` once an hour.
+
+To edit a pool, change the file: a new prompt starts at its audience's average
+pick rate and the sampler tries it; a removed prompt simply stops showing.
+
+```
+node scripts/ai-opening-suggestions.mjs [months]
+```
+
+prints each audience's prompts, best pick rate first, with each lift beneath
+its template. A wide `±` means the sampler is still finding out.

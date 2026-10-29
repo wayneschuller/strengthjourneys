@@ -24,7 +24,6 @@ import {
 } from "@/lib/remark-chat-formatting";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import {
-  AI_REVIEW_PROMPTS,
   clearAiAssistantPrompt,
   readAiAssistantPrompt,
 } from "@/lib/ai/review-prompts";
@@ -44,6 +43,12 @@ import {
   resolveChatModelId,
 } from "@/lib/ai/chat-model-catalog";
 import { buildLiftingContext } from "@/lib/ai/lifting-context";
+import {
+  getOpeningAudience,
+  getOpeningSuggestions,
+} from "@/lib/ai/opening-suggestions";
+import { readOpeningSuggestionScores } from "@/lib/ai/opening-suggestion-stats";
+import { useOpeningSuggestionTracking } from "@/hooks/use-opening-suggestion-tracking";
 
 import {
   Conversation,
@@ -111,10 +116,21 @@ export async function getStaticProps() {
   const RELATED_ARTICLES_CATEGORY = "AI Lifting Assistant";
   const relatedArticles = getRelatedArticles(RELATED_ARTICLES_CATEGORY);
 
+  // How often each opening suggestion started a chat, for the page to favour
+  // the ones that work. Refreshed hourly; with KV down every prompt is equal.
+  let openingScores = null;
+  try {
+    openingScores = await readOpeningSuggestionScores();
+  } catch (error) {
+    console.error("Opening suggestion scores unavailable:", error);
+  }
+
   return {
     props: {
       relatedArticles,
+      openingScores,
     },
+    revalidate: 3600,
   };
 }
 
@@ -122,8 +138,12 @@ export async function getStaticProps() {
  * AI Lifting Assistant page. Renders SEO metadata and delegates rendering to AILiftingAssistantMain.
  * @param {Object} props
  * @param {Array} props.relatedArticles - Articles related to the AI Lifting Assistant topic.
+ * @param {Object|null} props.openingScores - [picked, shown] per audience and opening prompt.
  */
-export default function AILiftingAssistantPage({ relatedArticles }) {
+export default function AILiftingAssistantPage({
+  relatedArticles,
+  openingScores,
+}) {
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/ai-lifting-assistant";
   const description =
@@ -166,7 +186,10 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
         ]}
       />
       {/* Keep the main component separate. I learned the hard way if it breaks server rendering you lose static metadata tags */}
-      <AILiftingAssistantMain relatedArticles={relatedArticles} />
+      <AILiftingAssistantMain
+        relatedArticles={relatedArticles}
+        openingScores={openingScores}
+      />
     </>
   );
 }
@@ -176,8 +199,9 @@ export default function AILiftingAssistantPage({ relatedArticles }) {
  * context strings and renders the chat card alongside bio and lifting data configuration panels.
  * @param {Object} props
  * @param {Array} props.relatedArticles - Articles to display in the related articles section.
+ * @param {Object|null} props.openingScores - [picked, shown] per audience and opening prompt.
  */
-function AILiftingAssistantMain({ relatedArticles }) {
+function AILiftingAssistantMain({ relatedArticles, openingScores }) {
   const {
     age,
     setAge,
@@ -353,211 +377,26 @@ function AILiftingAssistantMain({ relatedArticles }) {
         suggestionContext={suggestionContext}
         buildCoachContext={buildCoachContext}
         relatedArticles={relatedArticles}
+        openingScores={openingScores}
       />
     </PageContainer>
   );
 }
 
-// Health, food and recovery questions, wearing the heart icon.
-const BIO_DATA_FALLBACK_PROMPTS = [
-  "How much protein should I eat?",
-  "Should I lift every day?",
-  "Can I lift weights and still lose weight?",
-  "How important is sleep for getting stronger?",
-  "What should I eat before a workout?",
-  "How do I recover faster between sessions?",
-  "Is lifting good for my bones and joints?",
-];
-
-// Questions anyone can ask with no log or bio. The welcome draws a few fresh
-// each visit, so a returning athlete rarely sees the same set twice.
-const GENERAL_LIFTING_PROMPTS = [
-  "Why lift weights?",
-  "What should I do in my first gym session?",
-  "How often should I deadlift?",
-  "I'm female, will I get bulky lifting weights?",
-  "How do I choose a gym?",
-  "Isn't deadlifting dangerous?",
-  "What are the health benefits for women who lift?",
-  "Can I start lifting in my 50s?",
-  "Write me a simple three-day beginner program",
-  "How many sets and reps should a beginner do?",
-  "What is progressive overload?",
-  "How long until I notice strength gains?",
-  "Should I test my one-rep max?",
-  "Should I wear a lifting belt?",
-  "How do I warm up for a heavy squat?",
-  "How deep should I squat?",
-  "Free weights or machines for a beginner?",
-  "How do I get my bench press moving again?",
-  "How long should I rest between sets?",
-  "What does RPE mean?",
-  "Strength or hypertrophy training: what's the difference?",
-  "How do I fit lifting into a busy week?",
-  "What makes a good deadlift setup?",
-  "How do I train for my first powerlifting meet?",
-  "Low bar or high bar squat?",
-  "What's a good first strength goal?",
-];
-
-const PLAYFUL_PROMPTS = [
-  "Write me a motivational rap.",
-  "Give me a riddle about lifting weights.",
-  "Hype me up for leg day.",
-  "Write a haiku about the deadlift.",
-  "Tell me your best gym dad joke.",
-  "Narrate my squat like a nature documentary.",
-  "Write a pep talk from my barbell.",
-  "Invent a new lifting holiday.",
-];
-
-/**
- * The welcome's suggested questions. The reviews a lifter comes back for
- * always lead; the rest are a seeded draw from larger pools, so each visit
- * (and each new chat) opens with a different mix.
- * @param {Object} args
- * @param {string} args.seed Fresh per visit; the same seed gives the same set.
- */
-function getAssistantSuggestions({
-  seed,
-  hasSharedBioData,
-  hasSharedFullTrainingData,
-  hasSharedTrainingData,
-  suggestionContext,
-}) {
-  const pick = (pool, count, salt) =>
-    pickPrompts(pool, `${seed}|${salt}`, count);
-  const bioPrompts = buildBioDataPrompts(suggestionContext);
-  const bioPicks = hasSharedBioData ? pick(bioPrompts, 1, "bio") : [];
-
-  if (hasSharedFullTrainingData) {
-    return uniqueMessages([
-      ...buildTrainingAnchorPrompts(suggestionContext),
-      ...pick(
-        buildTrainingPromptPool({ hasSharedBioData, suggestionContext }),
-        3,
-        "training",
-      ),
-      ...bioPicks,
-      ...pick(GENERAL_LIFTING_PROMPTS, 1, "general"),
-      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
-    ]);
-  }
-
-  if (hasSharedTrainingData) {
-    return uniqueMessages([
-      "Review the training data I've shared",
-      ...pick(
-        buildPartialTrainingPromptPool({ hasSharedBioData, suggestionContext }),
-        2,
-        "training",
-      ),
-      ...bioPicks,
-      ...pick(GENERAL_LIFTING_PROMPTS, 2, "general"),
-      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
-    ]);
-  }
-
-  if (hasSharedBioData) {
-    return uniqueMessages([
-      ...pick(bioPrompts, 3, "bio"),
-      ...pick(GENERAL_LIFTING_PROMPTS, 3, "general"),
-      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
-    ]);
-  }
-
-  // A first visit: a shuffled handful across all three kinds.
-  return pick(
-    [
-      ...pick(GENERAL_LIFTING_PROMPTS, 4, "general"),
-      ...pick(BIO_DATA_FALLBACK_PROMPTS, 2, "bio"),
-      ...pick(PLAYFUL_PROMPTS, 1, "playful"),
-    ],
-    7,
-    "order",
-  );
-}
-
-// Always first for a lifter sharing their whole log.
-function buildTrainingAnchorPrompts(suggestionContext) {
-  const { recentSessionDate, latestSessionPR } = suggestionContext ?? {};
-  return [
-    getLatestSessionReviewPrompt(recentSessionDate, Boolean(latestSessionPR)),
-    AI_REVIEW_PROMPTS.week,
-    AI_REVIEW_PROMPTS.month,
-  ];
-}
-
-// Questions the coach can answer from the full lifting summary: per-lift
-// bests and six-week trends, rep-range records, consistency and tonnage.
-function buildTrainingPromptPool({ hasSharedBioData, suggestionContext }) {
-  const { primaryLift, secondaryLift } = suggestionContext ?? {};
-  return [
-    primaryLift
-      ? `What should I focus on next for ${primaryLift}?`
-      : "What lift should I focus on next?",
-    primaryLift && `Is my ${primaryLift} still climbing?`,
-    primaryLift &&
-      `Set me a realistic ${primaryLift} goal for the next three months`,
-    primaryLift && `Which rep ranges could I explore on ${primaryLift}?`,
-    primaryLift &&
-      secondaryLift &&
-      `Compare my ${primaryLift} and ${secondaryLift} progress`,
-    "Where is my training inconsistent?",
-    "What am I doing well right now?",
-    "Which lift has the most room to grow?",
-    "Which lift has improved the most this year?",
-    "How has my training load changed this year?",
-    "Am I training often enough to keep progressing?",
-    "Do I need a deload?",
-    "Which PRs could I chase next?",
-    "Tell me something I might not have noticed about my training",
-    hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
-    hasSharedBioData && "Which of my lifts is strongest for my bodyweight?",
-  ].filter(Boolean);
-}
-
 // Names the latest session by how long ago it was, in the lifter's local
-// calendar. The coach's context carries the exact date, so this stays clear.
-function getLatestSessionReviewPrompt(recentSessionDate, hasPR) {
+// calendar, for the "Review {session}" prompt. The coach's context carries the
+// exact date, so this stays clear.
+function describeLatestSession(recentSessionDate, hasPR) {
   const session = hasPR ? "PR session" : "training session";
-  if (!recentSessionDate) return `Review my latest ${session}`;
+  if (!recentSessionDate) return `my latest ${session}`;
   const daysAgo = getDaysAgo(recentSessionDate);
-  if (daysAgo <= 0) return `Review today's ${session}`;
-  if (daysAgo === 1) return `Review yesterday's ${session}`;
-  return `Review my ${session} from ${daysAgo} days ago`;
+  if (daysAgo <= 0) return `today's ${session}`;
+  if (daysAgo === 1) return `yesterday's ${session}`;
+  return `my ${session} from ${daysAgo} days ago`;
 }
 
 function getDaysAgo(date) {
   return differenceInCalendarDays(new Date(), parseISO(date));
-}
-
-function buildPartialTrainingPromptPool({
-  hasSharedBioData,
-  suggestionContext,
-}) {
-  const { primaryLift, secondaryLift } = suggestionContext ?? {};
-  return [
-    primaryLift
-      ? `What does my ${primaryLift} data suggest?`
-      : "What does my shared training data suggest?",
-    primaryLift && secondaryLift
-      ? `Compare my ${primaryLift} and ${secondaryLift} progress`
-      : "What should I focus on next from my shared data?",
-    "What am I doing well right now?",
-    hasSharedBioData ? "How strong am I for my age?" : "How strong am I?",
-  ];
-}
-
-function buildBioDataPrompts(suggestionContext) {
-  const age = Number(suggestionContext?.age);
-  const ageSuffix = Number.isFinite(age) && age > 0 ? ` at ${age}` : "";
-
-  return [
-    `Why does strength training matter${ageSuffix}?`,
-    `How should recovery change${ageSuffix}?`,
-    ...BIO_DATA_FALLBACK_PROMPTS,
-  ];
 }
 
 function hasAnySharedTrainingData(userLiftingMetadata) {
@@ -583,38 +422,6 @@ function hasAllSharedTrainingData(userLiftingMetadata) {
   );
 }
 
-// A seeded shuffle: the first `count` of the pool in an order fixed by the
-// seed, so a render never reshuffles what the athlete is reading.
-function pickPrompts(pool, seed, count) {
-  const next = seededRandoms(hashString(seed));
-  const shuffled = [...pool];
-  for (let i = shuffled.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(next() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled.slice(0, count);
-}
-
-function hashString(text) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-}
-
-// A stream of numbers in [0, 1) from one seed (mulberry32).
-function seededRandoms(seed) {
-  let a = seed;
-  return () => {
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
 // One per visit, and a new one for each new chat. Suggestions render only
 // after hydration, so the server's draw never has to match.
 function newSuggestionSeed() {
@@ -632,28 +439,14 @@ function getStablePromptOffset(value, modulo) {
   return hash;
 }
 
-function uniqueMessages(messages) {
-  return [...new Set(messages.filter(Boolean))];
-}
-
-const BIO_PROMPT_PREFIXES = [
-  "Why does strength training matter",
-  "How should recovery change",
-];
-
 // Each opening prompt wears an icon for what it draws on: the lifter's log,
 // their body, general lifting knowledge, or just fun.
-function getSuggestionIcon(prompt) {
-  if (PLAYFUL_PROMPTS.includes(prompt)) return PartyPopper;
-  if (GENERAL_LIFTING_PROMPTS.includes(prompt)) return Dumbbell;
-  if (
-    BIO_DATA_FALLBACK_PROMPTS.includes(prompt) ||
-    BIO_PROMPT_PREFIXES.some((prefix) => prompt.startsWith(prefix))
-  ) {
-    return HeartPulse;
-  }
-  return TrendingUp;
-}
+const SUGGESTION_ICONS = {
+  data: TrendingUp,
+  health: HeartPulse,
+  general: Dumbbell,
+  playful: PartyPopper,
+};
 
 // A fresh PR is cheered for this many days after the session.
 const PR_CELEBRATION_DAYS = 3;
@@ -835,6 +628,7 @@ function AILiftingAssistantCard({
   loggedLiftTypes,
   loggedSessionDates,
   relatedArticles,
+  openingScores,
 }) {
   const router = useRouter();
   // Passing remarkPlugins to Streamdown replaces its defaults, so GFM (tables,
@@ -867,23 +661,35 @@ function AILiftingAssistantCard({
   const pendingAiPromptRef = useRef(null);
   const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
-  const suggestedMessages = useMemo(
-    () =>
-      getAssistantSuggestions({
-        seed: suggestionSeed,
-        hasSharedBioData,
-        hasSharedFullTrainingData,
-        hasSharedTrainingData,
-        suggestionContext,
-      }),
-    [
+  const openingAudience = getOpeningAudience({
+    hasSharedBioData,
+    hasSharedTrainingData,
+    hasSharedFullTrainingData,
+  });
+  const suggestedMessages = useMemo(() => {
+    const age = Number(suggestionContext?.age);
+    return getOpeningSuggestions({
+      audience: openingAudience,
       hasSharedBioData,
-      hasSharedFullTrainingData,
-      hasSharedTrainingData,
-      suggestionSeed,
-      suggestionContext,
-    ],
-  );
+      context: {
+        lift: suggestionContext?.primaryLift,
+        lift2: suggestionContext?.secondaryLift,
+        age: Number.isFinite(age) && age > 0 ? age : null,
+        session: describeLatestSession(
+          suggestionContext?.recentSessionDate,
+          Boolean(suggestionContext?.latestSessionPR),
+        ),
+      },
+      scores: openingScores?.[openingAudience],
+      seed: suggestionSeed,
+    });
+  }, [
+    hasSharedBioData,
+    openingAudience,
+    openingScores,
+    suggestionSeed,
+    suggestionContext,
+  ]);
 
   const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
     if (!nextQuota) return;
@@ -1104,6 +910,7 @@ function AILiftingAssistantCard({
       return;
     }
 
+    if (messages.length === 0) recordOpeningChatStart(message.text);
     sendMessageWithMetadata(message.text);
   };
 
@@ -1331,6 +1138,23 @@ function AILiftingAssistantCard({
   // window, past the site nav, the way a chat app opens.
   const chatPanelRef = useRef(null);
   const hasConversation = messages.length > 0;
+
+  const welcomeCopy = getWelcomeCopy({
+    dateKey: suggestionDateKey,
+    hasSharedTrainingData,
+    latestSessionPR: suggestionContext?.latestSessionPR,
+  });
+  const recordOpeningChatStart = useOpeningSuggestionTracking({
+    isActive: !hasConversation && isChatHydrated,
+    audience: openingAudience,
+    suggestions: suggestedMessages,
+    celebration: welcomeCopy.celebration,
+  });
+  const startChatFromWelcome = (text) => {
+    if (isChatUnavailable) return;
+    recordOpeningChatStart(text);
+    sendMessageWithMetadata(text);
+  };
   useEffect(() => {
     if (!hasConversation) return;
     chatPanelRef.current?.scrollIntoView({
@@ -1469,22 +1293,18 @@ function AILiftingAssistantCard({
         {!hasConversation ? (
           <div className="flex flex-1 flex-col items-center justify-center py-8">
             <CoachWelcome
-              {...getWelcomeCopy({
-                dateKey: suggestionDateKey,
-                hasSharedTrainingData,
-                latestSessionPR: suggestionContext?.latestSessionPR,
-              })}
+              {...welcomeCopy}
               composer={composer}
               suggestions={
                 isChatHydrated
-                  ? suggestedMessages.map((text) => ({
+                  ? suggestedMessages.map(({ text, kind }) => ({
                       text,
-                      icon: getSuggestionIcon(text),
+                      icon: SUGGESTION_ICONS[kind],
                     }))
                   : null
               }
               disabled={isChatUnavailable}
-              onSelect={sendMessageWithMetadata}
+              onSelect={startChatFromWelcome}
             />
             <div className="mt-12 max-w-md text-center">
               <h1 className="text-sm font-semibold">AI Lifting Assistant</h1>

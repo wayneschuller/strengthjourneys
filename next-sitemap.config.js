@@ -51,8 +51,9 @@ module.exports = {
   // changefreq/priority. Google ignores changefreq and priority outright, and a
   // lastmod that is identical across all routes and resets on each deploy is a
   // freshness claim we cannot back up — the kind Google learns to discount.
-  // Articles carry their real updatedAt instead and every other route emits
-  // only <loc>, which keeps the one lastmod signal we do have worth trusting.
+  // Articles carry their real updatedAt instead, /changelog its newest entry's
+  // date, and every other route emits only <loc>, which keeps the lastmod
+  // signals we do have worth trusting.
   autoLastmod: false,
   transform: async (config, route) => {
     const lastmod = (await getArticleLastmods()).get(route);

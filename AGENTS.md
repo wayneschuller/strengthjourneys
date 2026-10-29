@@ -31,6 +31,7 @@ calls for them:
 npm run dev            # Turbopack dev server; the user usually has one running
 npm run dev:webpack    # fallback when Turbopack itself seems to be the problem
 npx eslint <paths>     # lint the files you touched
+                       # (npm run lint covers all of src/; see section 5)
 npx prettier --write <paths>  # format the files you touched
 npm run format         # format the whole repo; format:check only reports
 npm run validate:imports  # importer and lift-name checks on synthetic rows
@@ -120,7 +121,8 @@ authenticated users.
 - **Import pipeline:** `import/import-dispatcher.js` is the single entry
   point, with two functions — `parseData(rows)` for Google Sheets (Strength
   Journeys format only, read/write) and `parseImportedFile(file)` for
-  drag-and-drop CSV/XLSX (any format, view-only).
+  drag-and-drop CSV/XLSX (any format). A dropped file is previewed on the
+  client and only reaches a sheet through a merge, below.
 - **The parser contract:** each app export is one module in
   `import/parsers/` whose whole interface is one exported descriptor
   (`id`, `name`, `detect`, `parse`). The contract is written at the top of
@@ -187,6 +189,13 @@ authenticated users.
   gate the UI on `isValidating`. Read the engine's header comment first, and
   prove a change with `scripts/validate-log-sync.mjs`, which drives the real
   engine against a simulated sheet with lost requests and stale reads.
+- **One lift registry:** everything curated about a lift (names, synonyms,
+  slug, artwork, guide content) is one JSON file per lift in `src/lib/lifts/`,
+  read through `src/lib/lifts/lift-registry.js`, whose header documents the
+  format. Pages, the nav, the log and the importers all read it there; do not
+  keep per-lift facts anywhere else. A lift's `/progress-guide/` page stays
+  noindex and out of the sitemap until it has a guide block
+  (`isLiftGuideIndexable`, mirrored in `next-sitemap.config.js`).
 - **KV keys:** `src/lib/user-kv-keys.js` owns the `sj:user:<email>` key
   convention and the read-modify-write helpers. Never interpolate that key
   inline.
@@ -202,8 +211,8 @@ authenticated users.
   git; see `docs/agents/ai-prompts.md`.
 - **Proprietary material lives outside this repo** in
   `~/hacking/strengthjourneys-private/` on the maintainer's machine, which is
-  not a git repo and never deployed. It holds `prompts/editions/` (the daily
-  backup of the AI coach prompt editions), `3rd party fitness app exports/`
+  not a git repo and never deployed. It holds `prompts/` (AI coach prompt
+  drafts, and in `editions/` the daily backup of the prompt editions), `3rd party fitness app exports/`
   (real exports from other apps, used to test importers; read its README) and
   `strength-journeys-sheets/` (real logs in our own sheet format, including the
   maintainer's 12-year sheet, for stress and regression testing the analysis
@@ -268,14 +277,13 @@ licence for new code — treat the warnings as real when writing anything new.
 
 ### Data Handling
 
-- Lift objects contain:
-  - `date` (YYYY-MM-DD)
-  - `liftType`
-  - `reps`
-  - `weight`
-  - `unitType`
-  - `isHistoricalPR`
-- Do not modify this schema without updating parsing + processing
+- The lift object schema is the `LiftEntry` typedef at the top of
+  `src/lib/import/import-dispatcher.js`: `date` (YYYY-MM-DD), `liftType`,
+  `reps`, `weight` and `unitType`, plus optional fields such as `notes`,
+  `label`, `URL` and `rowIndex`. `isHistoricalPR` is added later by
+  `processing-utils.js`
+- Do not modify this schema without updating the typedef, parsing and
+  processing together
 - Imported file preview data is stored client-side in `sessionStorage` and
   overrides the normal linked-sheet pipeline until cleared
 - `sheetInfo` in localStorage is the canonical linked-sheet pointer
@@ -297,7 +305,9 @@ licence for new code — treat the warnings as real when writing anything new.
 - Use Tailwind utility classes and the existing theme CSS variables (e.g.,
   `--heatmap-0` through `--heatmap-4`) defined in `globals.css`
 - Do not introduce random new color systems
-- Charts use Recharts inside `ResponsiveContainer`
+- Charts use Recharts, wrapped in shadcn's `ChartContainer`
+  (`src/components/ui/chart.jsx`, which supplies the `ResponsiveContainer`)
+  unless a chart needs a bare `ResponsiveContainer`
 
 ---
 
@@ -308,7 +318,9 @@ licence for new code — treat the warnings as real when writing anything new.
 - Use `getStaticProps` for ISR pages
 - Use `NextSeo` for metadata
 - Do NOT migrate to App Router patterns
-- Do NOT introduce `"use client"` directives
+- Do NOT introduce `"use client"` directives. The vendored AI Elements
+  components in `src/components/ai-elements/` arrive with one; it is inert
+  under the Pages Router, so leave those as they came
 - Do NOT use `generateMetadata`
 - Never introduce TypeScript
 
@@ -378,21 +390,23 @@ their branch aliases or the public site domains.
 
 ### Deploy Shortcut
 
-When the user says "deploy", they mean:
+When the user says "deploy", they mean fast-forward `stable` to `main` on
+origin, without switching branches (neighbours are mid-edit on `main`):
 
-1. Ensure the worktree is clean.
-2. Fetch `origin main stable`.
-3. Switch to `stable`.
-4. Fast-forward `stable` to `main`: `git merge --ff-only main`.
-5. Push `stable` to origin.
-6. Switch back to `main`.
-7. Confirm the worktree is clean and report the resulting `stable` commit.
+1. `git fetch origin main stable`.
+2. Make sure your own work is committed and `main` is pushed
+   (`git push origin main`, catching up with a merge first if it is
+   rejected, as below).
+3. `git push origin main:stable`. Git refuses this unless it is a
+   fast-forward, which is the safety check.
+4. Report the resulting `stable` commit (`git rev-parse --short origin/stable`).
 
-Deploys fast-forward, so `stable` stays an exact pointer into `main`'s
-history and GitHub reports it as neither ahead nor behind. If step 4 refuses
-because it is not a fast-forward, `stable` has commits `main` does not —
-stop and report it. Merge `stable` into `main` to reconcile; never force
-push to fix it.
+Only commits deploy, so a neighbour's uncommitted edits in the tree are not
+at risk and need not be cleaned up first. Deploys fast-forward, so `stable`
+stays an exact pointer into `main`'s history and GitHub reports it as
+neither ahead nor behind. If step 3 is rejected as not a fast-forward,
+`stable` has commits `main` does not: stop and report it. The fix is to
+merge `origin/stable` into `main`; never force push.
 
 ---
 
@@ -416,7 +430,7 @@ Agents operating in this repo should:
 ---
 
 This project is a labour of love — built by a lifter, for lifters, over many
-years of consistent training. The person behind it has 11+ years of barbell
+years of consistent training. The person behind it has 12 years of barbell
 data and genuinely cares that every UI decision reflects real lifting
 experience, not abstract design theory.
 

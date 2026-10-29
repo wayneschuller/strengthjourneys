@@ -500,10 +500,11 @@ function MenuListItem({ href, title, icon, pill, children, className }) {
 }
 
 // A hover-open dropdown with a two-column grid of links. Radix waits 200ms
-// before opening by default; these open straight away.
+// before opening by default; these open straight away. z-30 keeps the open
+// menu above sticky page bars like the progress guide's section nav (z-20).
 function NavDropdown({ isActive, shortLabel, fullLabel, fullFrom, children }) {
   return (
-    <NavigationMenu delayDuration={0}>
+    <NavigationMenu delayDuration={0} className="z-30">
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger

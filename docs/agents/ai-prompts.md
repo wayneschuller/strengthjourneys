@@ -72,8 +72,9 @@ fixed prompts and a few adaptive slots, filled per visit by Thompson sampling
 over how often each prompt started a chat when shown. Prompts with no data, or
 little, still get their turn; strong ones show more.
 
-"More ideas" redraws the adaptive chips, leaving out every one already shown
-that visit. The browser also remembers the last ten adaptive chips it showed
+"More ideas" redraws every chip, leaving out every one already shown that
+visit; the fixed prompts step aside until the next visit or New chat, and their
+places come from the audience's `refill` pool. The browser also remembers the last ten adaptive chips it showed
 (`SJ_AIRecentOpeningChips`), so a returning athlete's next visit draws fresh
 ones. Both only sit a chip out; a pool that runs short falls back to them.
 

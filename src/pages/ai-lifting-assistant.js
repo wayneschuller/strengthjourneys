@@ -665,6 +665,9 @@ function AILiftingAssistantCard({
   // then whatever this visit has shown. Chips render only after hydration,
   // so reading storage here never has to match the server.
   const [seenOpeningKeys, setSeenOpeningKeys] = useState(readRecentOpeningKeys);
+  // More ideas swaps every chip; a fresh page or New chat brings the fixed
+  // prompts back.
+  const [showFixedOpeners, setShowFixedOpeners] = useState(true);
   const pendingAiPromptRef = useRef(null);
   const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
@@ -690,23 +693,30 @@ function AILiftingAssistantCard({
       scores: openingScores?.[openingAudience],
       seed: suggestionSeed,
       exclude: seenOpeningKeys,
+      withFixed: showFixedOpeners,
     });
   }, [
     hasSharedBioData,
     openingAudience,
     openingScores,
     seenOpeningKeys,
+    showFixedOpeners,
     suggestionSeed,
     suggestionContext,
   ]);
-  // A new draw that leaves out every adaptive chip shown so far.
-  const drawFreshSuggestions = useCallback(() => {
-    const shown = suggestedMessages
-      .filter((suggestion) => !suggestion.fixed)
-      .map((suggestion) => suggestion.key);
-    setSeenOpeningKeys((previous) => [...previous, ...shown]);
-    setSuggestionSeed(newSuggestionSeed());
-  }, [suggestedMessages]);
+  // A new draw that leaves out every adaptive chip shown so far, with or
+  // without the fixed prompts.
+  const drawFreshSuggestions = useCallback(
+    (withFixed) => {
+      const shown = suggestedMessages
+        .filter((suggestion) => !suggestion.fixed)
+        .map((suggestion) => suggestion.key);
+      setSeenOpeningKeys((previous) => [...previous, ...shown]);
+      setShowFixedOpeners(withFixed);
+      setSuggestionSeed(newSuggestionSeed());
+    },
+    [suggestedMessages],
+  );
 
   const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
     if (!nextQuota) return;
@@ -1086,7 +1096,7 @@ function AILiftingAssistantCard({
     setMessages([]);
     setSentContext("");
     setSuggestionsByMessageId({});
-    drawFreshSuggestions();
+    drawFreshSuggestions(true);
     clearPromptQueryParams();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -1327,7 +1337,7 @@ function AILiftingAssistantCard({
               onSelect={startChatFromWelcome}
               onShuffle={() => {
                 recordOpeningShuffle();
-                drawFreshSuggestions();
+                drawFreshSuggestions(false);
               }}
             />
             <div className="mt-12 max-w-md text-center">

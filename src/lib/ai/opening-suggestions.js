@@ -180,9 +180,10 @@ const PARTIAL_TRAINING_PROMPTS = [
 ];
 
 /**
- * Per audience: four fixed prompts, always shown first, then the adaptive
- * slots as [pool, count] for bio shared or not. Slots keep the mix of kinds;
- * the sampler picks the best within each.
+ * Per audience: four fixed prompts, shown first on every fresh page, then the
+ * adaptive slots as [pool, count] for bio shared or not. Slots keep the mix
+ * of kinds; the sampler picks the best within each. After More ideas the
+ * fixed prompts step aside and their places come from `refill`.
  */
 const AUDIENCE_PLANS = {
   first: {
@@ -197,6 +198,7 @@ const AUDIENCE_PLANS = {
       [HEALTH_PROMPTS, 1],
       [PLAYFUL_PROMPTS, 1],
     ],
+    refill: GENERAL_PROMPTS,
   },
   bio: {
     anchors: [
@@ -216,6 +218,8 @@ const AUDIENCE_PLANS = {
       [GENERAL_PROMPTS, 2],
       [PLAYFUL_PROMPTS, 1],
     ],
+    // The health pool is small, so general questions fill in.
+    refill: GENERAL_PROMPTS,
   },
   partial: {
     anchors: [
@@ -237,6 +241,8 @@ const AUDIENCE_PLANS = {
       [GENERAL_PROMPTS, 1],
       [PLAYFUL_PROMPTS, 1],
     ],
+    // The partial pool is small, so general questions fill in.
+    refill: GENERAL_PROMPTS,
   },
   full: {
     anchors: [
@@ -254,6 +260,7 @@ const AUDIENCE_PLANS = {
       [GENERAL_PROMPTS, 1],
       [PLAYFUL_PROMPTS, 1],
     ],
+    refill: TRAINING_PROMPTS,
   },
 };
 
@@ -282,6 +289,8 @@ export function getOpeningAudience({
  * @param {Iterable<string>} [args.exclude] Keys the athlete has just seen:
  *   this visit's earlier draws and their last few visits. They sit out unless
  *   a pool runs short.
+ * @param {boolean} [args.withFixed=true] False after More ideas: every chip
+ *   is drawn, the fixed prompts' places from the audience's refill pool.
  * @returns {{ text: string, key: string, kind: string, fixed: boolean }[]}
  */
 export function getOpeningSuggestions({
@@ -291,6 +300,7 @@ export function getOpeningSuggestions({
   scores,
   seed,
   exclude,
+  withFixed = true,
 }) {
   const plan = AUDIENCE_PLANS[audience] ?? AUDIENCE_PLANS.first;
   const next = seededRandoms(hashString(`${seed}|${audience}`));
@@ -298,11 +308,15 @@ export function getOpeningSuggestions({
   const used = new Set();
   const seen = new Set(exclude);
 
+  // Fixed prompts never appear as adaptive ones, shown or stepped aside.
   const anchors = resolveEntries(plan.anchors, hasSharedBioData, context);
   anchors.forEach((suggestion) => used.add(suggestion.template));
+  const slots = withFixed
+    ? plan.slots(hasSharedBioData)
+    : [[plan.refill, anchors.length], ...plan.slots(hasSharedBioData)];
 
   const adaptive = [];
-  for (const [pool, count] of plan.slots(hasSharedBioData)) {
+  for (const [pool, count] of slots) {
     const candidates = resolveEntries(pool, hasSharedBioData, context)
       .filter((suggestion) => !used.has(suggestion.template))
       .map((suggestion) => {
@@ -327,7 +341,12 @@ export function getOpeningSuggestions({
   }
 
   return [
-    ...anchors.map(({ text, key, kind }) => ({ text, key, kind, fixed: true })),
+    ...(withFixed ? anchors : []).map(({ text, key, kind }) => ({
+      text,
+      key,
+      kind,
+      fixed: true,
+    })),
     ...shuffle(adaptive, next).map(({ text, key, kind }) => ({
       text,
       key,

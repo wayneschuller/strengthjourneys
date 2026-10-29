@@ -29,7 +29,6 @@ calls for them:
 
 ```
 npm run dev            # Turbopack dev server; the user usually has one running
-npm run dev:webpack    # fallback when Turbopack itself seems to be the problem
 npx eslint <paths>     # lint the files you touched
                        # (npm run lint covers all of src/; see section 5)
 npx prettier --write <paths>  # format the files you touched

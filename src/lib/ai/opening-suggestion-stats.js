@@ -6,6 +6,7 @@
  * Fields, per audience:
  *   <audience>|views            blank-page views that showed chips
  *   <audience>|typed            chats started with the athlete's own words
+ *   <audience>|shuffles         "More ideas" presses
  *   <audience>|shown|<key>      times a prompt was shown
  *   <audience>|picked|<key>     times a prompt started a chat
  *
@@ -48,6 +49,7 @@ export function getRecentMonthKeys(count, now = new Date()) {
  * @param {string[]} [report.shown] Present once per blank-page view.
  * @param {string} [report.picked] The prompt that started the chat.
  * @param {boolean} [report.typed] The chat started from the athlete's own words.
+ * @param {boolean} [report.shuffled] The athlete asked for more ideas.
  * @returns {Promise<boolean>} false when there was nothing valid to count.
  */
 export async function recordOpeningSuggestions({
@@ -55,6 +57,7 @@ export async function recordOpeningSuggestions({
   shown,
   picked,
   typed,
+  shuffled,
 }) {
   if (!OPENING_AUDIENCES.includes(audience)) return false;
   const fields = [];
@@ -76,6 +79,8 @@ export async function recordOpeningSuggestions({
     if (key) fields.push(`${audience}|picked|${key}`);
   } else if (typed === true) {
     fields.push(`${audience}|typed`);
+  } else if (shuffled === true) {
+    fields.push(`${audience}|shuffles`);
   }
   if (fields.length === 0) return false;
 

@@ -85,6 +85,8 @@ console.log(
 for (const audience of OPENING_AUDIENCES) {
   const views = totals[`${audience}|views`] ?? 0;
   const typed = totals[`${audience}|typed`] ?? 0;
+  // Each "More ideas" press ends one view and starts another.
+  const shuffles = totals[`${audience}|shuffles`] ?? 0;
   const templates = new Map();
   let picks = 0;
 
@@ -113,7 +115,7 @@ for (const audience of OPENING_AUDIENCES) {
 
   console.log(`== ${AUDIENCE_NAMES[audience]} ==`);
   console.log(
-    `${views} views, ${picks} chats from a chip, ${typed} typed their own, ${Math.max(0, views - picks - typed)} left without chatting\n`,
+    `${views} views, ${picks} chats from a chip, ${typed} typed their own, ${shuffles} asked for more ideas, ${Math.max(0, views - picks - typed - shuffles)} left without chatting\n`,
   );
   if (templates.size === 0) {
     console.log("  No counts yet.\n");

@@ -8,14 +8,22 @@
  * or their own words) is counted when it happens. Reports go by sendBeacon,
  * which never holds up the page, even as it unloads.
  *
+ * "More ideas" counts the set it replaces as shown and starts a new view.
+ *
  * A chat started any other way, such as a review link from the dashboard,
  * is not counted: its blank page was never really seen.
+ *
+ * Every counted set's adaptive chips are also remembered in this browser, so
+ * the athlete's next visit draws fresh ones (readRecentOpeningKeys).
  */
 import { useCallback, useEffect, useRef } from "react";
 
 import { CELEBRATION_KEY } from "@/lib/ai/opening-suggestions";
+import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 
 const ENDPOINT = "/api/chat/openers";
+// About two visits' worth of adaptive chips.
+const RECENT_CHIP_LIMIT = 10;
 
 /**
  * @param {Object} args
@@ -23,8 +31,9 @@ const ENDPOINT = "/api/chat/openers";
  * @param {string} args.audience
  * @param {{ text: string, key: string }[]|null} args.suggestions
  * @param {{ prompt: string }|null} [args.celebration] The PR chip, if shown.
- * @returns {(text: string) => void} Call as a chat starts from the blank page,
- *   with the text sent.
+ * @returns {{ recordChatStart: (text: string) => void, recordShuffle: () => void }}
+ *   recordChatStart as a chat starts from the blank page, with the text sent;
+ *   recordShuffle as "More ideas" replaces the chips.
  */
 export function useOpeningSuggestionTracking({
   isActive,
@@ -68,7 +77,7 @@ export function useOpeningSuggestionTracking({
       }
       const view = viewRef.current;
       if (!view?.chips || view.counted) return;
-      view.counted = true;
+      countShown(view);
       report({ audience: view.audience, shown: keysOf(view.chips) });
     };
     document.addEventListener("visibilitychange", handleHide);
@@ -79,7 +88,7 @@ export function useOpeningSuggestionTracking({
     };
   }, [isActive]);
 
-  return useCallback((text) => {
+  const recordChatStart = useCallback((text) => {
     const view = viewRef.current;
     if (!view?.chips) return;
     const chip = view.chips.find((item) => item.text === text.trim());
@@ -88,13 +97,60 @@ export function useOpeningSuggestionTracking({
       ...(view.counted ? {} : { shown: keysOf(view.chips) }),
       ...(chip ? { picked: chip.key } : { typed: true }),
     });
-    view.counted = true;
+    countShown(view);
     view.chips = null;
   }, []);
+
+  const recordShuffle = useCallback(() => {
+    const view = viewRef.current;
+    if (!view?.chips) return;
+    report({
+      audience: view.audience,
+      ...(view.counted ? {} : { shown: keysOf(view.chips) }),
+      shuffled: true,
+    });
+    countShown(view);
+    // The new set is a view of its own.
+    viewRef.current = { counted: false };
+  }, []);
+
+  return { recordChatStart, recordShuffle };
+}
+
+function countShown(view) {
+  if (view.counted) return;
+  view.counted = true;
+  rememberRecentChips(view.chips);
 }
 
 function keysOf(chips) {
   return chips.map((chip) => chip.key);
+}
+
+/** The adaptive chips this browser showed lately, newest first. */
+export function readRecentOpeningKeys() {
+  try {
+    const stored = JSON.parse(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.AI_RECENT_OPENING_CHIPS),
+    );
+    return Array.isArray(stored) ? stored : [];
+  } catch {
+    return [];
+  }
+}
+
+function rememberRecentChips(chips) {
+  const shown = chips.filter((chip) => chip.fixed === false).map((c) => c.key);
+  if (shown.length === 0) return;
+  const recent = [...new Set([...shown, ...readRecentOpeningKeys()])];
+  try {
+    localStorage.setItem(
+      LOCAL_STORAGE_KEYS.AI_RECENT_OPENING_CHIPS,
+      JSON.stringify(recent.slice(0, RECENT_CHIP_LIMIT)),
+    );
+  } catch {
+    // Private windows and full storage: fresh chips are a nicety.
+  }
 }
 
 // Best effort: a lost count is not worth anything the athlete would notice.

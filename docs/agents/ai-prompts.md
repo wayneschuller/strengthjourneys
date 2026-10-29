@@ -72,12 +72,17 @@ fixed prompts and a few adaptive slots, filled per visit by Thompson sampling
 over how often each prompt started a chat when shown. Prompts with no data, or
 little, still get their turn; strong ones show more.
 
+"More ideas" redraws the adaptive chips, leaving out every one already shown
+that visit. The browser also remembers the last ten adaptive chips it showed
+(`SJ_AIRecentOpeningChips`), so a returning athlete's next visit draws fresh
+ones. Both only sit a chip out; a pool that runs short falls back to them.
+
 Counts go to KV through `/api/chat/openers` (sent by `navigator.sendBeacon`,
 counts only, rate limited per hashed IP; the dev server does not count):
 
 | Key | Holds |
 | --- | --- |
-| `sj:ai:openers:<YYYY-MM>` | hash of `<audience>\|views`, `<audience>\|typed`, `<audience>\|shown\|<prompt>` and `<audience>\|picked\|<prompt>` |
+| `sj:ai:openers:<YYYY-MM>` | hash of `<audience>\|views`, `<audience>\|typed`, `<audience>\|shuffles`, `<audience>\|shown\|<prompt>` and `<audience>\|picked\|<prompt>` |
 
 A prompt is stored as its template with registry lift names filled in, so
 "for Bench Press" and "for Deadlift" count apart. `{age}` and `{session}` stay

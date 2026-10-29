@@ -233,8 +233,11 @@ export function getOpeningAudience({
  * @param {{ lift?: string, lift2?: string, age?: number, session?: string }} args.context
  * @param {Record<string, [number, number]>} [args.scores] This audience's
  *   [picked, shown] per template.
- * @param {string} args.seed Fresh per visit; the same seed gives the same set.
- * @returns {{ text: string, key: string, kind: string }[]}
+ * @param {string} args.seed Fresh per draw; the same seed gives the same set.
+ * @param {Iterable<string>} [args.exclude] Keys the athlete has just seen:
+ *   this visit's earlier draws and their last few visits. They sit out unless
+ *   a pool runs short.
+ * @returns {{ text: string, key: string, kind: string, fixed: boolean }[]}
  */
 export function getOpeningSuggestions({
   audience,
@@ -242,11 +245,13 @@ export function getOpeningSuggestions({
   context,
   scores,
   seed,
+  exclude,
 }) {
   const plan = AUDIENCE_PLANS[audience] ?? AUDIENCE_PLANS.first;
   const next = seededRandoms(hashString(`${seed}|${audience}`));
   const prior = getPrior(scores);
   const used = new Set();
+  const seen = new Set(exclude);
 
   const anchors = resolveEntries(plan.anchors, hasSharedBioData, context);
   anchors.forEach((suggestion) => used.add(suggestion.template));
@@ -260,6 +265,7 @@ export function getOpeningSuggestions({
         const hits = Math.min(picked, shown);
         return {
           suggestion,
+          isSeen: seen.has(suggestion.key),
           draw: sampleBeta(
             prior.alpha + hits,
             prior.beta + Math.max(0, shown - hits),
@@ -267,7 +273,7 @@ export function getOpeningSuggestions({
           ),
         };
       })
-      .sort((a, b) => b.draw - a.draw)
+      .sort((a, b) => a.isSeen - b.isSeen || b.draw - a.draw)
       .slice(0, count);
     for (const { suggestion } of candidates) {
       used.add(suggestion.template);
@@ -275,9 +281,15 @@ export function getOpeningSuggestions({
     }
   }
 
-  return [...anchors, ...shuffle(adaptive, next)].map(
-    ({ text, key, kind }) => ({ text, key, kind }),
-  );
+  return [
+    ...anchors.map(({ text, key, kind }) => ({ text, key, kind, fixed: true })),
+    ...shuffle(adaptive, next).map(({ text, key, kind }) => ({
+      text,
+      key,
+      kind,
+      fixed: false,
+    })),
+  ];
 }
 
 function resolveEntries(entries, hasSharedBioData, context) {

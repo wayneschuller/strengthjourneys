@@ -48,7 +48,10 @@ import {
   getOpeningSuggestions,
 } from "@/lib/ai/opening-suggestions";
 import { readOpeningSuggestionScores } from "@/lib/ai/opening-suggestion-stats";
-import { useOpeningSuggestionTracking } from "@/hooks/use-opening-suggestion-tracking";
+import {
+  readRecentOpeningKeys,
+  useOpeningSuggestionTracking,
+} from "@/hooks/use-opening-suggestion-tracking";
 
 import {
   Conversation,
@@ -658,6 +661,10 @@ function AILiftingAssistantCard({
   const [isChatHydrated, setIsChatHydrated] = useState(false);
   const [suggestionDateKey] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [suggestionSeed, setSuggestionSeed] = useState(newSuggestionSeed);
+  // Adaptive chips that sit out the next draw: this browser's last visits,
+  // then whatever this visit has shown. Chips render only after hydration,
+  // so reading storage here never has to match the server.
+  const [seenOpeningKeys, setSeenOpeningKeys] = useState(readRecentOpeningKeys);
   const pendingAiPromptRef = useRef(null);
   const pendingAiPromptKeyRef = useRef(null);
   const consumedAiPromptRef = useRef(null);
@@ -682,14 +689,24 @@ function AILiftingAssistantCard({
       },
       scores: openingScores?.[openingAudience],
       seed: suggestionSeed,
+      exclude: seenOpeningKeys,
     });
   }, [
     hasSharedBioData,
     openingAudience,
     openingScores,
+    seenOpeningKeys,
     suggestionSeed,
     suggestionContext,
   ]);
+  // A new draw that leaves out every adaptive chip shown so far.
+  const drawFreshSuggestions = useCallback(() => {
+    const shown = suggestedMessages
+      .filter((suggestion) => !suggestion.fixed)
+      .map((suggestion) => suggestion.key);
+    setSeenOpeningKeys((previous) => [...previous, ...shown]);
+    setSuggestionSeed(newSuggestionSeed());
+  }, [suggestedMessages]);
 
   const applyQuotaSnapshot = useCallback((nextQuota, options = {}) => {
     if (!nextQuota) return;
@@ -1069,7 +1086,7 @@ function AILiftingAssistantCard({
     setMessages([]);
     setSentContext("");
     setSuggestionsByMessageId({});
-    setSuggestionSeed(newSuggestionSeed());
+    drawFreshSuggestions();
     clearPromptQueryParams();
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -1144,7 +1161,10 @@ function AILiftingAssistantCard({
     hasSharedTrainingData,
     latestSessionPR: suggestionContext?.latestSessionPR,
   });
-  const recordOpeningChatStart = useOpeningSuggestionTracking({
+  const {
+    recordChatStart: recordOpeningChatStart,
+    recordShuffle: recordOpeningShuffle,
+  } = useOpeningSuggestionTracking({
     isActive: !hasConversation && isChatHydrated,
     audience: openingAudience,
     suggestions: suggestedMessages,
@@ -1305,6 +1325,10 @@ function AILiftingAssistantCard({
               }
               disabled={isChatUnavailable}
               onSelect={startChatFromWelcome}
+              onShuffle={() => {
+                recordOpeningShuffle();
+                drawFreshSuggestions();
+              }}
             />
             <div className="mt-12 max-w-md text-center">
               <h1 className="text-sm font-semibold">AI Lifting Assistant</h1>

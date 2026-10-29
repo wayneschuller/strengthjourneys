@@ -55,6 +55,7 @@ import {
   MessageContent,
   MessageResponse,
   MessageAction,
+  MessageActions,
 } from "@/components/ai-elements/message";
 import {
   Source,
@@ -1338,6 +1339,47 @@ function AILiftingAssistantCard({
     });
   }, [hasConversation]);
 
+  // The message box takes focus when the page is ready and again after each
+  // reply, so the athlete can just type. Desktop only: on a phone it would
+  // throw the keyboard up over the page. It never takes focus from another
+  // field or dialog, or from a passage the athlete has selected to copy.
+  const composerRef = useRef(null);
+  const isComposerReady = !isChatUnavailable && status === "ready";
+  useEffect(() => {
+    if (!isComposerReady) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      return;
+    }
+    const active = document.activeElement;
+    if (
+      active?.closest(
+        "input, textarea, select, [contenteditable='true'], [role='dialog']",
+      )
+    ) {
+      return;
+    }
+    if (window.getSelection()?.toString()) return;
+    composerRef.current?.focus({ preventScroll: true });
+  }, [isComposerReady, hasConversation]);
+
+  // Escape stops a reply mid-stream, unless it is closing a dialog or menu.
+  useEffect(() => {
+    if (status !== "submitted" && status !== "streaming") return;
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (
+        document.activeElement?.closest(
+          "[role='dialog'], [role='menu'], [role='listbox']",
+        )
+      ) {
+        return;
+      }
+      stop();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [status, stop]);
+
   const modelSwitcherProps = {
     selectedId: selectedModelId,
     onSelect: setStoredModelId,
@@ -1361,6 +1403,7 @@ function AILiftingAssistantCard({
       >
         <PromptInputBody>
           <PromptInputTextarea
+            ref={composerRef}
             className="disabled:opacity-70"
             placeholder={
               isChatBlocked
@@ -1575,6 +1618,17 @@ function AILiftingAssistantCard({
                                   text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
                                 />
                               </AiReplyFeedback>
+                            )}
+                          {/* Earlier replies keep a copy button, shown on
+                              hover where there is one, always on touch. */}
+                          {message.role === "assistant" &&
+                            !isLastMessage &&
+                            textContent && (
+                              <MessageActions className="transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:hover)]:opacity-0">
+                                <CopyButton
+                                  text={`${textContent}\n\n${formatReplyAttribution(message.metadata)}`}
+                                />
+                              </MessageActions>
                             )}
                         </Message>
                         {message.role === "assistant" &&

@@ -6,6 +6,10 @@
     "tonnageRatio": 1
   },
   "tagline": "Sit back to the box, then drive up with the hips.",
+  "artwork": {
+    "src": "/lifts/default/box-squat.svg",
+    "figure": "male"
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=1SgHKc5tImQ",

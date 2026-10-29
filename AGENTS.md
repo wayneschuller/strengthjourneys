@@ -207,7 +207,9 @@ authenticated users.
   (real exports from other apps, used to test importers; read its README) and
   `strength-journeys-sheets/` (real logs in our own sheet format, including the
   maintainer's 12-year sheet, for stress and regression testing the analysis
-  code; read its README).
+  code; read its README) and `lift-artwork/` (the script that turns a generated
+  lift render into house-format artwork, plus the original renders; read its
+  README before drawing a lift).
   Read from it freely, but never copy its contents into this repo or into
   commit messages, since this repo is public.
 - **`next.config.js`** carries a long list of SEO redirects, each with a dated

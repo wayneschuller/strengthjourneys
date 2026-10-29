@@ -47,6 +47,9 @@
  *  - Never paint background over the artwork to carve the gaps between limbs.
  *    It cannot be undone once the background comes off.
  *
+ * The cleanup that gets a generated render to this standard lives outside the
+ * repo with the original renders; AGENTS.md says where.
+ *
  * None of this is enforced. Odd sizes still render, builds never fail over
  * artwork, and development logs one console note per offending file.
  *

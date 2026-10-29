@@ -7,6 +7,10 @@
     "tonnageRatio": 1
   },
   "tagline": "Halfway between the bench and the press.",
+  "artwork": {
+    "src": "/lifts/default/incline-bench-press.png",
+    "figure": "female"
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=5k_enq6vXGM",

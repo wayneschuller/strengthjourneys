@@ -268,19 +268,24 @@ export function CoachWelcome({
                 onBlur={lookAway}
               />
             ))}
+            {/* Its own centred row under the chips, however they wrap */}
             {onShuffle && (
-              <Suggestion
-                suggestion="More ideas"
-                onClick={() => {
-                  playMove("coach-bot-nod");
-                  onShuffle();
-                }}
-                className="group text-muted-foreground hover:text-foreground hover:border-primary/50 border-border/70 animate-in fade-in fill-mode-both h-auto min-h-9 gap-2 border-dashed bg-transparent py-2 pr-3.5 pl-3 duration-500"
-                style={{ animationDelay: `${(suggestions.length + 3) * 70}ms` }}
-              >
-                <Shuffle className="size-3.5 shrink-0 transition-transform group-hover:rotate-12" />
-                <span>More ideas</span>
-              </Suggestion>
+              <div className="flex basis-full justify-center">
+                <Suggestion
+                  suggestion="More ideas"
+                  onClick={() => {
+                    playMove("coach-bot-nod");
+                    onShuffle();
+                  }}
+                  className="group text-muted-foreground hover:text-foreground hover:border-primary/50 border-border/70 animate-in fade-in fill-mode-both h-auto min-h-9 gap-2 border-dashed bg-transparent py-2 pr-3.5 pl-3 duration-500"
+                  style={{
+                    animationDelay: `${(suggestions.length + 3) * 70}ms`,
+                  }}
+                >
+                  <Shuffle className="size-3.5 shrink-0 transition-transform group-hover:rotate-12" />
+                  <span>More ideas</span>
+                </Suggestion>
+              </div>
             )}
           </Suggestions>
         )}

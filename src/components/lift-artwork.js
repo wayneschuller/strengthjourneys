@@ -38,6 +38,9 @@
  *      singlet #3970c0 #2d609f             whites  #f4f3f3 #b0b0ae
  *      bar     #8e8e8e #656769
  *      plates  #4e4f51 #3e3d3f #343434 #252323 #100f0d
+ *    Equipment that is not iron may add its own flat tones. The box squat's
+ *    wooden box uses #eec78f #dab17b #ac8256 (top, front, side); reuse them
+ *    for any other wood.
  *    #343434 earns its keep: generated plates arrive near #333333, which sits
  *    19 from both #3e3d3f and the hair brown, so without it they quantise
  *    mottled brown.

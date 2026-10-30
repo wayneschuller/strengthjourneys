@@ -1,12 +1,12 @@
-// The editorial strength hexagon: a print-magazine take on the same six
-// scores. A rose of six wedges, one per axis, sits on a polar grid of the tier
-// rings, with the hexagon itself drawn as a fine ink line through the wedge
-// tips. Motion is quiet: the wedges spring out on arrival, a sheen passes
+// The SVG strength shape: a print-magazine take on the same scores, used
+// where WebGL is unavailable. A rose of wedges, one per axis, sits on a polar
+// grid of the tier rings, with the shape itself drawn as a fine ink line
+// through the wedge tips. Motion is quiet: the wedges spring out on arrival, a sheen passes
 // over them, and the outer dotted ring turns very slowly.
 //
-// All text lives in HTML over the SVG rather than inside it, so the story card
-// export can rasterise the SVG shapes and set the type itself with the same
-// fonts the page uses.
+// Colours come from the active theme (resolved to plain rgb() strings, so the
+// image export can rasterise the SVG). All text lives in HTML over the SVG,
+// so the export sets the type itself in the theme's font.
 
 import {
   forwardRef,
@@ -27,12 +27,6 @@ import {
   strongestAxis,
 } from "@/components/strength-hexagon/hexagon-model";
 import { cn } from "@/lib/utils";
-
-export const EDITORIAL_THEME = {
-  bg: "#f3eee3",
-  ink: "#1d1a16",
-  muted: "#6f675b",
-};
 
 const SIZE = 600;
 const CENTER = SIZE / 2;
@@ -129,14 +123,14 @@ function useSpringValues(values) {
 }
 
 export const StrengthHexagonEditorial = forwardRef(
-  function StrengthHexagonEditorial({ values, palette, className }, ref) {
+  function StrengthHexagonEditorial({ values, colors, className }, ref) {
     const containerRef = useRef(null);
     const svgRef = useRef(null);
     const id = useId().replace(/:/g, "");
     const animated = useSpringValues(values);
     const overall = overallPercentile(values);
     const strongest = strongestAxis(values);
-    const css = palette.css;
+    const css = colors.css;
 
     const radii = animated.map((value, index) =>
       values[index] == null
@@ -161,7 +155,7 @@ export const StrengthHexagonEditorial = forwardRef(
         canvas.width = SIZE * 2;
         canvas.height = SIZE * 2;
         const context = canvas.getContext("2d");
-        context.fillStyle = EDITORIAL_THEME.bg;
+        context.fillStyle = css.bg;
         context.fillRect(0, 0, canvas.width, canvas.height);
         context.drawImage(image, 0, 0, canvas.width, canvas.height);
         return {
@@ -237,7 +231,7 @@ export const StrengthHexagonEditorial = forwardRef(
                 y1="0"
                 x2="0"
                 y2="6"
-                stroke={EDITORIAL_THEME.ink}
+                stroke={css.ink}
                 strokeOpacity="0.28"
                 strokeWidth="1.2"
               />
@@ -268,7 +262,7 @@ export const StrengthHexagonEditorial = forwardRef(
               cy={CENTER}
               r={ring.radius * OUTER}
               fill="none"
-              stroke={EDITORIAL_THEME.ink}
+              stroke={css.ink}
               strokeOpacity={0.12 + index * 0.05}
               strokeWidth={index === TIER_RINGS.length - 1 ? 1.2 : 0.8}
               strokeDasharray={index % 2 === 0 ? "2 4" : undefined}
@@ -284,7 +278,7 @@ export const StrengthHexagonEditorial = forwardRef(
                 y1={CENTER}
                 x2={x}
                 y2={y}
-                stroke={EDITORIAL_THEME.ink}
+                stroke={css.ink}
                 strokeOpacity="0.1"
                 strokeWidth="0.8"
               />
@@ -299,7 +293,7 @@ export const StrengthHexagonEditorial = forwardRef(
               cy={CENTER}
               r={OUTER * 1.07}
               fill="none"
-              stroke={EDITORIAL_THEME.ink}
+              stroke={css.ink}
               strokeOpacity="0.55"
               strokeWidth="1.6"
               strokeLinecap="round"
@@ -328,7 +322,7 @@ export const StrengthHexagonEditorial = forwardRef(
               fill={
                 values[index] == null ? `url(#${id}-hatch)` : `url(#${id}-fill)`
               }
-              stroke={EDITORIAL_THEME.ink}
+              stroke={css.ink}
               strokeOpacity={values[index] == null ? 0.35 : 0.85}
               strokeWidth="1"
               strokeDasharray={values[index] == null ? "3 3" : undefined}
@@ -356,7 +350,7 @@ export const StrengthHexagonEditorial = forwardRef(
           <polygon
             points={tips.map(([x, y]) => `${x},${y}`).join(" ")}
             fill="none"
-            stroke={EDITORIAL_THEME.ink}
+            stroke={css.ink}
             strokeWidth="1.4"
             strokeLinejoin="round"
           />
@@ -366,12 +360,8 @@ export const StrengthHexagonEditorial = forwardRef(
                 cx={x}
                 cy={y}
                 r={values[index] == null ? 2.5 : 4}
-                fill={
-                  values[index] == null
-                    ? EDITORIAL_THEME.bg
-                    : EDITORIAL_THEME.ink
-                }
-                stroke={EDITORIAL_THEME.ink}
+                fill={values[index] == null ? css.bg : css.ink}
+                stroke={css.ink}
                 strokeWidth="1.2"
               />
               {strongest?.axis === HEXAGON_AXES[index] && (
@@ -380,7 +370,7 @@ export const StrengthHexagonEditorial = forwardRef(
                   cy={y}
                   r="10"
                   fill="none"
-                  stroke={EDITORIAL_THEME.ink}
+                  stroke={css.ink}
                   strokeWidth="1"
                   className="motion-safe:animate-pulse"
                 />
@@ -392,8 +382,8 @@ export const StrengthHexagonEditorial = forwardRef(
             cx={CENTER}
             cy={CENTER}
             r={INNER + 34}
-            fill={EDITORIAL_THEME.bg}
-            stroke={EDITORIAL_THEME.ink}
+            fill={css.bg}
+            stroke={css.ink}
             strokeOpacity="0.8"
             strokeWidth="1"
           />
@@ -412,9 +402,8 @@ export const StrengthHexagonEditorial = forwardRef(
               style={{
                 left: `${(x / SIZE) * 100}%`,
                 top: `${(y / SIZE) * 100}%`,
-                color: EDITORIAL_THEME.muted,
-                fontFamily: "'Fraunces Variable', Georgia, serif",
-                background: EDITORIAL_THEME.bg,
+                color: css.muted,
+                background: css.bg,
                 padding: "0 3px",
               }}
             >
@@ -426,19 +415,15 @@ export const StrengthHexagonEditorial = forwardRef(
         {overall != null && (
           <div
             className="pointer-events-none absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center leading-none"
-            style={{ color: EDITORIAL_THEME.ink }}
+            style={{ color: css.ink }}
           >
-            <span
-              className="text-3xl font-semibold sm:text-4xl"
-              style={{ fontFamily: "'Fraunces Variable', Georgia, serif" }}
-            >
+            <span className="text-3xl font-semibold sm:text-4xl">
               {overall}
             </span>
             <span
               className="mt-1 text-[10px] sm:text-xs"
               style={{
-                color: EDITORIAL_THEME.muted,
-                fontFamily: "'IBM Plex Sans Condensed', sans-serif",
+                color: css.muted,
               }}
             >
               overall
@@ -456,15 +441,14 @@ export const StrengthHexagonEditorial = forwardRef(
               style={{
                 left: `${(x / SIZE) * 100}%`,
                 top: `${(y / SIZE) * 100}%`,
-                color: EDITORIAL_THEME.ink,
+                color: css.ink,
                 opacity: value == null ? 0.6 : 1,
               }}
             >
               <span
                 className="text-[11px] tracking-wide sm:text-xs"
                 style={{
-                  color: EDITORIAL_THEME.muted,
-                  fontFamily: "'IBM Plex Sans Condensed', sans-serif",
+                  color: css.muted,
                 }}
               >
                 {axis.label}
@@ -474,18 +458,11 @@ export const StrengthHexagonEditorial = forwardRef(
                   "mt-0.5 font-semibold",
                   value == null ? "text-sm" : "text-lg sm:text-xl",
                 )}
-                style={{ fontFamily: "'Fraunces Variable', Georgia, serif" }}
               >
                 {formatAxisValue(value, axis)}
               </span>
               {isStrongest && (
-                <span
-                  className="mt-1 rounded-full px-1.5 py-0.5 text-[10px] text-white"
-                  style={{
-                    background: EDITORIAL_THEME.ink,
-                    fontFamily: "'IBM Plex Sans Condensed', sans-serif",
-                  }}
-                >
+                <span className="bg-foreground text-background mt-1 rounded-full px-1.5 py-0.5 text-[10px]">
                   Top {Math.max(1, 100 - Math.round(value))}%
                 </span>
               )}

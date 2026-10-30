@@ -24,10 +24,12 @@ function compileShader(gl, type, source) {
 }
 
 export function createHexagonRenderer(canvas, fragmentSource) {
-  // preserveDrawingBuffer lets the story card export read the canvas at any
-  // moment instead of racing the next animation frame.
+  // The canvas is transparent (premultiplied) so the theme background shows
+  // through. preserveDrawingBuffer lets the image export read the canvas at
+  // any moment instead of racing the next animation frame.
   const gl = canvas.getContext("webgl2", {
-    alpha: false,
+    alpha: true,
+    premultipliedAlpha: true,
     antialias: false,
     preserveDrawingBuffer: true,
     powerPreference: "high-performance",

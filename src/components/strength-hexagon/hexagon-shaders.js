@@ -1,17 +1,21 @@
-// GLSL for the two WebGL strength hexagon views. Both are a single full-screen
-// fragment shader with no geometry: every pixel casts a ray from the camera in
+// GLSL for the WebGL strength shape. It is a single full-screen fragment
+// shader with no geometry: every pixel casts a ray from the camera in
 // hexagon-model.js and works out what it sees analytically. That keeps the
-// whole effect dependency-free (no three.js) and lets the glow be computed per
-// pixel instead of faked with a bloom pass.
+// effect dependency-free (no three.js) and lets the glow be computed per pixel
+// instead of faked with a bloom pass.
 //
-// The scene: a floor at y = 0 carrying the tier rings, the six axis spokes and
-// a radar sweep, and above it the athlete's shape. The hologram stacks the
-// shape in translucent slices to make a glowing prism; the crystal raymarches
-// a faceted gem whose girdle is the shape, so each facet belongs to one axis.
+// The scene: a floor at y = 0 carrying the tier rings, the axis spokes and a
+// slow radar sweep, and above it the athlete's shape stacked in translucent
+// slices to make a glowing prism.
+//
+// The canvas is transparent so the theme's own background shows through. The
+// scene is gathered as two layers, crisp lines and soft coloured glow, so a
+// light theme can draw the lines as ink and the glow as a tint while a dark
+// theme draws both as light.
 
 import { HEXAGON_AXES } from "@/components/strength-hexagon/hexagon-model";
 
-const COMMON = /* glsl */ `#version 300 es
+export const HOLOGRAM_FRAGMENT = /* glsl */ `#version 300 es
 precision highp float;
 #define AXES ${HEXAGON_AXES.length}
 out vec4 fragColor;
@@ -30,7 +34,9 @@ uniform float uRings[4];
 uniform vec3 uCore;
 uniform vec3 uEdge;
 uniform vec3 uAccent;
-uniform vec3 uBg;
+uniform vec3 uLine;
+uniform vec3 uSpark;
+uniform float uLight;
 uniform float uHeight;
 uniform float uSweep;
 
@@ -114,7 +120,7 @@ vec3 sectorEdge(vec2 p) {
   return vec3(n, dot(n, A));
 }
 
-// Each axis gets its own hue, drifting between the palette's core and accent.
+// The theme's two chart colours, drifting around the shape.
 vec3 axisHue(float t) {
   return mix(uCore, uAccent, 0.5 + 0.5 * sin(t * TAU));
 }
@@ -139,87 +145,58 @@ float raySegment(vec3 ro, vec3 rd, vec3 a, vec3 b) {
   return length(ro + rd * t - q);
 }
 
-// The floor: tier rings, axis spokes, a dot grid and a radar sweep, plus a
-// pool of light cast by the shape above.
-vec3 floorLayer(vec3 ro, vec3 rd) {
-  if (rd.y >= -0.0001) return vec3(0.0);
+// Two layers are gathered as the scene is traced: L, crisp lines (rings,
+// spokes, the prism's edges) as a single intensity, and G, soft coloured light
+// (fills, glows, beacons, motes). finish() composes them for the theme.
+float L;
+vec3 G;
+
+// The floor: tier rings, axis spokes, a faint dot grid and a slow sweep, plus
+// a pool of light cast by the shape above.
+void floorLayer(vec3 ro, vec3 rd) {
+  if (rd.y >= -0.0001) return;
   float t = -ro.y / rd.y;
   vec2 q = (ro + rd * t).xz;
   float r = length(q);
   float fade = exp(-max(r - 1.05, 0.0) * 3.0);
-  float hn = ringNorm(q);
+  float rn = ringNorm(q);
 
   float rings = 0.0;
   for (int k = 0; k < 4; k++) {
-    float w = 0.0035 + 0.0015 * float(k);
-    rings += exp(-abs(hn - uRings[k]) / w) * (0.3 + 0.2 * float(k));
+    float w = 0.0035 + 0.0012 * float(k);
+    rings += exp(-abs(rn - uRings[k]) / w) * (0.3 + 0.15 * float(k));
   }
-  float frame = exp(-abs(hn - 1.08) / 0.0025) * 0.45;
+  float frame = exp(-abs(rn - 1.08) / 0.0025) * 0.4;
 
   float spokes = 0.0;
   for (int i = 0; i < AXES; i++) {
     vec2 d = axisDir(i);
     float along = dot(q, d);
     float perp = abs(d.x * q.y - d.y * q.x);
-    float on = smoothstep(-0.02, 0.02, along) * smoothstep(1.07, 1.0, along);
+    float on = smoothstep(-0.02, 0.02, along) * smoothstep(1.08, 1.0, along);
     spokes += exp(-perp / 0.0035) * on * mix(0.25, 1.0, uTested[i]);
   }
 
   float ang = atan(q.x, q.y);
-  float sweepAngle = mod(uTime * 0.7, TAU) - PI;
+  float sweepAngle = mod(uTime * 0.35, TAU) - PI;
   float da = mod(sweepAngle - ang + 2.0 * TAU, TAU);
-  float sweep = exp(-da * 2.5) * step(hn, 1.0) * uSweep;
+  float sweep = exp(-da * 3.0) * step(rn, 1.0) * uSweep * 0.5;
 
   vec2 cell = fract(q * 18.0) - 0.5;
-  float dots = exp(-dot(cell, cell) * 140.0) * 0.22 * step(hn, 1.0);
+  float dots = exp(-dot(cell, cell) * 160.0) * 0.12 * step(rn, 1.0);
 
   float sd = sdPoly(q);
-  float pool = exp(-max(sd, 0.0) * 9.0) * (sd < 0.0 ? 0.5 : 0.35);
+  float pool = exp(-max(sd, 0.0) * 9.0) * (sd < 0.0 ? 0.45 : 0.3);
 
-  vec3 c = uEdge * (rings * 0.5 + frame * 0.55);
-  c += uCore * spokes * 0.45;
-  c += uCore * dots * (0.35 + 2.5 * sweep);
-  c += uAccent * sweep * (0.06 + rings * 1.6 + spokes * 1.2);
-  c += uCore * pool * 0.3;
-  return c * fade;
+  L += (rings * 0.5 + frame * 0.55 + spokes * 0.3) * fade;
+  G += (uCore * (spokes * 0.15 + dots * (0.35 + 2.0 * sweep) + pool * 0.28)
+    + uAccent * sweep * (0.05 + rings * 1.2 + spokes * 0.9)) * fade;
 }
 
-// A glowing beacon on a vertex, with an anamorphic streak that grows into a
-// full star once the axis passes the elite ring.
-vec3 beacon(vec3 ro, vec3 rd, vec2 uv, vec3 p, float value, float tested, float phase) {
-  float pulse = 0.85 + 0.15 * sin(uTime * 2.4 + phase);
-  float size = mix(0.01, 0.026, value) * pulse;
-  vec3 c = mix(uEdge, vec3(1.0), 0.5) * pointGlow(ro, rd, p, size) * tested;
-  vec2 d = uv - projectToScreen(p);
-  float streak = exp(-abs(d.y) * 260.0) * exp(-abs(d.x) * 9.0);
-  float elite = smoothstep(0.93, 0.99, value);
-  float vertical = exp(-abs(d.x) * 260.0) * exp(-abs(d.y) * 12.0) * elite;
-  c += mix(uCore, uEdge, 0.5) * (streak * (0.12 + 0.5 * elite) + vertical * 0.5) * tested * pulse;
-  return c;
-}
-
-vec3 backdrop(vec2 uv) {
-  vec3 col = uBg;
-  col += uCore * 0.06 * exp(-dot(uv, uv) * 1.2);
-  vec2 top = uv - vec2(0.0, 0.7);
-  col += uAccent * 0.035 * exp(-dot(top, top) * 2.0);
-  return col;
-}
-
-vec3 finish(vec3 col, vec2 uv) {
-  col = vec3(1.0) - exp(-col * 1.35);
-  col *= 1.0 - 0.25 * dot(uv * 0.55, uv * 0.55);
-  col += (hash12(gl_FragCoord.xy + fract(uTime) * 91.0) - 0.5) * (2.0 / 255.0);
-  return col;
-}
-`;
-
-export const HOLOGRAM_FRAGMENT = `${COMMON}
 // The shape sliced into translucent layers from the floor to uHeight. Adding
 // them together reads as a solid of light, brightest at its edges.
-vec3 prismLayers(vec3 ro, vec3 rd) {
-  vec3 c = vec3(0.0);
-  if (abs(rd.y) < 1e-4) return c;
+void prismLayers(vec3 ro, vec3 rd) {
+  if (abs(rd.y) < 1e-4) return;
   const int N = 16;
   for (int k = 0; k < N; k++) {
     float fk = float(k) / float(N - 1);
@@ -229,226 +206,89 @@ vec3 prismLayers(vec3 ro, vec3 rd) {
     float sd = sdPoly(q);
     float inside = smoothstep(0.003, -0.003, sd);
     float edge = exp(-abs(sd) / 0.005);
-    vec3 hue = axisHue(atan(q.x, q.y) / TAU + uTime * 0.03);
-    float scan = 0.55 + 0.45 * sin(fk * 40.0 - uTime * 4.0);
-    c += hue * inside * 0.022 * scan;
-    c += mix(hue, uEdge, 0.6) * edge * (0.035 + 0.05 * fk);
+    vec3 hue = axisHue(atan(q.x, q.y) / TAU + uTime * 0.015);
+    float scan = 0.8 + 0.2 * sin(fk * 40.0 - uTime * 2.0);
+    G += hue * (inside * 0.022 * scan + edge * 0.015);
+    L += edge * (0.025 + 0.04 * fk);
     if (k == N - 1) {
-      float contour = smoothstep(0.82, 1.0, 0.5 + 0.5 * sin(-sd * 30.0 + uTime * 1.6));
-      c += hue * inside * (0.07 + 0.1 * contour);
-      c += uEdge * edge * 0.9;
-      c += uEdge * exp(-abs(sd) / 0.02) * 0.16;
-      c += mix(hue, uEdge, 0.4) * exp(-max(sd, 0.0) / 0.07) * 0.07;
+      float contour = smoothstep(0.85, 1.0, 0.5 + 0.5 * sin(-sd * 30.0 + uTime * 0.8));
+      G += hue * inside * (0.07 + 0.07 * contour);
+      L += edge * 0.9;
+      G += uEdge * exp(-abs(sd) / 0.02) * 0.14;
+      G += mix(hue, uEdge, 0.4) * exp(-max(sd, 0.0) / 0.07) * 0.06;
     }
   }
-  return c;
 }
 
-vec3 pillars(vec3 ro, vec3 rd, vec2 uv) {
-  vec3 c = vec3(0.0);
+// A glowing beacon on a vertex, with a short streak that grows into a full
+// star once the axis passes the elite ring.
+void beacon(vec3 ro, vec3 rd, vec2 uv, vec3 p, float value, float tested, float phase) {
+  float pulse = 0.9 + 0.1 * sin(uTime * 1.8 + phase);
+  float size = mix(0.01, 0.024, value) * pulse;
+  G += uSpark * pointGlow(ro, rd, p, size) * tested;
+  vec2 d = uv - projectToScreen(p);
+  float streak = exp(-abs(d.y) * 280.0) * exp(-abs(d.x) * 11.0);
+  float elite = smoothstep(0.93, 0.99, value);
+  float vertical = exp(-abs(d.x) * 280.0) * exp(-abs(d.y) * 13.0) * elite;
+  G += mix(uCore, uEdge, 0.5) * (streak * (0.08 + 0.4 * elite) + vertical * 0.4) * tested * pulse;
+}
+
+void pillars(vec3 ro, vec3 rd, vec2 uv) {
   for (int i = 0; i < AXES; i++) {
     vec3 base = vec3(uVerts[i].x, 0.0, uVerts[i].y);
     vec3 top = base + vec3(0.0, uHeight, 0.0);
     float d = raySegment(ro, rd, base, top);
     float tested = uTested[i];
-    c += uEdge * exp(-d / 0.0035) * mix(0.15, 0.8, tested);
-    c += mix(uCore, uEdge, 0.3) * exp(-d / 0.02) * 0.08 * tested;
-    c += beacon(ro, rd, uv, top, uVals[i], tested, float(i));
+    L += exp(-d / 0.0035) * mix(0.15, 0.8, tested);
+    G += mix(uCore, uEdge, 0.3) * exp(-d / 0.02) * 0.06 * tested;
+    beacon(ro, rd, uv, top, uVals[i], tested, float(i));
   }
-  return c;
 }
 
-// Motes of light drifting up out of the shape.
-vec3 motes(vec3 ro, vec3 rd) {
-  vec3 c = vec3(0.0);
-  for (int i = 0; i < 26; i++) {
+// A few motes of light drifting up out of the shape.
+void motes(vec3 ro, vec3 rd) {
+  for (int i = 0; i < 12; i++) {
     float fi = float(i);
     float a = hash11(fi * 7.31 + 0.5) * TAU;
     vec2 dir = vec2(sin(a), cos(a));
     vec3 e = sectorEdge(dir);
     float rho = e.z / max(dot(dir, e.xy), 0.05);
-    float rad = rho * sqrt(hash11(fi * 3.17 + 1.3)) * 0.92;
-    float life = fract(uTime * (0.05 + 0.06 * hash11(fi * 1.91)) + hash11(fi * 5.7));
-    vec3 p = vec3(dir.x * rad, life * (uHeight + 0.6), dir.y * rad);
+    float rad = rho * sqrt(hash11(fi * 3.17 + 1.3)) * 0.9;
+    float life = fract(uTime * (0.03 + 0.04 * hash11(fi * 1.91)) + hash11(fi * 5.7));
+    vec3 p = vec3(dir.x * rad, life * (uHeight + 0.5), dir.y * rad);
     vec3 tint = mix(uEdge, uCore, hash11(fi * 9.1));
-    c += tint * pointGlow(ro, rd, p, 0.0055) * sin(life * PI) * 0.7;
+    G += tint * pointGlow(ro, rd, p, 0.005) * sin(life * PI) * 0.45;
   }
-  return c;
+}
+
+// Output is premultiplied over a transparent canvas. On a dark theme lines
+// and glow are both light. On a light theme the glow becomes a tint of its own
+// hue and the lines are drawn over it in the line colour, like ink.
+vec4 finish() {
+  float dither = (hash12(gl_FragCoord.xy + fract(uTime) * 91.0) - 0.5) / 255.0;
+  if (uLight < 0.5) {
+    vec3 lit = vec3(1.0) - exp(-(G + uLine * L) * 1.35);
+    float alpha = clamp(max(max(lit.r, lit.g), lit.b) + dither, 0.0, 1.0);
+    return vec4(min(lit, vec3(alpha)), alpha);
+  }
+  vec3 glow = vec3(1.0) - exp(-G * 1.6);
+  float peak = max(max(glow.r, glow.g), glow.b);
+  float glowAlpha = clamp(peak * 0.85 + dither, 0.0, 1.0);
+  vec3 glowRgb = glow / max(peak, 1e-4) * glowAlpha;
+  float lineAlpha = 1.0 - exp(-L * 2.2);
+  return vec4(uLine * lineAlpha + glowRgb * (1.0 - lineAlpha), lineAlpha + glowAlpha * (1.0 - lineAlpha));
 }
 
 void main() {
   vec2 uv = screenUv();
   vec3 ro = uCamPos;
   vec3 rd = cameraRay(uv);
-  vec3 col = backdrop(uv);
-  col += floorLayer(ro, rd);
-  col += prismLayers(ro, rd);
-  col += pillars(ro, rd, uv);
-  col += motes(ro, rd);
-  fragColor = vec4(finish(col, uv), 1.0);
-}
-`;
-
-export const CRYSTAL_FRAGMENT = `${COMMON}
-uniform float uGemY;
-uniform float uGemHalf;
-
-// The table (the flat top) sits at this fraction of the crown height, and the
-// pavilion below the girdle runs deeper than the crown, like a cut stone.
-#define TABLE 0.5
-#define PAVILION 1.55
-
-// A cut gem over the athlete's polygon: a crown rising from the girdle to a
-// flat table, and a pavilion falling to a point. Within one sector every facet
-// is a plane, so the distance to that plane is the distance estimate.
-float facetDist(vec3 p) {
-  vec3 e = sectorEdge(p.xz);
-  float invC = 1.0 / e.z;
-  float y = p.y - uGemY;
-  float h = y >= 0.0 ? uGemHalf : uGemHalf * PAVILION;
-  float f = dot(p.xz, e.xy) * invC + abs(y) / h - 1.0;
-  return f / sqrt(invC * invC + 1.0 / (h * h));
-}
-
-float gemDist(vec3 p) {
-  return max(facetDist(p), p.y - uGemY - uGemHalf * TABLE);
-}
-
-vec3 gemNormal(vec3 p) {
-  if (p.y - uGemY - uGemHalf * TABLE > facetDist(p) - 0.0005) return vec3(0.0, 1.0, 0.0);
-  vec3 e = sectorEdge(p.xz);
-  float invC = 1.0 / e.z;
-  float y = p.y - uGemY;
-  float h = y >= 0.0 ? uGemHalf : uGemHalf * PAVILION;
-  return normalize(vec3(e.x * invC, (y >= 0.0 ? 1.0 : -1.0) / h, e.y * invC));
-}
-
-// A dark studio with three soft boxes circling it. The boxes are what make the
-// facets flash as the camera orbits.
-vec3 studio(vec3 d) {
-  float a = atan(d.x, d.z);
-  vec3 c = mix(uBg * 2.0, uBg * 4.0 + uCore * 0.05, smoothstep(-0.3, 0.8, d.y));
-  for (int k = 0; k < 3; k++) {
-    float la = float(k) * 2.0944 + uTime * 0.25;
-    float band = smoothstep(0.93, 0.995, cos(a - la));
-    band *= smoothstep(-0.05, 0.25, d.y) * smoothstep(0.95, 0.6, d.y);
-    c += vec3(1.0) * band * 1.6;
-  }
-  c += uCore * smoothstep(0.25, 0.0, abs(d.y + 0.05)) * 0.35;
-  c += mix(uCore, uEdge, 0.3) * smoothstep(0.0, -0.7, d.y) * 0.45;
-  c += uAccent * smoothstep(0.6, 1.0, d.y) * 0.25;
-  return c;
-}
-
-bool marchGem(vec3 ro, vec3 rd, int steps, out float tHit, out float minD) {
-  minD = 1e9;
-  tHit = 0.0;
-  vec3 oc = ro - vec3(0.0, uGemY, 0.0);
-  float b = dot(oc, rd);
-  float h = b * b - (dot(oc, oc) - 1.2 * 1.2);
-  if (h < 0.0) return false;
-  h = sqrt(h);
-  float t = max(-b - h, 0.0);
-  float tEnd = -b + h;
-  for (int i = 0; i < 96; i++) {
-    if (i >= steps || t > tEnd) break;
-    float d = gemDist(ro + rd * t);
-    minD = min(minD, d);
-    if (d < 0.0012) {
-      tHit = t;
-      return true;
-    }
-    t += max(d * 0.7, 0.0015);
-  }
-  return false;
-}
-
-vec3 shadeGem(vec3 ro, vec3 rd, vec3 p, vec2 uv, bool detailed) {
-  vec3 n = gemNormal(p);
-  int sector = sectorOf(p.xz);
-  vec3 hue = axisHue((float(sector) + 0.5) / float(AXES) + uTime * 0.02);
-  float tested = 0.5 * (uTested[sector] + uTested[(sector + 1) % AXES]);
-
-  vec3 lightDir = normalize(vec3(0.4, 0.9, -0.3));
-  float fres = pow(1.0 - max(dot(-rd, n), 0.0), 3.0);
-  vec3 refl = studio(reflect(rd, n));
-  vec3 refr = vec3(
-    studio(refract(rd, n, 1.0 / 1.5)).r,
-    studio(refract(rd, n, 1.0 / 1.54)).g,
-    studio(refract(rd, n, 1.0 / 1.58)).b
-  );
-
-  bool onTable = n.y > 0.999;
-  vec3 e = sectorEdge(p.xz);
-  float gauge = dot(p.xz, e.xy) / e.z;
-
-  vec3 body = hue * (0.22 + 0.5 * pow(max(dot(n, lightDir), 0.0), 2.0));
-  body += refr * mix(vec3(1.0), hue, 0.65) * 0.7;
-  body += hue * 0.25 + uCore * pow(1.0 - gauge, 3.0) * (0.35 + 0.15 * sin(uTime * 1.7));
-
-  vec3 col = mix(body, refl, 0.12 + fres * 0.7);
-  col += vec3(1.0) * pow(max(dot(reflect(rd, n), lightDir), 0.0), 80.0) * 1.4;
-
-  if (onTable) {
-    // The table is a window onto the shape: contours of it flow inward.
-    float contour = smoothstep(0.8, 1.0, 0.5 + 0.5 * sin(gauge * 48.0 + uTime * 1.6));
-    col += hue * contour * 0.35 + uEdge * exp(-abs(facetDist(p)) / 0.006) * 1.1;
-  }
-
-  if (detailed) {
-    // Seams: the girdle and the ridges running from each vertex inward, with
-    // light travelling along them.
-    vec2 q = p.xz;
-    float seam = exp(-abs(p.y - uGemY) / 0.007);
-    if (!onTable) {
-      for (int k = 0; k < 2; k++) {
-        int i = (sector + k) % AXES;
-        vec2 d = axisDir(i);
-        seam += exp(-abs(d.x * q.y - d.y * q.x) / 0.006) * mix(0.3, 1.0, uTested[i]);
-      }
-    }
-    float flow = 0.6 + 0.4 * sin(length(q) * 22.0 - uTime * 3.0);
-    col += uEdge * seam * flow * mix(0.35, 1.0, tested) * 0.9;
-  }
-
-  float luma = dot(col, vec3(0.3, 0.5, 0.2));
-  return mix(vec3(luma) * 0.6, col, mix(0.3, 1.0, tested));
-}
-
-void main() {
-  vec2 uv = screenUv();
-  vec3 ro = uCamPos;
-  vec3 rd = cameraRay(uv);
-  vec3 col = backdrop(uv);
-
-  float tHit;
-  float minD;
-  bool hit = marchGem(ro, rd, 96, tHit, minD);
-  if (hit) {
-    col = shadeGem(ro, rd, ro + rd * tHit, uv, true);
-  } else {
-    col += mix(uCore, uAccent, 0.3) * exp(-minD * 7.0) * 0.4;
-    col += floorLayer(ro, rd);
-    // A glossy floor: a dim reflection of the gem under it.
-    if (rd.y < 0.0) {
-      vec3 fp = ro + rd * (-ro.y / rd.y);
-      vec3 rr = reflect(rd, vec3(0.0, 1.0, 0.0));
-      float tr;
-      float md;
-      if (marchGem(fp, rr, 48, tr, md)) {
-        vec3 reflected = shadeGem(fp, rr, fp + rr * tr, uv, false);
-        col += reflected * 0.22 * exp(-length(fp.xz) * 0.8);
-      } else {
-        col += mix(uCore, uAccent, 0.3) * exp(-md * 7.0) * 0.12;
-      }
-    }
-  }
-
-  for (int i = 0; i < AXES; i++) {
-    vec3 v = vec3(uVerts[i].x, uGemY, uVerts[i].y);
-    col += beacon(ro, rd, uv, v, uVals[i], uTested[i], float(i));
-  }
-
-  fragColor = vec4(finish(col, uv), 1.0);
+  L = 0.0;
+  G = uCore * 0.035 * exp(-dot(uv, uv) * 1.6);
+  floorLayer(ro, rd);
+  prismLayers(ro, rd);
+  pillars(ro, rd, uv);
+  motes(ro, rd);
+  fragColor = finish();
 }
 `;

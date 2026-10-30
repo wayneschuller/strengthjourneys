@@ -1,10 +1,10 @@
 // The strength hexagon: the big four lifts and pull-ups, each scored 0 to 100
 // as a percentile, drawn as one shape (a pentagon while there are five axes;
-// the module keeps the hexagon name from the original six-axis design). This module holds what every renderer
-// shares, so the WebGL views, their HTML labels, the editorial SVG and the
-// story card export all agree on where a vertex sits and what it means:
-// the axes, the radius mapping, the tier rings, the camera, the palettes,
-// the lab's preset athletes and the archetype name a shape earns.
+// the module keeps the hexagon name from the original six-axis design). This
+// module holds what every renderer shares, so the WebGL view, its HTML labels,
+// the SVG fallback and the story card export all agree on where a vertex sits
+// and what it means: the axes, the radius mapping, the tier rings, the camera,
+// the comparison groups and the archetype name a shape earns.
 
 import { MODELED_UNIVERSE_PROFILES } from "@/lib/strength-circles/strength-percentile-data";
 
@@ -186,70 +186,32 @@ function normalize(v) {
   return [v[0] / length, v[1] / length, v[2] / length];
 }
 
-// ─── Palettes ───────────────────────────────────────────────────────────────
-// Named for how they look. Colours are linear-ish RGB in 0..1 for the shaders;
-// `css` holds the same hues for HTML text, glows and the card export.
+// ─── Comparison groups ──────────────────────────────────────────────────────
+// The How Strong Am I universes, each with the words the headline uses.
 
-export const HEXAGON_PALETTES = {
-  ember: {
-    label: "Ember",
-    core: [1.0, 0.42, 0.12],
-    edge: [1.0, 0.78, 0.42],
-    accent: [0.95, 0.16, 0.32],
-    bg: [0.035, 0.02, 0.03],
-    css: { core: "#ff6b1f", edge: "#ffc76b", accent: "#f22952", bg: "#0b0508" },
+export const COMPARISON_GROUPS = [
+  { universe: "General Population", label: "Everyone", phrase: "people" },
+  { universe: "Gym-Goers", label: "Gym-goers", phrase: "gym-goers" },
+  {
+    universe: "Barbell Lifters",
+    label: "Barbell lifters",
+    phrase: "barbell lifters",
   },
-  glacier: {
-    label: "Glacier",
-    core: [0.2, 0.7, 1.0],
-    edge: [0.78, 0.95, 1.0],
-    accent: [0.36, 0.34, 1.0],
-    bg: [0.015, 0.03, 0.06],
-    css: { core: "#33b3ff", edge: "#c7f2ff", accent: "#5c57ff", bg: "#040810" },
+  {
+    universe: "Powerlifting Culture",
+    label: "Powerlifters",
+    phrase: "powerlifters",
   },
-  aurora: {
-    label: "Aurora",
-    core: [0.1, 0.95, 0.7],
-    edge: [0.85, 1.0, 0.92],
-    accent: [0.75, 0.25, 1.0],
-    bg: [0.02, 0.03, 0.05],
-    css: { core: "#1af2b3", edge: "#d9ffeb", accent: "#bf40ff", bg: "#05080d" },
-  },
-  gilded: {
-    label: "Gilded",
-    core: [1.0, 0.74, 0.28],
-    edge: [1.0, 0.94, 0.75],
-    accent: [0.85, 0.45, 0.18],
-    bg: [0.04, 0.03, 0.02],
-    css: { core: "#ffbd47", edge: "#fff0bf", accent: "#d9732e", bg: "#0a0805" },
-  },
-};
-
-// ─── Lab presets ────────────────────────────────────────────────────────────
-// Percentiles per axis in HEXAGON_AXES order; null is an untested axis.
-
-export const HEXAGON_PRESETS = [
-  { id: "all-rounder", label: "All-rounder", values: [72, 66, 76, 70, 64] },
-  { id: "powerlifter", label: "Powerlifter", values: [93, 90, 96, 58, 38] },
-  { id: "calisthenics", label: "Calisthenics", values: [52, 61, 55, 79, 97] },
-  { id: "strongman", label: "Strongman", values: [92, 74, 97, 91, 35] },
-  { id: "first-year", label: "First year", values: [44, 36, 50, 40, null] },
-  { id: "elite", label: "Elite", values: [99, 97, 99, 95, 93] },
 ];
 
-export const AGE_GROUPS = [
-  { id: "all", label: "of all ages", phrase: "athletes" },
-  { id: "20s", label: "20 to 29", phrase: "athletes aged 20 to 29" },
-  { id: "30s", label: "30 to 39", phrase: "athletes aged 30 to 39" },
-  { id: "40s", label: "40 to 49", phrase: "athletes aged 40 to 49" },
-  { id: "50s", label: "50 to 59", phrase: "athletes aged 50 to 59" },
-  { id: "60s", label: "60 and over", phrase: "athletes aged 60 and over" },
-];
-
-export function headlineFor(values, ageGroupId) {
+export function headlineFor(values, universe, { sex, age }) {
   const overall = overallPercentile(values);
   if (overall == null) return "Add a lift to see your shape";
   const group =
-    AGE_GROUPS.find((entry) => entry.id === ageGroupId) ?? AGE_GROUPS[0];
-  return `Stronger than ${overall}% of ${group.phrase}`;
+    COMPARISON_GROUPS.find((entry) => entry.universe === universe) ??
+    COMPARISON_GROUPS[0];
+  const who = sex === "female" ? "women" : "men";
+  const phrase =
+    group.universe === "General Population" ? who : `${who} ${group.phrase}`;
+  return `Stronger than ${overall}% of ${phrase} aged ${age}`;
 }

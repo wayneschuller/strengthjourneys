@@ -38,7 +38,8 @@ const SIZE = 600;
 const CENTER = SIZE / 2;
 const OUTER = 212;
 const INNER = 22;
-const WEDGE_HALF_ANGLE = Math.PI / 6 - 0.03;
+const HALF_SECTOR = Math.PI / HEXAGON_AXES.length;
+const WEDGE_HALF_ANGLE = HALF_SECTOR - 0.03;
 
 function polar(angle, radius) {
   return [CENTER + Math.sin(angle) * radius, CENTER - Math.cos(angle) * radius];
@@ -275,7 +276,7 @@ export const StrengthHexagonEditorial = forwardRef(
           ))}
 
           {HEXAGON_AXES.map((axis, index) => {
-            const [x, y] = polar(axisAngle(index) + Math.PI / 6, OUTER);
+            const [x, y] = polar(axisAngle(index) + HALF_SECTOR, OUTER);
             return (
               <line
                 key={axis.key}
@@ -398,10 +399,10 @@ export const StrengthHexagonEditorial = forwardRef(
           />
         </svg>
 
-        {/* Tier names along the gap between Legs and Push */}
+        {/* Tier names along the gaps either side of the top axis */}
         {TIER_RINGS.map((ring, index) => {
           const [x, y] = polar(
-            index % 2 === 0 ? Math.PI / 6 : -Math.PI / 6,
+            index % 2 === 0 ? HALF_SECTOR : -HALF_SECTOR,
             ring.radius * OUTER,
           );
           return (

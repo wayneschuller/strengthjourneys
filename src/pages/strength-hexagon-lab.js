@@ -1,7 +1,7 @@
 // pages/strength-hexagon-lab.js
 //
-// A workbench for the strength hexagon: six strength qualities drawn as one
-// shareable shape. Three renderings of the same scores sit side by side so
+// A workbench for the strength hexagon: the big four lifts and pull-ups drawn
+// as one shareable shape. Three renderings of the same scores sit side by side so
 // we can judge which one makes an athlete want to post it: a WebGL hologram,
 // a WebGL crystal, and a print-magazine editorial chart. Scores are entered
 // directly as percentiles here; wiring them to real lifts comes once a look
@@ -62,8 +62,9 @@ export default function StrengthHexagonLabPage() {
           Strength Hexagon Lab
         </PageHeaderHeading>
         <PageHeaderDescription>
-          Six qualities of strength drawn as one shape. Try each look, drag the
-          3D ones to spin them, and save a story card to see how it posts.
+          The big four lifts and pull-ups drawn as one shape. Try each look,
+          drag the 3D ones to spin them, and save a story card to see how it
+          posts.
         </PageHeaderDescription>
       </PageHeader>
       <HexagonLab />
@@ -187,7 +188,7 @@ function HexagonLab() {
               className="text-sm"
               style={{ color: theme.muted, fontFamily: CONDENSED }}
             >
-              My strength hexagon
+              My strength profile
             </p>
             <h2
               className="mt-1 text-center text-3xl font-semibold sm:text-4xl"

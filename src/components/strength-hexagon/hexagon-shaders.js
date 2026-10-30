@@ -9,8 +9,11 @@
 // shape in translucent slices to make a glowing prism; the crystal raymarches
 // a faceted gem whose girdle is the shape, so each facet belongs to one axis.
 
+import { HEXAGON_AXES } from "@/components/strength-hexagon/hexagon-model";
+
 const COMMON = /* glsl */ `#version 300 es
 precision highp float;
+#define AXES ${HEXAGON_AXES.length}
 out vec4 fragColor;
 
 uniform vec2 uRes;
@@ -20,9 +23,9 @@ uniform vec3 uCamFwd;
 uniform vec3 uCamRight;
 uniform vec3 uCamUp;
 uniform float uFocal;
-uniform vec2 uVerts[6];
-uniform float uVals[6];
-uniform float uTested[6];
+uniform vec2 uVerts[AXES];
+uniform float uVals[AXES];
+uniform float uTested[AXES];
 uniform float uRings[4];
 uniform vec3 uCore;
 uniform vec3 uEdge;
@@ -33,7 +36,7 @@ uniform float uSweep;
 
 #define PI 3.14159265
 #define TAU 6.28318531
-#define SECTOR 1.04719755
+#define SECTOR (TAU / float(AXES))
 
 vec2 screenUv() {
   return (gl_FragCoord.xy - 0.5 * uRes) / (0.5 * uRes.y);
@@ -71,8 +74,8 @@ vec2 axisDir(int i) {
 float sdPoly(vec2 p) {
   float d = dot(p - uVerts[0], p - uVerts[0]);
   float s = 1.0;
-  for (int i = 0; i < 6; i++) {
-    int j = (i + 5) % 6;
+  for (int i = 0; i < AXES; i++) {
+    int j = (i + AXES - 1) % AXES;
     vec2 e = uVerts[j] - uVerts[i];
     vec2 w = p - uVerts[i];
     vec2 b = w - e * clamp(dot(w, e) / dot(e, e), 0.0, 1.0);
@@ -83,28 +86,28 @@ float sdPoly(vec2 p) {
   return s * sqrt(d);
 }
 
-// Radius of p measured as a regular hexagon whose vertices sit on the axes,
-// so a tier ring of radius R is the set where hexNorm(p) == R.
-float hexNorm(vec2 p) {
-  float m = 0.0;
-  for (int k = 0; k < 3; k++) {
+// Radius of p measured as a regular polygon whose vertices sit on the axes,
+// so a tier ring of radius R is the set where ringNorm(p) == R.
+float ringNorm(vec2 p) {
+  float m = -1e9;
+  for (int k = 0; k < AXES; k++) {
     float a = float(k) * SECTOR + SECTOR * 0.5;
-    m = max(m, abs(dot(p, vec2(sin(a), cos(a)))));
+    m = max(m, dot(p, vec2(sin(a), cos(a))));
   }
-  return m / 0.8660254;
+  return m / cos(SECTOR * 0.5);
 }
 
 int sectorOf(vec2 p) {
   float a = atan(p.x, p.y);
   if (a < 0.0) a += TAU;
-  return min(int(a / SECTOR), 5);
+  return min(int(a / SECTOR), AXES - 1);
 }
 
 // Outward normal (xy) and offset (z) of the shape edge in the sector holding p.
 vec3 sectorEdge(vec2 p) {
   int i = sectorOf(p);
   vec2 A = uVerts[i];
-  vec2 B = uVerts[(i + 1) % 6];
+  vec2 B = uVerts[(i + 1) % AXES];
   vec2 e = B - A;
   vec2 n = normalize(vec2(e.y, -e.x));
   if (dot(n, A) < 0.0) n = -n;
@@ -144,7 +147,7 @@ vec3 floorLayer(vec3 ro, vec3 rd) {
   vec2 q = (ro + rd * t).xz;
   float r = length(q);
   float fade = exp(-max(r - 1.05, 0.0) * 3.0);
-  float hn = hexNorm(q);
+  float hn = ringNorm(q);
 
   float rings = 0.0;
   for (int k = 0; k < 4; k++) {
@@ -154,7 +157,7 @@ vec3 floorLayer(vec3 ro, vec3 rd) {
   float frame = exp(-abs(hn - 1.08) / 0.0025) * 0.45;
 
   float spokes = 0.0;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < AXES; i++) {
     vec2 d = axisDir(i);
     float along = dot(q, d);
     float perp = abs(d.x * q.y - d.y * q.x);
@@ -243,7 +246,7 @@ vec3 prismLayers(vec3 ro, vec3 rd) {
 
 vec3 pillars(vec3 ro, vec3 rd, vec2 uv) {
   vec3 c = vec3(0.0);
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < AXES; i++) {
     vec3 base = vec3(uVerts[i].x, 0.0, uVerts[i].y);
     vec3 top = base + vec3(0.0, uHeight, 0.0);
     float d = raySegment(ro, rd, base, top);
@@ -363,8 +366,8 @@ bool marchGem(vec3 ro, vec3 rd, int steps, out float tHit, out float minD) {
 vec3 shadeGem(vec3 ro, vec3 rd, vec3 p, vec2 uv, bool detailed) {
   vec3 n = gemNormal(p);
   int sector = sectorOf(p.xz);
-  vec3 hue = axisHue((float(sector) + 0.5) / 6.0 + uTime * 0.02);
-  float tested = 0.5 * (uTested[sector] + uTested[(sector + 1) % 6]);
+  vec3 hue = axisHue((float(sector) + 0.5) / float(AXES) + uTime * 0.02);
+  float tested = 0.5 * (uTested[sector] + uTested[(sector + 1) % AXES]);
 
   vec3 lightDir = normalize(vec3(0.4, 0.9, -0.3));
   float fres = pow(1.0 - max(dot(-rd, n), 0.0), 3.0);
@@ -399,7 +402,7 @@ vec3 shadeGem(vec3 ro, vec3 rd, vec3 p, vec2 uv, bool detailed) {
     float seam = exp(-abs(p.y - uGemY) / 0.007);
     if (!onTable) {
       for (int k = 0; k < 2; k++) {
-        int i = (sector + k) % 6;
+        int i = (sector + k) % AXES;
         vec2 d = axisDir(i);
         seam += exp(-abs(d.x * q.y - d.y * q.x) / 0.006) * mix(0.3, 1.0, uTested[i]);
       }
@@ -441,7 +444,7 @@ void main() {
     }
   }
 
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < AXES; i++) {
     vec3 v = vec3(uVerts[i].x, uGemY, uVerts[i].y);
     col += beacon(ro, rd, uv, v, uVals[i], uTested[i], float(i));
   }

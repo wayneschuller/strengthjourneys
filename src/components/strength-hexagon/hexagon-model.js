@@ -1,5 +1,6 @@
-// The strength hexagon: six qualities of strength, each scored 0 to 100 as a
-// percentile, drawn as one shape. This module holds what every renderer
+// The strength hexagon: the big four lifts and pull-ups, each scored 0 to 100
+// as a percentile, drawn as one shape (a pentagon while there are five axes;
+// the module keeps the hexagon name from the original six-axis design). This module holds what every renderer
 // shares, so the WebGL views, their HTML labels, the editorial SVG and the
 // story card export all agree on where a vertex sits and what it means:
 // the axes, the radius mapping, the tier rings, the camera, the palettes,
@@ -7,28 +8,35 @@
 
 import { MODELED_UNIVERSE_PROFILES } from "@/lib/strength-circles/strength-percentile-data";
 
-// Clockwise from the top of the shape when seen from the front.
+// Clockwise from the top of the shape when seen from the front: the big four
+// in the app's usual order, then pull-ups for bodyweight strength. The
+// renderers take their axis count from this list, so adding an axis here is
+// all it takes to draw a different polygon.
 export const HEXAGON_AXES = [
-  { key: "legs", label: "Legs", lift: "Back Squat", addPrompt: "Add squat" },
-  { key: "push", label: "Push", lift: "Bench Press", addPrompt: "Add bench" },
+  { key: "squat", label: "Squat", lift: "Back Squat", addPrompt: "Add squat" },
   {
-    key: "overhead",
-    label: "Overhead",
+    key: "bench",
+    label: "Bench",
+    lift: "Bench Press",
+    addPrompt: "Add bench",
+  },
+  {
+    key: "deadlift",
+    label: "Deadlift",
+    lift: "Deadlift",
+    addPrompt: "Add deadlift",
+  },
+  {
+    key: "press",
+    label: "Press",
     lift: "Strict Press",
     addPrompt: "Add press",
   },
-  { key: "pull", label: "Pull", lift: "Deadlift", addPrompt: "Add deadlift" },
   {
-    key: "bodyweight",
-    label: "Bodyweight",
-    lift: "Pull-ups",
+    key: "pullups",
+    label: "Pull-ups",
+    lift: "Pull-up or chin-up",
     addPrompt: "Add pull-ups",
-  },
-  {
-    key: "power",
-    label: "Power",
-    lift: "Clean or snatch",
-    addPrompt: "Add a clean",
   },
 ];
 
@@ -96,12 +104,11 @@ export function overallPercentile(values) {
 // an athlete what they are great at, never what they lack.
 
 const ARCHETYPE_BY_AXIS = {
-  legs: "The Powerhouse",
-  push: "The Presser",
-  overhead: "The Overhead Athlete",
-  pull: "The Puller",
-  bodyweight: "The Climber",
-  power: "The Explosive Athlete",
+  squat: "The Powerhouse",
+  bench: "The Presser",
+  deadlift: "The Puller",
+  press: "The Overhead Athlete",
+  pullups: "The Climber",
 };
 
 export function archetypeFor(values) {
@@ -222,28 +229,12 @@ export const HEXAGON_PALETTES = {
 // Percentiles per axis in HEXAGON_AXES order; null is an untested axis.
 
 export const HEXAGON_PRESETS = [
-  { id: "all-rounder", label: "All-rounder", values: [72, 66, 70, 76, 64, 58] },
-  {
-    id: "powerlifter",
-    label: "Powerlifter",
-    values: [93, 90, 58, 96, 38, null],
-  },
-  {
-    id: "calisthenics",
-    label: "Calisthenics",
-    values: [52, 61, 79, 55, 97, 66],
-  },
-  {
-    id: "weightlifter",
-    label: "Weightlifter",
-    values: [90, 52, 82, 84, 62, 98],
-  },
-  {
-    id: "first-year",
-    label: "First year",
-    values: [44, 36, 40, 50, null, null],
-  },
-  { id: "elite", label: "Elite", values: [99, 97, 95, 99, 93, 96] },
+  { id: "all-rounder", label: "All-rounder", values: [72, 66, 76, 70, 64] },
+  { id: "powerlifter", label: "Powerlifter", values: [93, 90, 96, 58, 38] },
+  { id: "calisthenics", label: "Calisthenics", values: [52, 61, 55, 79, 97] },
+  { id: "strongman", label: "Strongman", values: [92, 74, 97, 91, 35] },
+  { id: "first-year", label: "First year", values: [44, 36, 50, 40, null] },
+  { id: "elite", label: "Elite", values: [99, 97, 99, 95, 93] },
 ];
 
 export const AGE_GROUPS = [

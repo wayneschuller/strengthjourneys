@@ -102,7 +102,7 @@ export async function renderStoryCardBlob({ capture, theme, title, headline }) {
 
   context.fillStyle = theme.muted;
   context.font = `400 36px ${CONDENSED}`;
-  context.fillText("My strength hexagon", CARD_WIDTH / 2, 240);
+  context.fillText("My strength profile", CARD_WIDTH / 2, 240);
   context.fillStyle = theme.text;
   context.font = `600 92px ${SERIF}`;
   withGlow(() => context.fillText(title, CARD_WIDTH / 2, 330));

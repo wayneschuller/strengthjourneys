@@ -7,6 +7,7 @@ import { useId, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { defaultFilter } from "cmdk";
 import {
   ArrowDown,
   ArrowUp,
@@ -35,6 +36,7 @@ import {
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import { DRAWN_LIFT_TYPES, LiftArtwork } from "@/components/lift-artwork";
 import { logFatActionClass } from "@/components/log/session-footer-actions";
+import { getCuratedLift } from "@/lib/lifts/lift-registry";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { getDaysBetweenYmd, getReadableDateString } from "@/lib/date-utils";
 import { useLiftColors } from "@/hooks/use-lift-colors";
@@ -618,12 +620,30 @@ function getLastLiftedLabel(lastDate, sessionDate, isToday) {
   return years === 1 ? "A year ago" : `${years} years ago`;
 }
 
+const NEW_LIFT_VALUE_PREFIX = "create-";
+
+// Below this a match is letters that merely appear in order: "Leg Press" inside
+// "cLosE Grip bench PRESS". Real abbreviations such as "ohp" score well above it.
+const MIN_LIFT_SEARCH_SCORE = 0.05;
+
 /**
- * A visible gallery of every illustrated lift, followed by a search tile for
- * other lift types. Both empty and active sessions use this same catalogue.
- * Tiles lead with what has been trained lately and say when each was last
- * done. `readOnly` shows the same gallery to preview visitors with nothing to
- * tap, headed by `readOnlyCta` so the reason is plain.
+ * Scores the add-lift search so Enter does what was meant. The "add a new lift"
+ * row ranks below any real match, so "squat" picks Back Squat rather than
+ * writing a new lift type to the sheet, but above stray matches, so a full new
+ * name like "Leg Press" adds that lift rather than a lookalike.
+ */
+function scoreLiftSearch(value, search, keywords) {
+  if (value.startsWith(NEW_LIFT_VALUE_PREFIX)) return MIN_LIFT_SEARCH_SCORE / 2;
+  const score = defaultFilter(value, search, keywords);
+  return score >= MIN_LIFT_SEARCH_SCORE ? score : 0;
+}
+
+/**
+ * A search over every lift, above a visible gallery of the illustrated ones.
+ * Both empty and active sessions use this same catalogue. Tiles lead with what
+ * has been trained lately and say when each was last done. `readOnly` shows
+ * the same gallery to preview visitors with nothing to tap or search, headed
+ * by `readOnlyCta` so the reason is plain.
  *
  * `startCollapsed` is for a session old enough that adding a lift is the
  * exception. The artwork stays one tap away behind a single button, and
@@ -641,52 +661,58 @@ export function AddLiftButton({
   readOnlyCta = null,
   startCollapsed = false,
 }) {
-  const [showInput, setShowInput] = useState(false);
   const [liftType, setLiftType] = useState("");
+  const [searchFocused, setSearchFocused] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const prefersReducedMotion = useReducedMotion();
   const searchId = useId();
-  const otherButtonRef = useRef(null);
+  const searchInputRef = useRef(null);
   const { getColor } = useLiftColors();
   // Read once per mount, so the line holds still if the hour turns mid-visit.
   const [anyLiftExamples] = useState(() => getAnyLiftExamples());
-  const { drawnLifts, searchLifts } = useMemo(() => {
+  const { allLifts, drawnLifts, otherLifts } = useMemo(() => {
     const excluded = new Set(excludeLiftTypes ?? []);
     const chipsByName = new Map((chips ?? []).map((chip) => [chip.name, chip]));
     const recentSets = (name) => chipsByName.get(name)?.recentSets ?? 0;
     const frequency = (name) => chipsByName.get(name)?.frequency ?? 0;
+    // Recent training leads, lifetime volume breaks ties, and stable ties
+    // keep catalogue order for lifts with no logged history.
+    const lifts = [
+      ...new Set([
+        ...DRAWN_LIFT_TYPES,
+        ...(chips ?? []).map(({ name }) => name),
+      ]),
+    ]
+      .filter((name) => !excluded.has(name))
+      .sort(
+        (a, b) => recentSets(b) - recentSets(a) || frequency(b) - frequency(a),
+      )
+      .map((name) => ({
+        name,
+        color: getColor(name),
+        isDrawn: DRAWN_LIFT_TYPES.includes(name),
+        // So "RDL" or "OHP" finds the drawn lift instead of a new lift type.
+        synonyms: getCuratedLift(name)?.synonyms,
+        lastLiftedLabel: getLastLiftedLabel(
+          chipsByName.get(name)?.lastDate,
+          sessionDate,
+          isToday,
+        ),
+      }));
     return {
-      // Recent training leads, lifetime volume breaks ties, and stable ties
-      // keep catalogue order for lifts with no logged history.
-      drawnLifts: DRAWN_LIFT_TYPES.filter((name) => !excluded.has(name))
-        .sort(
-          (a, b) =>
-            recentSets(b) - recentSets(a) || frequency(b) - frequency(a),
-        )
-        .map((name) => ({
-          name,
-          color: getColor(name),
-          lastLiftedLabel: getLastLiftedLabel(
-            chipsByName.get(name)?.lastDate,
-            sessionDate,
-            isToday,
-          ),
-        })),
-      // The search covers what the tiles don't, so a drawn lift never shows
-      // up twice.
-      searchLifts: [...new Set((chips ?? []).map(({ name }) => name))].filter(
-        (name) => !excluded.has(name) && !DRAWN_LIFT_TYPES.includes(name),
-      ),
+      allLifts: lifts,
+      drawnLifts: lifts.filter((lift) => lift.isDrawn),
+      otherLifts: lifts.filter((lift) => !lift.isDrawn),
     };
   }, [chips, excludeLiftTypes, sessionDate, isToday, getColor]);
   // Keep a row's drawings level when only some tiles have a date under them,
   // without reserving the line for a lifter who has no history yet.
   const hasAnyLastLifted = drawnLifts.some((lift) => lift.lastLiftedLabel);
 
-  function close() {
-    setShowInput(false);
+  function clearSearch() {
     setLiftType("");
-    otherButtonRef.current?.focus();
+    // Also drops a phone's keyboard, and stops the list reopening on focus.
+    searchInputRef.current?.blur();
   }
 
   function submit(name) {
@@ -703,7 +729,7 @@ export function AddLiftButton({
         /\S+/g,
         (word) => word[0].toUpperCase() + word.slice(1).toLowerCase(),
       );
-    close();
+    clearSearch();
     onAddLift(clean);
   }
 
@@ -723,9 +749,93 @@ export function AddLiftButton({
       : `${interactiveTileClass} hover:border-[color:color-mix(in_srgb,var(--lift-color)_55%,transparent)]`
   }`;
   const TileElement = readOnly ? "div" : "button";
+  // With nothing typed the tiles already show the drawn lifts, so focus only
+  // has to offer the rest. Typed results outlive focus: dismissing a phone's
+  // keyboard to read them must not close them.
+  const searchResults = typed ? allLifts : otherLifts;
+  const showResults =
+    Boolean(typed) || (searchFocused && otherLifts.length > 0);
 
   const gallery = (
     <>
+      {!readOnly && (
+        <Command
+          filter={scoreLiftSearch}
+          className={`bg-background rounded-xl border ${
+            showResults ? "" : "[&_[cmdk-input-wrapper]]:border-b-0"
+          }`}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") {
+              event.stopPropagation();
+              clearSearch();
+            }
+          }}
+        >
+          <CommandInput
+            ref={searchInputRef}
+            aria-label="Search lifts, or name a new one"
+            placeholder="Search lifts, or name a new one"
+            value={liftType}
+            disabled={disabled}
+            onValueChange={setLiftType}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+          />
+          {showResults && (
+            <CommandList
+              className="max-h-64"
+              // Keeps focus in the input, so pressing a row selects it rather
+              // than blurring the input and closing the list first.
+              onMouseDown={(event) => event.preventDefault()}
+            >
+              <CommandEmpty>That lift is already here.</CommandEmpty>
+              <CommandGroup heading={typed ? "Lift types" : "Your other lifts"}>
+                {searchResults.map(
+                  ({ name, isDrawn, synonyms, lastLiftedLabel }) => (
+                    <CommandItem
+                      key={name}
+                      value={name}
+                      keywords={synonyms}
+                      disabled={disabled}
+                      onSelect={() => submit(name)}
+                    >
+                      {isDrawn ? (
+                        <LiftArtwork
+                          liftType={name}
+                          size="sm"
+                          animate={false}
+                          className="shrink-0"
+                        />
+                      ) : (
+                        // Holds the names in one column beside the drawings.
+                        typed && <span className="size-10 shrink-0" />
+                      )}
+                      <span className="min-w-0">{name}</span>
+                      {lastLiftedLabel && (
+                        <span className="text-muted-foreground ml-auto shrink-0 pl-2 text-xs">
+                          {lastLiftedLabel}
+                        </span>
+                      )}
+                    </CommandItem>
+                  ),
+                )}
+              </CommandGroup>
+              {typed && !hasExactMatch && (
+                <CommandGroup heading="New lift type">
+                  <CommandItem
+                    value={`${NEW_LIFT_VALUE_PREFIX}${typed}`}
+                    disabled={disabled}
+                    onSelect={() => submit()}
+                  >
+                    <ClipboardPlus className="size-4" />
+                    {`Add "${typed}"`}
+                  </CommandItem>
+                </CommandGroup>
+              )}
+            </CommandList>
+          )}
+        </Command>
+      )}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
         {drawnLifts.map(({ name, color, lastLiftedLabel }) => (
           <TileElement
@@ -778,8 +888,8 @@ export function AddLiftButton({
           </TileElement>
         ))}
         {readOnly && (
-          // Stands where signed-in lifters see "Add other lift types", so a
-          // visitor never reads the drawings as the whole catalogue.
+          // Does the job of the signed-in search, so a visitor never reads the
+          // drawings as the whole catalogue.
           <div
             className={`${tileClass} bg-muted/20 col-span-2 border-dashed px-4`}
           >
@@ -799,85 +909,7 @@ export function AddLiftButton({
             </span>
           </div>
         )}
-        {!readOnly && (
-          <button
-            ref={otherButtonRef}
-            type="button"
-            disabled={disabled}
-            aria-expanded={showInput}
-            aria-controls={searchId}
-            onClick={() => (showInput ? close() : setShowInput(true))}
-            className={`${tileClass} ${interactiveTileClass} hover:border-primary/40 bg-muted/20 border-dashed`}
-          >
-            <span
-              aria-hidden="true"
-              className="flex h-20 items-center justify-center sm:h-14"
-            >
-              <span className="bg-primary/10 text-primary group-hover:bg-primary/15 flex size-8 items-center justify-center rounded-full transition-colors">
-                <Plus className="size-4" strokeWidth={1.5} />
-              </span>
-            </span>
-            <span className="flex min-h-10 items-center text-sm leading-snug font-medium">
-              Add other lift types
-            </span>
-          </button>
-        )}
       </div>
-      {showInput && (
-        <div
-          id={searchId}
-          className="bg-card space-y-3 rounded-2xl border p-3 shadow-sm"
-        >
-          <Command
-            className="bg-background rounded-xl border"
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.stopPropagation();
-                close();
-              }
-            }}
-          >
-            <CommandInput
-              autoFocus
-              aria-label="Search or name a lift"
-              placeholder="Search, or type a new lift"
-              value={liftType}
-              disabled={disabled}
-              onValueChange={setLiftType}
-            />
-            <CommandList className="max-h-64">
-              <CommandEmpty>No other lifts found.</CommandEmpty>
-              <CommandGroup heading="Lift types">
-                {searchLifts.map((name) => (
-                  <CommandItem
-                    key={name}
-                    value={name}
-                    disabled={disabled}
-                    onSelect={() => submit(name)}
-                  >
-                    {name}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-              {typed && !hasExactMatch && (
-                <CommandGroup heading="New lift type">
-                  <CommandItem
-                    value={`create-${typed}`}
-                    disabled={disabled}
-                    onSelect={() => submit()}
-                  >
-                    <ClipboardPlus className="size-4" />
-                    {`Add "${typed}"`}
-                  </CommandItem>
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-          <Button size="sm" variant="ghost" onClick={close}>
-            Cancel
-          </Button>
-        </div>
-      )}
       {disabled && (
         <p className="text-muted-foreground text-xs">
           Add controls will re-enable once the current update finishes.
@@ -898,7 +930,7 @@ export function AddLiftButton({
           aria-expanded={galleryOpen}
           className={`${logFatActionClass} sm:col-start-1 sm:row-start-1`}
           onClick={() => {
-            if (galleryOpen) close();
+            if (galleryOpen) clearSearch();
             setGalleryOpen((open) => !open);
           }}
         >

@@ -149,7 +149,20 @@ export default function StrengthStandardsLiftPage({ page, relatedArticles }) {
           "bench press chart" 1,359 imp / 5 clicks; overhead/military press
           standards ~1.5k imp / ~3 clicks at pos 8-10.
           Review ~2026-10-29 with GSC's 28-day compare split at 2026-09-29.
-          Judge on clicks and CTR: site impressions were falling all window. */}
+          Judge on clicks and CTR: site impressions were falling all window.
+          Review 2026-10-31 (Sep 29-Oct 29 vs Aug 29-Sep 28): the titles won
+          the target queries ("bench press chart" 15 to 665 imp, pos 11.7 to
+          7.7; overhead press standards 27 to 102 imp) but they earn 0 clicks,
+          because Google shows the chart itself. The queries that click are
+          calculator and level phrasing ("bench press calculator by age" 3.3%
+          at pos 5.4, "strict press standards" 7.4%, "squat levels" 6.7%), so
+          titles now lead with the age/bodyweight calculator the page has.
+          Baseline, 31 days to 2026-10-29 (clicks / imp / CTR / pos):
+            bench-press   30 / 6,092 / 0.5% / 11
+            squat         14 / 8,330 / 0.2% / 8.5
+            deadlift      17 / 9,398 / 0.2% / 9.2
+            strict-press  25 / 4,911 / 0.5% / 7.5
+          Review ~2026-12-01 against the 31 days before this change ships. */}
       <NextSeo
         title={page.seoTitle}
         description={page.description}

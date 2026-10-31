@@ -416,6 +416,25 @@ export default function Home({ starterArticles = [] }) {
 
         <Separator className="my-8" />
 
+        {/* The free tools are half of what a stranger came for, so say so before
+            the first tier. A lifter with their own data already knows. */}
+        {surface === "hero" && (
+          <div
+            id="free-tools"
+            data-first-visit=""
+            className="mb-8 scroll-mt-24 text-center"
+          >
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">
+              A full rack of free tools. No sign-in needed.
+            </h2>
+            <p className="text-muted-foreground mx-auto mt-2 max-w-2xl text-pretty">
+              Every one of these works right now, on your own numbers or our
+              sample lifter. Sign in only when you want your whole lifting
+              history behind them.
+            </p>
+          </div>
+        )}
+
         {/* Tier 1: Training insight tools */}
         <h2 className="mt-8 text-xl font-semibold">📊 Your Training</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">

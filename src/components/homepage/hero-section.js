@@ -22,7 +22,7 @@ import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 import { SloganCarousel } from "@/components/homepage/slogan-carousel";
 import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -40,13 +40,17 @@ export function HeroSection() {
       <div className="grid grid-cols-1 items-center gap-8 xl:grid-cols-2 xl:gap-12">
         <div>
           <div className="flex justify-center lg:justify-start">
-            <p className="bg-background/85 text-muted-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-sm">
+            <a
+              href="#free-tools"
+              className="bg-background/85 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-sm transition-colors"
+            >
               <span
                 className="bg-chart-2 h-1.5 w-1.5 rounded-full"
                 aria-hidden
               />
-              Free barbell lifting log &amp; analysis
-            </p>
+              Free barbell log, plus a full rack of free tools
+              <ArrowRight className="h-3 w-3" aria-hidden />
+            </a>
           </div>
           <h1 className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance md:mb-5 lg:text-left lg:text-4xl xl:text-5xl">
             Every barbell set you&rsquo;ve ever lifted, in one place
@@ -160,42 +164,84 @@ function HeroPrimaryCta() {
   );
 }
 
-const SLIDE_DURATION = 3500; // ms per slide
+const SLIDE_DURATION = 5000; // ms per slide
 
 // Product-only rotation. Order is deliberate: the log is what a lifter touches
-// every session, so it leads; the E1RM chart is the payoff for logging; the
-// heatmap is the long-game payoff that only a permanent data store can offer.
-// Each slide links to the feature it shows, so the showcase doubles as a way
-// into the product rather than decoration. To add a feature, drop a 16:9
-// screenshot in /public and add an entry: src, alt, caption, href, linkLabel.
+// every session, so it leads; the all-time chart is the payoff for logging; then
+// free tools a stranger can try right now; then the depth behind them. Each slide
+// links to the feature it shows, so the showcase doubles as a way into the product.
+//
+// The slides are real captures of a real training history, each in a different
+// theme, because a decade of data sells what sample data cannot and the themes
+// are a reward lifters earn. Weights are shown in lb for our mostly US audience.
+// To add a feature, drop a 16:9 WebP in /public and add an entry.
 const SHOWCASE_SLIDES = [
   {
-    src: "/log-hero.png",
-    alt: "Strength Journeys workout log showing a barbell session with sets, reps, lifter notes and personal record badges",
+    src: "/hero-log.webp",
+    alt: "Workout log in the Evergreen theme showing a deadlift session building to a lifetime best single of 463 pounds, with the lifter's notes and personal record badges",
     caption: "Log today's session in seconds",
+    themeName: "Evergreen",
     href: "/log",
     linkLabel: "Explore the live demo",
   },
   {
-    src: "/app1.png",
-    alt: "Chart of estimated one rep max trending upward for back squat, bench press, deadlift and power clean",
-    caption: "Watch your one rep max climb, lift by lift",
+    src: "/hero-all-time-chart.webp",
+    alt: "Blueprint Dark theme chart of estimated one rep max for squat, bench and deadlift from 2014 to 2026, with five meets marked by gold medals",
+    caption: "Twelve years of lifting, every meet marked in gold",
+    themeName: "Blueprint Dark",
     href: "/visualizer",
     linkLabel: "Open the strength visualizer",
   },
   {
-    src: "/app3.png",
-    alt: "Multi-year heatmap of every lifting session with personal records highlighted",
-    caption: "Ten years of training in one picture",
+    src: "/hero-how-strong.webp",
+    alt: "How Strong Am I page in the Starry Night Dark theme, with four percentile rings and a strength story beside them",
+    caption: "See how strong you really are. Free, no sign-in",
+    themeName: "Starry Night Dark",
+    href: "/how-strong-am-i",
+    linkLabel: "Try How Strong Am I?",
+  },
+  {
+    src: "/hero-plate-milestones.webp",
+    alt: "Plate Milestones page in the Neo Brutalism theme, showing one to four plates earned across press, bench, squat and deadlift, with the date of each",
+    caption: "Plates get dates. Free, no sign-in",
+    themeName: "Neo Brutalism",
+    href: "/plate-milestones",
+    linkLabel: "Check your plate milestones",
+  },
+  {
+    src: "/hero-lift-explorer.webp",
+    alt: "Lift Explorer in the Retro Arcade theme, with an illustrated tile for each barbell lift",
+    caption: "Every lift you train, with a guide of its own",
+    themeName: "Retro Arcade",
     href: "/lift-explorer",
-    linkLabel: "Explore your lifting history",
+    linkLabel: "Open the lift explorer",
+  },
+  {
+    src: "/hero-ai-coach.webp",
+    alt: "AI Lifting Assistant in the Retro Arcade Dark theme, with a robot coach greeting the athlete above a message box and suggested questions",
+    caption: "An AI coach who reads your training",
+    themeName: "Retro Arcade Dark",
+    href: "/ai-lifting-assistant",
+    linkLabel: "Talk to the AI coach",
   },
 ];
 
+// Show a slide and mount the one after it, so its image is already loaded by the
+// time the crossfade reaches it instead of fading in over an empty frame. Slides
+// stay mounted once seen, which keeps the first paint to two images.
+function showSlide(previous, nextIndex) {
+  return {
+    index: nextIndex,
+    mounted: new Set(previous.mounted)
+      .add(nextIndex)
+      .add((nextIndex + 1) % SHOWCASE_SLIDES.length),
+  };
+}
+
 /**
- * Product screenshot slideshow for the hero. Cycles app screenshots with a
- * crossfade and a floating outcome caption, over a data-ownership strip and
- * slide dots. The whole frame links through to the live demo on /log.
+ * Product screenshot slideshow for the hero. Crossfades real captures in the
+ * frame, with the caption underneath so it never covers the screenshot, over a
+ * data-ownership strip and slide dots.
  *
  * Auto-advance pauses on hover/focus and is disabled entirely under
  * prefers-reduced-motion, where the dots become the only way to change slide.
@@ -203,14 +249,18 @@ const SHOWCASE_SLIDES = [
  * @param {Object} props - No props.
  */
 export default function ProductShowcase() {
-  const [index, setIndex] = useState(0);
+  const [{ index, mounted }, setShow] = useState(() =>
+    showSlide({ mounted: [] }, 0),
+  );
   const [isPaused, setIsPaused] = useState(false);
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
     if (prefersReducedMotion || isPaused) return;
     const timer = setInterval(() => {
-      setIndex((i) => (i + 1) % SHOWCASE_SLIDES.length);
+      setShow((previous) =>
+        showSlide(previous, (previous.index + 1) % SHOWCASE_SLIDES.length),
+      );
     }, SLIDE_DURATION);
     return () => clearInterval(timer);
   }, [prefersReducedMotion, isPaused]);
@@ -220,17 +270,6 @@ export default function ProductShowcase() {
   }, []);
 
   const slide = SHOWCASE_SLIDES[index];
-  // Under reduced motion the scale push is dropped and the transitions run at
-  // zero duration, so a dot press swaps the slide instantly with no movement.
-  const enter = prefersReducedMotion
-    ? { opacity: 0 }
-    : { opacity: 0, scale: 1.05 };
-  const active = prefersReducedMotion
-    ? { opacity: 1 }
-    : { opacity: 1, scale: 1 };
-  const leave = prefersReducedMotion
-    ? { opacity: 0 }
-    : { opacity: 0, scale: 0.95 };
 
   return (
     <div className="relative isolate flex flex-col items-center gap-3 md:py-4">
@@ -254,65 +293,45 @@ export default function ProductShowcase() {
         onBlur={() => setIsPaused(false)}
       >
         <div className="border-border/60 bg-card relative aspect-video w-full overflow-hidden rounded-2xl border shadow-lg">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={slide.src}
-              initial={enter}
-              animate={active}
-              exit={leave}
-              transition={{
-                duration: prefersReducedMotion ? 0 : 0.6,
-                ease: "easeInOut",
-              }}
-              className="absolute inset-0"
-            >
-              <Image
-                src={slide.src}
-                alt={slide.alt}
-                fill
-                sizes="(max-width: 900px) 100vw, 900px"
-                className="object-cover"
-                priority={index === 0}
-              />
-            </motion.div>
-          </AnimatePresence>
-
-          <div className="absolute bottom-2 left-1/2 z-10 -translate-x-1/2 md:bottom-4">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={slide.caption}
-                initial={
-                  prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: 20 }
-                }
-                animate={
-                  prefersReducedMotion ? { opacity: 1 } : { opacity: 1, y: 0 }
-                }
-                exit={
-                  prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }
-                }
-                transition={{
-                  duration: prefersReducedMotion ? 0 : 0.4,
-                  delay: prefersReducedMotion ? 0 : 0.3,
-                  ease: "easeOut",
-                }}
-                className="border-border bg-card w-max max-w-[calc(100vw-3rem)] rounded-full border px-6 py-3 text-center shadow-lg"
-              >
-                <p className="text-foreground text-xs font-semibold md:text-sm">
-                  {slide.caption}
-                </p>
-              </motion.div>
-            </AnimatePresence>
-          </div>
+          {SHOWCASE_SLIDES.map(
+            (item, i) =>
+              mounted.has(i) && (
+                <motion.div
+                  key={item.src}
+                  initial={false}
+                  animate={{ opacity: i === index ? 1 : 0 }}
+                  transition={{
+                    duration: prefersReducedMotion ? 0 : 0.7,
+                    ease: "easeInOut",
+                  }}
+                  className="absolute inset-0"
+                >
+                  <Image
+                    src={item.src}
+                    alt={i === index ? item.alt : ""}
+                    fill
+                    sizes="(max-width: 672px) 100vw, 672px"
+                    className="object-cover"
+                    priority={i === 0}
+                  />
+                </motion.div>
+              ),
+          )}
         </div>
       </Link>
 
       {/* Controls and the ownership strip live outside the link so the dots stay
-          independently operable. The Google Sheet claim sits here rather than as
-          an overlay chip because no corner of the frame is free across all three
-          screenshots — and read as a caption to the whole showcase it says
-          "everything you just saw is stored in your own sheet", which is exactly
-          the promise. It is on screen for 100% of the rotation either way. */}
+          independently operable. The caption sits here too, since the old floating
+          pill covered part of every screenshot and most of a phone-sized one. The
+          Google Sheet claim reads as a caption to the whole showcase: "everything
+          you just saw is stored in your own sheet", on screen the whole rotation. */}
       <div className="flex w-full max-w-2xl flex-col items-center gap-2">
+        <p className="min-h-11 text-center text-sm font-semibold text-balance sm:min-h-6 md:text-base">
+          {slide.caption}
+          <span className="text-muted-foreground ml-2 text-xs font-medium whitespace-nowrap">
+            {slide.themeName} theme
+          </span>
+        </p>
         <div className="flex items-center gap-1.5">
           {SHOWCASE_SLIDES.map((item, i) => (
             <button
@@ -320,7 +339,7 @@ export default function ProductShowcase() {
               type="button"
               aria-label={`Show slide ${i + 1}: ${item.caption}`}
               aria-current={i === index}
-              onClick={() => setIndex(i)}
+              onClick={() => setShow((previous) => showSlide(previous, i))}
               className={cn(
                 "h-2 rounded-full transition-all",
                 i === index

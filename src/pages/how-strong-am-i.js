@@ -130,9 +130,17 @@ const PercentileTimelineChart = dynamic(
 );
 
 const CANONICAL = "https://www.strengthjourneys.xyz/how-strong-am-i";
-const TITLE = "How Strong Am I? Strength Percentile Calculator";
+// SEO change, 2026-11-01: lead with "strength calculator", the phrase searchers
+// use (~85x the impressions of "strength percentile calculator").
+// Baseline, Oct 1-29 2026 (clicks / imp / CTR / pos):
+//   page                 722 / 37,730 / 1.9% / 5.8
+//   strength calculator   98 /  7,824 / 1.3% / 5.0
+//   percentile calculator 18 /     94 / 19.1% / 4.2
+// The page was already sliding in rank, so judge CTR at similar positions, not
+// raw clicks. Review about four weeks after this reaches production.
+const TITLE = "How Strong Am I? Free Strength Calculator";
 const DESCRIPTION =
-  "Compare your squat, bench press, and deadlift to the general population, gym-goers, barbell lifters, and competitive powerlifters. Free strength percentile calculator — no login required.";
+  "Enter your squat, bench press, and deadlift to see how you stack up against gym-goers, barbell lifters, and powerlifters. Free, with no login required.";
 
 export default function HowStrongAmIPage({ relatedArticles }) {
   // GSC review 2026-05-24: this top-click page already has visible FAQ content;

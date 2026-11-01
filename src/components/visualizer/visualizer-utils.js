@@ -264,7 +264,7 @@ export const SingleLiftTooltipContent = ({
   if (!tooltipContent) return null;
 
   return (
-    <div className="border-border/50 bg-background grid max-w-[17rem] min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+    <ResizingTooltipCard>
       <p className="font-bold">{dateLabel}</p>
       <ChartTooltipMeetLine date={dateStr} />
       <div className="flex flex-row items-center">
@@ -285,7 +285,7 @@ export const SingleLiftTooltipContent = ({
           />
         </div>
       )}
-    </div>
+    </ResizingTooltipCard>
   );
 };
 

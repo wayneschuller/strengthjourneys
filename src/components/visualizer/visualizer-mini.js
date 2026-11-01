@@ -37,6 +37,8 @@ import {
   formatWeightTick,
   getDateTickProps,
   getResponsiveLabelCount,
+  interpolateDatedAreaPoints,
+  MATCH_AREA_POINTS_BY_DATE,
   paddedDateDomain,
   renderMeetMarkers,
   renderYearDividers,
@@ -467,6 +469,8 @@ export function VisualizerMini({ liftType }) {
                   activeDot={chartActiveDotProps(liftColor)}
                   animationDuration={900}
                   animationEasing="ease-out"
+                  animationMatchBy={MATCH_AREA_POINTS_BY_DATE}
+                  animationInterpolateFn={interpolateDatedAreaPoints}
                   connectNulls
                 />
                 {/* Faint year boundary dividers with the year beneath them */}

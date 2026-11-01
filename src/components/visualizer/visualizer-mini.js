@@ -453,6 +453,7 @@ export function VisualizerMini({ liftType }) {
                       parsedData={parsedData}
                       liftColor={liftColor}
                       isMetric={isMetric}
+                      latestDate={latestPoint?.date}
                     />
                   )}
                   formatter={(value, name, props) =>

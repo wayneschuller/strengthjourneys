@@ -231,6 +231,7 @@ function getSessionLiftsByType(parsedData, dateStr, chartLiftType) {
  * @param {Array} props.parsedData - Full parsed lifting dataset used to look up session sets.
  * @param {string} [props.liftColor] - Hex color for the lift's color swatch; falls back to the lift color from context.
  * @param {boolean} [props.isMetric] - When true, displays weights in kg; otherwise lb.
+ * @param {string} [props.latestDate] - The latest session's date ("YYYY-MM-DD"); that day is tagged "Latest".
  */
 export const SingleLiftTooltipContent = ({
   active,
@@ -240,6 +241,7 @@ export const SingleLiftTooltipContent = ({
   parsedData,
   liftColor,
   isMetric,
+  latestDate,
 }) => {
   const { getColor } = useLiftColors();
   if (!active || !payload?.length) return null;
@@ -265,7 +267,14 @@ export const SingleLiftTooltipContent = ({
 
   return (
     <ResizingTooltipCard>
-      <p className="font-bold">{dateLabel}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="font-bold">{dateLabel}</p>
+        {dateStr === latestDate && (
+          <span className="bg-muted text-foreground rounded px-1.5 font-semibold">
+            Latest
+          </span>
+        )}
+      </div>
       <ChartTooltipMeetLine date={dateStr} />
       <div className="flex flex-row items-center">
         <div

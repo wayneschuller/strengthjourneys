@@ -640,6 +640,136 @@ export function TopPointMarkers({
 const LABEL_CHAR_WIDTH_PX = 7;
 const LABEL_GAP_PX = 3;
 
+// Room a bodyweight-multiple label ("1.5xBW") takes at the plot's right edge.
+const RIGHT_EDGE_LABEL_WIDTH_PX = 48;
+
+/**
+ * Where the latest session's label goes: below its point, because the labels
+ * of the best sessions own the space above the line. Kept inside the plot, and
+ * moved below any right-edge label it would otherwise print over.
+ *
+ * @param {Object} args
+ * @param {number} args.cx - The point's x in chart coordinates.
+ * @param {number} args.cy - The point's y in chart coordinates.
+ * @param {string[]} args.lines - The label's lines.
+ * @param {{x: number, y: number, width: number, height: number}} args.plotArea
+ * @param {number[]} [args.rightEdgeLineYs] - Screen y of each horizontal line
+ *   carrying a label at the right edge.
+ * @returns {{x: number, y: number}} Centre x and first baseline for the label.
+ */
+export function placeLatestSessionLabel({
+  cx,
+  cy,
+  lines,
+  plotArea,
+  rightEdgeLineYs = [],
+}) {
+  const halfWidth =
+    (Math.max(...lines.map((line) => line.length)) * LABEL_CHAR_WIDTH_PX) / 2;
+  const height = lines.length * LABEL_LINE_HEIGHT;
+  const plotRight = plotArea.x + plotArea.width;
+  const x = Math.max(
+    plotArea.x + halfWidth,
+    Math.min(cx, plotRight - halfWidth),
+  );
+
+  let top = cy + 10;
+  if (x + halfWidth > plotRight - RIGHT_EDGE_LABEL_WIDTH_PX) {
+    for (const lineY of [...rightEdgeLineYs].sort((a, b) => a - b)) {
+      const edgeTop = lineY - EDGE_LABEL_LIFT - LABEL_LINE_HEIGHT;
+      const edgeBottom = lineY - EDGE_LABEL_LIFT + 4;
+      if (top < edgeBottom && top + height > edgeTop) {
+        top = edgeBottom + LABEL_GAP_PX;
+      }
+    }
+  }
+  top = Math.min(top, plotArea.y + plotArea.height - height);
+
+  // Baseline of the first line, about one cap height below the label's top.
+  return { x, y: top + 11 };
+}
+
+// "Oct 28", with the year once the session is from another year. UTC because
+// chart dates are UTC midnights, which local time would show a day early in
+// the Americas.
+function formatLatestSessionDate(rechartsDate) {
+  const date = new Date(rechartsDate);
+  const otherYear = date.getUTCFullYear() !== new Date().getUTCFullYear();
+  return date.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: otherYear ? "numeric" : undefined,
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * Marks the most recent session, the point to find first when reviewing today's
+ * work or planning the next one. When that session is already one of the best
+ * in range, its marker and numbers are drawn by TopPointMarkers, so this only
+ * adds the name and date.
+ *
+ * @param {Object} props
+ * @param {Object} props.point - The latest chart row.
+ * @param {number} props.value - The point's plotted value.
+ * @param {string} props.color - Marker colour.
+ * @param {function} props.getLines - ({ point, value }) => string[], the set and
+ *   estimate lines shown under the name.
+ * @param {boolean} [props.isTopPoint] - The point already has a top-point marker.
+ * @param {number[]} [props.rightEdgeLineValues] - Values of horizontal lines
+ *   with a label at the plot's right edge.
+ */
+export function LatestSessionMarker({
+  point,
+  value,
+  color,
+  getLines,
+  isTopPoint = false,
+  rightEdgeLineValues = [],
+}) {
+  const plotArea = usePlotArea();
+  const yScale = useYAxisScale();
+  if (!point || !plotArea) return null;
+
+  const title = `Latest · ${formatLatestSessionDate(point.rechartsDate)}`;
+  const lines = isTopPoint ? [title] : [title, ...getLines({ point, value })];
+
+  return (
+    <ReferenceDot
+      x={point.rechartsDate}
+      y={value}
+      // Filled, where the runners-up are open rings, and without the winner's
+      // foreground outline. A top point keeps the marker it already has.
+      r={isTopPoint ? 0 : 5}
+      fill={color}
+      stroke="var(--background)"
+      strokeWidth={2}
+      label={{
+        content: ({ viewBox }) => {
+          const { x, y } = placeLatestSessionLabel({
+            cx: viewBox.x + viewBox.width / 2,
+            cy: viewBox.y + viewBox.height / 2,
+            lines,
+            plotArea,
+            rightEdgeLineYs: rightEdgeLineValues
+              .map((lineValue) => yScale?.(lineValue))
+              .filter(Number.isFinite),
+          });
+          return (
+            <ChartInlineLabel
+              x={x}
+              y={y}
+              textAnchor="middle"
+              color="var(--foreground)"
+              lines={lines}
+            />
+          );
+        },
+      }}
+    />
+  );
+}
+
 /**
  * TopPointMarkers for several series sharing one plot. selectTopPoints keeps a
  * series' own points apart but has no view of the other series, so two lifts

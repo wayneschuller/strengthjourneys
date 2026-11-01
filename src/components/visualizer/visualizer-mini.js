@@ -38,6 +38,7 @@ import {
   getDateTickProps,
   getResponsiveLabelCount,
   interpolateDatedAreaPoints,
+  LatestSessionMarker,
   MATCH_AREA_POINTS_BY_DATE,
   paddedDateDomain,
   renderMeetMarkers,
@@ -210,6 +211,16 @@ export function VisualizerMini({ liftType }) {
     [chartData, liftType, topPointCount],
   );
 
+  // Only a session that is really the latest gets the name. Shaping can drop an
+  // absurdly light final session, which leaves an older point at the line's end.
+  const latestPoint = useMemo(() => {
+    const plotted = chartData?.[chartData.length - 1];
+    const logged = sessionSeries?.findLast((point) =>
+      Number.isFinite(point?.[liftType]),
+    );
+    return plotted && plotted.date === logged?.date ? plotted : null;
+  }, [chartData, sessionSeries, liftType]);
+
   const strengthRanges = standards?.[liftType] || null;
 
   // The chart ceiling must cover the data AND the highest visible strength
@@ -289,6 +300,19 @@ export function VisualizerMini({ liftType }) {
     roundedMaxWeightValue,
     highestVisibleStandard * 1.15,
   );
+
+  const bodyweightMultipleLines =
+    showBodyweightMultiples && bodyWeight > 0 && width >= 1280
+      ? [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+          .map((multiple) => ({
+            multiple,
+            weightValue: Math.round(multiple * bodyWeight),
+          }))
+          .filter(
+            ({ weightValue }) =>
+              weightValue > 0 && weightValue <= roundedMaxWeightValue,
+          )
+      : [];
 
   const chartSummaryLines = useMemo(
     () =>
@@ -531,41 +555,48 @@ export function VisualizerMini({ liftType }) {
                     );
                   })}
                 {/* Bodyweight multiples: use liftColor so lines feel tied to the chart area. */}
-                {showBodyweightMultiples &&
-                  bodyWeight > 0 &&
-                  width >= 1280 &&
-                  [0.5, 1.0, 1.5, 2.0, 2.5, 3.0].map((multiple) => {
-                    const weightValue = Math.round(multiple * bodyWeight);
-                    if (weightValue > roundedMaxWeightValue || weightValue <= 0)
-                      return null;
-                    return (
-                      <ReferenceLine
-                        key={`bw-${multiple}`}
-                        y={weightValue}
-                        stroke={liftColor}
-                        strokeWidth={1.5}
-                        strokeDasharray="3 6"
-                        strokeOpacity={0.7}
-                        label={{
-                          // Right edge, opposite the strength standards on the left.
-                          // Bodyweight multiples often land within a kilo or two of a
-                          // standard (0.5xBW vs Physically Active, say), so splitting
-                          // the two families across the plot keeps them from
-                          // colliding. These are short enough to cover very little of
-                          // the recent line.
-                          content: ({ viewBox }) => (
-                            <ChartInlineLabel
-                              x={viewBox.x + viewBox.width - 6}
-                              y={viewBox.y - 5}
-                              color={liftColor}
-                            >
-                              {`${multiple}xBW`}
-                            </ChartInlineLabel>
-                          ),
-                        }}
-                      />
-                    );
-                  })}
+                {bodyweightMultipleLines.map(({ multiple, weightValue }) => (
+                  <ReferenceLine
+                    key={`bw-${multiple}`}
+                    y={weightValue}
+                    stroke={liftColor}
+                    strokeWidth={1.5}
+                    strokeDasharray="3 6"
+                    strokeOpacity={0.7}
+                    label={{
+                      // Right edge, opposite the strength standards on the left.
+                      // Bodyweight multiples often land within a kilo or two of a
+                      // standard (0.5xBW vs Physically Active, say), so splitting
+                      // the two families across the plot keeps them from
+                      // colliding. These are short enough to cover very little of
+                      // the recent line.
+                      content: ({ viewBox }) => (
+                        <ChartInlineLabel
+                          x={viewBox.x + viewBox.width - 6}
+                          y={viewBox.y - 5}
+                          color={liftColor}
+                        >
+                          {`${multiple}xBW`}
+                        </ChartInlineLabel>
+                      ),
+                    }}
+                  />
+                ))}
+                {/* Last, so its label draws over the other markers. */}
+                {latestPoint && (
+                  <LatestSessionMarker
+                    point={latestPoint}
+                    value={latestPoint[liftType]}
+                    color={liftColor}
+                    getLines={e1rmMarkerLines(liftType)}
+                    isTopPoint={topPoints.some(
+                      ({ point }) => point.date === latestPoint.date,
+                    )}
+                    rightEdgeLineValues={bodyweightMultipleLines.map(
+                      ({ weightValue }) => weightValue,
+                    )}
+                  />
+                )}
               </AreaChart>
             </ChartContainer>
           )

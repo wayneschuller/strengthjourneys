@@ -1,3 +1,5 @@
+import { useLayoutEffect, useRef, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { devLog, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
@@ -96,9 +98,50 @@ export const ChartTooltipMeetLine = ({ date }) => {
   return <MeetTooltipLine meet={{ date, ...meetDay }} showDate={false} />;
 };
 
+const TOOLTIP_RESIZE_SPRING = { type: "spring", stiffness: 520, damping: 42 };
+
+// The tooltip card, easing to its new size as the hovered day's rows change.
+// The size is measured from the content because Motion's layout animations
+// would also chase the Recharts wrapper's position as the tooltip follows the
+// pointer. The card itself clips, so its own shadow still shows.
+function ResizingTooltipCard({ children }) {
+  const contentRef = useRef(null);
+  const [size, setSize] = useState(null);
+  const prefersReducedMotion = useReducedMotion();
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const [box] = entry.borderBoxSize;
+      setSize({ width: box.inlineSize, height: box.blockSize });
+    });
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <motion.div
+      className="border-border/50 bg-background box-content overflow-hidden rounded-lg border text-xs shadow-xl"
+      initial={false}
+      animate={size ?? undefined}
+      transition={
+        prefersReducedMotion ? { duration: 0 } : TOOLTIP_RESIZE_SPRING
+      }
+    >
+      <div
+        ref={contentRef}
+        className="grid w-max max-w-[17rem] min-w-[8rem] items-start gap-1.5 px-2.5 py-1.5"
+      >
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
 // Shared tooltip UI component
 const TooltipUI = ({ date, dateLabel, tooltipsPerLift }) => (
-  <div className="border-border/50 bg-background grid max-w-[17rem] min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+  <ResizingTooltipCard>
     <p className="font-bold">{dateLabel}</p>
     <ChartTooltipMeetLine date={date} />
     {tooltipsPerLift.map(({ liftType, label, color, reps }) => (
@@ -113,7 +156,7 @@ const TooltipUI = ({ date, dateLabel, tooltipsPerLift }) => (
         <div className="">{label}</div>
       </div>
     ))}
-  </div>
+  </ResizingTooltipCard>
 );
 
 /**

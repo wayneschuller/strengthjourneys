@@ -13,6 +13,7 @@ import {
   ReferenceDot,
   ReferenceLine,
   ZIndexLayer,
+  matchByDataKey,
   useActiveTooltipDataPoints,
   useIsTooltipActive,
   usePlotArea,
@@ -34,6 +35,52 @@ export const LABEL_LINE_HEIGHT = 14;
 // TopPointMarkers can work out the space such a label takes up.
 export const EDGE_LABEL_INSET = 6;
 export const EDGE_LABEL_LIFT = 5;
+
+/**
+ * Pairs an area's points across a data change by session date, so changing the
+ * time range or the lifts reads as the same history moving, not the line
+ * reshaping point by point. Use with interpolateDatedAreaPoints.
+ */
+export const MATCH_AREA_POINTS_BY_DATE = matchByDataKey("rechartsDate");
+
+const lerpWhenFinite = (from, to, progress) =>
+  Number.isFinite(from) && Number.isFinite(to)
+    ? from + (to - from) * progress
+    : to;
+
+/**
+ * Animation frames for an area matched by date. Recharts' default draws a newly
+ * visible session at its final spot straight away while the known sessions are
+ * still sliding across from the old scale, so widening the time range zigzags
+ * the line across the plot. Here a new session grows out of its nearest known
+ * neighbour instead, which keeps every frame in date order.
+ *
+ * @param {Array|null} items - Tagged points from Recharts' matchAnimationItems.
+ * @param {number} progress - Eased animation progress, 0 to 1.
+ * @returns {Array} The points to draw for this frame.
+ */
+export function interpolateDatedAreaPoints(items, progress) {
+  if (!items) return [];
+  const live = items.filter((item) => item.status !== "removed");
+  if (progress === 1) return live.map((item) => item.next);
+
+  // Only a point that was actually drawn can anchor a new one. A row with no
+  // value for this lift has no height to grow from.
+  const wasDrawn = (item) =>
+    item.status === "matched" && Number.isFinite(item.prev.y);
+  let anchor = live.find(wasDrawn)?.prev ?? null;
+
+  return live.map((item) => {
+    if (wasDrawn(item)) anchor = item.prev;
+    const from = item.status === "matched" ? item.prev : anchor;
+    if (!from) return item.next;
+    return {
+      ...item.next,
+      x: lerpWhenFinite(from.x, item.next.x, progress),
+      y: lerpWhenFinite(from.y, item.next.y, progress),
+    };
+  });
+}
 
 /**
  * Vertical fill gradient for an area series. Three stops instead of two: a

@@ -76,6 +76,8 @@ import {
   e1rmMarkerLines,
   formatWeightTick,
   getDateTickProps,
+  interpolateDatedAreaPoints,
+  MATCH_AREA_POINTS_BY_DATE,
   paddedDateDomain,
   renderMeetMarkers,
   SnappedHoverMarks,
@@ -424,6 +426,8 @@ export const VisualizerShadcn = memo(function VisualizerShadcn({
                   activeDot={false} // SnappedHoverMarks draws the hover dots
                   animationDuration={900}
                   animationEasing="ease-out"
+                  animationMatchBy={MATCH_AREA_POINTS_BY_DATE}
+                  animationInterpolateFn={interpolateDatedAreaPoints}
                   connectNulls
                 >
                   {/* Special user provided labels of special events/lifts */}

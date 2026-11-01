@@ -707,14 +707,14 @@ function formatLatestSessionDate(rechartsDate) {
  * Marks the most recent session, the point to find first when reviewing today's
  * work or planning the next one. When that session is already one of the best
  * in range, its marker and numbers are drawn by TopPointMarkers, so this only
- * adds the name and date.
+ * adds the date. Being the rightmost mark already says it is the latest.
  *
  * @param {Object} props
  * @param {Object} props.point - The latest chart row.
  * @param {number} props.value - The point's plotted value.
  * @param {string} props.color - Marker colour.
  * @param {function} props.getLines - ({ point, value }) => string[], the set and
- *   estimate lines shown under the name.
+ *   estimate lines shown under the date.
  * @param {boolean} [props.isTopPoint] - The point already has a top-point marker.
  * @param {number[]} [props.rightEdgeLineValues] - Values of horizontal lines
  *   with a label at the plot's right edge.
@@ -731,8 +731,8 @@ export function LatestSessionMarker({
   const yScale = useYAxisScale();
   if (!point || !plotArea) return null;
 
-  const title = `Latest · ${formatLatestSessionDate(point.rechartsDate)}`;
-  const lines = isTopPoint ? [title] : [title, ...getLines({ point, value })];
+  const date = formatLatestSessionDate(point.rechartsDate);
+  const lines = isTopPoint ? [date] : [date, ...getLines({ point, value })];
 
   return (
     <ReferenceDot

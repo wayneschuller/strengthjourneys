@@ -211,7 +211,7 @@ export function VisualizerMini({ liftType }) {
     [chartData, liftType, topPointCount],
   );
 
-  // Only a session that is really the latest gets the name. Shaping can drop an
+  // Only a session that is really the latest gets the mark. Shaping can drop an
   // absurdly light final session, which leaves an older point at the line's end.
   const latestPoint = useMemo(() => {
     const plotted = chartData?.[chartData.length - 1];

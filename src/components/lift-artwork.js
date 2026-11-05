@@ -85,6 +85,7 @@ import { motion } from "motion/react";
 
 import { useLiftColors } from "@/hooks/use-lift-colors";
 import { DRAWN_LIFT_TYPES, getCuratedLift } from "@/lib/lifts/lift-registry";
+import { cn } from "@/lib/utils";
 
 const ASPECT_RATIO = 5 / 3;
 const IDEAL_WIDTH = 1000;
@@ -143,7 +144,9 @@ export function LiftArtworkImage({
         role={alt ? "img" : undefined}
         aria-label={alt || undefined}
         aria-hidden={alt ? undefined : true}
-        className={`max-w-full object-contain ${className}`}
+        // SVGs do not get the img reset that makes height follow a shrinking
+        // width. Merge the default so callers can still pin their own height.
+        className={cn("h-auto max-w-full object-contain", className)}
         style={{ aspectRatio: `${width} / ${height}`, ...style }}
       >
         <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />

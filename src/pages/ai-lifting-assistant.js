@@ -155,7 +155,7 @@ export default function AILiftingAssistantPage({
   const keywords =
     "AI lifting assistant, personalized lifting advice, strength training, lifting progress tracker, weightlifting analysis, barbell lifting, strength goals, fitness AI";
   const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_ai_lifting_assistant.png";
+    "https://www.strengthjourneys.xyz/og/ai-lifting-assistant.png";
 
   return (
     <>
@@ -165,13 +165,14 @@ export default function AILiftingAssistantPage({
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "AI Lifting Assistant: a coach who reads your training",
+          description:
+            "Ask anything about strength training, or share your lifting history for answers built on your own sets, PRs and progress. Free.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys AI Lifting Assistant",
+              alt: "AI Lifting Assistant with a message box and suggested questions for the athlete",
             },
           ],
           site_name: "Strength Journeys",

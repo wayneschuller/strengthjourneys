@@ -176,8 +176,7 @@ export default function E1RMCalculator({ relatedArticles }) {
   const keywords =
     "one rep max calculator, 1RM calculator, ORM calculator, e1RM calculator, Epley formula, Brzycki formula, powerlifting 1RM calculator, weightlifting max calculator, max lift predictor, strength level estimator, rep max projections, percentage calculator, Big Four strength standards, barbell load calculator";
   const canonicalURL = "https://www.strengthjourneys.xyz/calculator";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/calculator.png";
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -239,13 +238,14 @@ export default function E1RMCalculator({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "One Rep Max Calculator: free, no sign-in",
+          description:
+            "Estimate your one rep max from any set with seven proven formulas, then see rep maxes, training percentages and where you rank for your age and bodyweight.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys One Rep Max Calculator",
+              alt: "One rep max calculator estimating a 253 lb max from 5 reps at 225 lb",
             },
           ],
           site_name: "Strength Journeys",

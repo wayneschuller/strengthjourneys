@@ -161,12 +161,13 @@ export default function GorillaStrengthPage({ relatedArticles }) {
         openGraph={{
           url: canonicalURL,
           title,
-          description,
+          description:
+            "A silverback's bench press is estimated at roughly 1,050 to 1,750 lb. Enter yours and see how you stack up. A small, very brave game.",
           type: "website",
           images: [
             {
-              url: "https://www.strengthjourneys.xyz/strength_journeys_strength_levels_calculator_og.png",
-              alt: "How Strong Are You Compared to a Gorilla",
+              url: "https://www.strengthjourneys.xyz/og/gorilla.png",
+              alt: "A 135 lb human bench press shown as 10% of a silverback gorilla's",
             },
           ],
           site_name: "Strength Journeys",

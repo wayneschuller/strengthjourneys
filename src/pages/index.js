@@ -256,7 +256,7 @@ export default function Home({ starterArticles = [] }) {
     "Track, import, and analyze your barbell lifting data. Merge app exports into a Google Sheet you own, then explore PRs, 1RM calculators, and visual insights.";
   const keywords =
     "strength training, barbell lifting, powerlifting, PR analyzer, strength visualizer, one rep max calculator, strength level calculator, lifting timer, gym playlist, strength articles, workout tracking, workout data import, fitness app export, Google Sheets integration, free tools, open source, strength progress, personal records, e1rm, relative strength, workout music, lifting motivation";
-  const ogImageURL = "https://www.strengthjourneys.xyz/og-image-2026-11.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/home.png";
   const { status: authStatus } = useSession();
   const { dataSource, parsedData, rawRows, sheetInfo } = useUserLiftingData();
   const [bigFourAnimated, setBigFourAnimated] = useState(false);
@@ -332,8 +332,10 @@ export default function Home({ starterArticles = [] }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title:
+            "Every barbell set you've ever lifted, in one place you'll never lose",
+          description:
+            "A free barbell log plus a full rack of lifting tools: one rep max, strength standards, PR history and lifetime charts. All stored in a Google Sheet you own.",
           type: "website",
           images: [
             {

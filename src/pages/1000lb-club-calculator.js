@@ -271,13 +271,14 @@ export default function ThousandPoundClubCalculator({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "1000lb Club Calculator: are you in?",
+          description:
+            "Add up your squat, bench press and deadlift and see how close you are to a 1000 lb total. Works in lb and kg, no sign-in.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys 1000lb Club Calculator",
+              alt: "1000lb Club calculator totalling a squat, bench press and deadlift",
             },
           ],
           site_name: "Strength Journeys",

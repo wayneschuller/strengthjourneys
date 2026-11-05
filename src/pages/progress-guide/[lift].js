@@ -181,7 +181,7 @@ function CuratedLiftGuide({ lift, relatedArticles, variations }) {
   const description =
     page.description ??
     `${coaching?.summary ? `${coaching.summary} ` : ""}Technique cues, a tutorial video, and free ${liftType} progress tracking with E1RM charts, rep PRs and tonnage.`;
-  const ogImageURL = `${SITE_URL}${page.ogImage ?? "/strength_journeys_analyzer_og.png"}`;
+  const ogImageURL = `${SITE_URL}${page.ogImage ?? "/og/lift-explorer.png"}`;
 
   const structuredData = {
     "@context": "https://schema.org",

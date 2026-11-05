@@ -72,8 +72,7 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
     "warmup sets calculator, barbell warmup calculator, progressive warmup, warmup sets generator, barbell warmup sets, strength training warmup, powerlifting warmup calculator, workout warmup calculator, warmup reps calculator";
   const canonicalURL =
     "https://www.strengthjourneys.xyz/warm-up-sets-calculator";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_warm_up_sets_calculator_og.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/warm-up-sets.png";
 
   return (
     <>
@@ -83,13 +82,14 @@ export default function WarmUpSetsCalculator({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "Barbell Warm Up Calculator",
+          description:
+            "Enter your top set and get warm up sets with the plates to load for each one. Free, no sign-in.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Warm Up Sets Calculator",
+              alt: "Warm up sets calculator listing four warm up sets with the plates for each",
             },
           ],
           site_name: "Strength Journeys",

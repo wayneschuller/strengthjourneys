@@ -940,8 +940,8 @@ export default function FormulaOrLiftCalculatorPage({
           type: "website",
           images: [
             {
-              url: "https://www.strengthjourneys.xyz/strength_journeys_one_rep_max_calculator_og.png",
-              alt: "Strength Journeys One Rep Max Calculator",
+              url: "https://www.strengthjourneys.xyz/og/calculator.png",
+              alt: "One rep max calculator estimating a 253 lb max from 5 reps at 225 lb",
             },
           ],
           site_name: "Strength Journeys",

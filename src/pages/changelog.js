@@ -30,7 +30,7 @@ import { getChangelogEntries } from "@/lib/changelog";
 
 const SITE_NAME = "Strength Journeys";
 const CANONICAL_URL = "https://www.strengthjourneys.xyz/changelog";
-const OG_IMAGE_URL = "https://www.strengthjourneys.xyz/og-image-2026-11.png";
+const OG_IMAGE_URL = "https://www.strengthjourneys.xyz/og/home.png";
 const PAGE_TITLE = "What's New in Strength Journeys";
 const DESCRIPTION =
   "New features and improvements in Strength Journeys, the free barbell strength tracker built on your own Google Sheet.";

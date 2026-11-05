@@ -72,11 +72,11 @@ export default function ArticleArchivePage({
         <meta property="og:type" content="website" />
         <meta
           property="og:image"
-          content="https://www.strengthjourneys.xyz/strength_journeys_articles_og.png"
+          content="https://www.strengthjourneys.xyz/og/articles.png"
         />
         <meta
           property="og:image:alt"
-          content="Strength Journeys article archive pages"
+          content="Strength Journeys article library with featured barbell training articles"
         />
         <script
           type="application/ld+json"

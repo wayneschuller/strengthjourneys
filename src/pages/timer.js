@@ -56,8 +56,7 @@ export default function Timer({ relatedArticles }) {
   // OG Meta Tags
   const canonicalURL = "https://www.strengthjourneys.xyz/timer";
   const title = PAGE_TITLE;
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_timer_og.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/timer.png";
   const description =
     "World's greatest gym timer app. Perfect for tracking lifting sets, rest periods, and overall workout duration. Hulk lift big. Hulk smash timer space bar.";
   const keywords =
@@ -71,13 +70,14 @@ export default function Timer({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "Lifting Set Timer: big, simple and free",
+          description:
+            "A huge rest timer you can read from across the gym. Tap or press space to restart, with optional interval pings. No sign-in.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Lifting Set Timer",
+              alt: "Gym set timer showing 00:08 in huge digits",
             },
           ],
           site_name: "Strength Journeys",

@@ -468,9 +468,15 @@ function ImportPageSeo() {
       canonical={SEO_CANONICAL}
       openGraph={{
         url: SEO_CANONICAL,
-        title: SEO_TITLE,
+        title: "Import your lifting history from any app",
         description: SEO_DESCRIPTION,
         type: "website",
+        images: [
+          {
+            url: "https://www.strengthjourneys.xyz/og/import.png",
+            alt: "Import page with a drop zone for workout exports from Hevy, Strong, Wodify and more",
+          },
+        ],
         site_name: "Strength Journeys",
       }}
       additionalMetaTags={[

@@ -38,8 +38,7 @@ export default function TonnageVisualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Tonnage Metrics";
   const canonicalURL = "https://www.strengthjourneys.xyz/tonnage";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_visualizer_og.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/tonnage.png";
   const description =
     "Big picture visualization of your tonnage and weight moved over time.";
   const keywords =
@@ -53,13 +52,14 @@ export default function TonnageVisualizer({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "Tonnage Metrics: how much weight have you moved?",
+          description:
+            "Every set adds up. See your total weight moved per session and over time, against your 30-day average.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Tonnage Metrics",
+              alt: "Tonnage chart of total weight moved per session climbing over three months, beside the latest session's sets",
             },
           ],
           site_name: "Strength Journeys",

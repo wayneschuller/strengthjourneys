@@ -302,7 +302,8 @@ export default function StrengthClubCalculator({ relatedArticles }) {
         openGraph={{
           url: canonicalURL,
           title: title,
-          description: description,
+          description:
+            "Track the classic barbell milestones: a 200 lb press, 300 bench, 400 squat and 500 deadlift. Free, no sign-in.",
           type: "website",
           site_name: "Strength Journeys",
           images: [

@@ -128,6 +128,12 @@ function ImportAppPage({ page }) {
           description: page.metaDescription,
           type: "article",
           site_name: "Strength Journeys",
+          images: [
+            {
+              url: "https://www.strengthjourneys.xyz/og/import.png",
+              alt: "Import page with a drop zone for workout exports from Hevy, Strong, Wodify and more",
+            },
+          ],
         }}
       />
 

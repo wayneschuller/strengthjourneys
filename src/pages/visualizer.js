@@ -38,8 +38,7 @@ export default function Visualizer({ relatedArticles }) {
   // OG Meta Tags
   const title = "Strength Journeys Lift Strength Visualizer";
   const canonicalURL = "https://www.strengthjourneys.xyz/visualizer";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_visualizer_og.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/visualizer.png";
   const description =
     "Big picture visualization of your strength journey. Charted E1RMs for each lift to identify trends and show your overall progress.";
   const keywords =
@@ -53,13 +52,14 @@ export default function Visualizer({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "Strength Visualizer: your whole lifting life on one chart",
+          description:
+            "Chart your estimated one rep max for every lift, from your first session to today, with meets and lifetime bests marked.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Strength Visualizer",
+              alt: "Estimated one rep max chart for squat, bench and deadlift from 2014 to 2026, with meets marked in gold",
             },
           ],
           site_name: "Strength Journeys",

@@ -506,8 +506,10 @@ export default function GymPlaylistLeaderboard({
     "Elevate your workouts with top-rated gym playlists. Discover the best music for weightlifting, powerlifting, and strength training.";
   const keywords =
     "gym playlists, workout music, lifting songs, powerlifting soundtrack, fitness motivation, strength training music";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength-journeys-playlist-leaderboard.png";
+  const ogTitle = "Gym Music Leaderboard: lifting playlists ranked by lifters";
+  const ogDescription =
+    "The playlists lifters actually train to, voted up by the community. Find your next heavy-day soundtrack or suggest your own.";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/playlist.png";
 
   return (
     <>
@@ -520,15 +522,19 @@ export default function GymPlaylistLeaderboard({
 
         <meta name="robots" content="index, follow" />
 
-        <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
+        <meta property="og:title" content={ogTitle} />
+        <meta property="og:description" content={ogDescription} />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={canonicalURL} />
         <meta property="og:image" content={ogImageURL} />
+        <meta
+          property="og:image:alt"
+          content="Top-voted gym playlists for lifting, ranked by lifter votes"
+        />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={description} />
+        <meta name="twitter:title" content={ogTitle} />
+        <meta name="twitter:description" content={ogDescription} />
         <meta name="twitter:image" content={ogImageURL} />
 
         <script

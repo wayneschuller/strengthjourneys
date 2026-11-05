@@ -26,6 +26,8 @@ const pageTitle = "Strength and Lifting Articles Library";
 const siteName = "Strength Journeys";
 const description = `Browse our collection of strength, lifting and fitness articles on various topics. Updated regularly with the latest insights and information.`;
 const canonicalUrl = "https://www.strengthjourneys.xyz/articles";
+const ogDescription =
+  "Practical reading on barbell strength: programming, progress, strength standards and owning your training data.";
 
 export async function getStaticProps() {
   const { featuredArticles, articles, totalPages } = getArticleLibraryPage(1);
@@ -51,16 +53,16 @@ export default function ArticleListingPage({
         <link rel="canonical" href={canonicalUrl} />
         {totalPages > 1 && <link rel="next" href={`${canonicalUrl}/page/2`} />}
         <meta property="og:title" content={fullTitle} />
-        <meta property="og:description" content={description} />
+        <meta property="og:description" content={ogDescription} />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:type" content="website" />
         <meta
           property="og:image"
-          content="https://www.strengthjourneys.xyz/strength_journeys_articles_og.png"
+          content="https://www.strengthjourneys.xyz/og/articles.png"
         />
         <meta
           property="og:image:alt"
-          content="Strength Journeys Article Library - Strength and Lifting Topics"
+          content="Strength Journeys article library with featured barbell training articles"
         />
 
         <script

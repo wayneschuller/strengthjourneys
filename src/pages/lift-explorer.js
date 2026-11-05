@@ -51,8 +51,7 @@ export default function LiftExplorer({ relatedArticles }) {
   const title =
     "Lift Explorer - Explore Your Lifting History | Strength Journeys";
   const canonicalURL = "https://www.strengthjourneys.xyz/lift-explorer";
-  const ogImageURL =
-    "https://www.strengthjourneys.xyz/strength_journeys_analyzer_og.png";
+  const ogImageURL = "https://www.strengthjourneys.xyz/og/lift-explorer.png";
   const keywords =
     "lift explorer, strength training, personal records, lifting history, rep max, lift frequency, strength journey, PR tracker, barbell lifts, workout history";
 
@@ -64,13 +63,14 @@ export default function LiftExplorer({ relatedArticles }) {
         canonical={canonicalURL}
         openGraph={{
           url: canonicalURL,
-          title: title,
-          description: description,
+          title: "Lift Explorer: every lift you train, in one place",
+          description:
+            "The big four and every other barbell lift in your log, each with recent bests, a strength level and a progress guide of its own.",
           type: "website",
           images: [
             {
               url: ogImageURL,
-              alt: "Strength Journeys Lift Explorer",
+              alt: "Lift Explorer with illustrated cards for squat, bench press, deadlift and strict press, plus more barbell lifts",
             },
           ],
           site_name: "Strength Journeys",

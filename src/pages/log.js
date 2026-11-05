@@ -72,8 +72,7 @@ const LOG_PAGE_TITLE = "Workout Log and Session Tracker | Strength Journeys";
 const LOG_PAGE_DESCRIPTION =
   "A free barbell workout log. Browse the live demo, log sets in seconds with warm-up and PR context, and keep every session in a Google Sheet you own.";
 const LOG_PAGE_CANONICAL_URL = "https://www.strengthjourneys.xyz/log";
-const LOG_PAGE_OG_IMAGE_URL =
-  "https://www.strengthjourneys.xyz/og-image-2026-11.png";
+const LOG_PAGE_OG_IMAGE_URL = "https://www.strengthjourneys.xyz/og/log.png";
 const LOG_PAGE_KEYWORDS =
   "workout log, strength training log, barbell log, lifting tracker, workout tracker, olympic lifting log, accessory lift tracker, Google Sheets workout log, PR tracker, warmup suggestions, strength journeys";
 // Copy note: this block only renders for signed-out visitors, so it is read by
@@ -709,13 +708,14 @@ export default function LogSessionPage({
         canonical={LOG_PAGE_CANONICAL_URL}
         openGraph={{
           url: LOG_PAGE_CANONICAL_URL,
-          title: LOG_PAGE_TITLE,
-          description: LOG_PAGE_DESCRIPTION,
+          title: "A free barbell workout log you own",
+          description:
+            "Log today's session in seconds, with warm ups, PRs and notes beside every set. Every set lands in a Google Sheet you own. Try the live demo.",
           type: "website",
           images: [
             {
               url: LOG_PAGE_OG_IMAGE_URL,
-              alt: "Strength Journeys workout log",
+              alt: "Workout log showing a deadlift session building to a lifetime best single of 463 lb, with notes and personal record badges",
             },
           ],
           site_name: "Strength Journeys",

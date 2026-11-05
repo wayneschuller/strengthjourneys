@@ -10,7 +10,8 @@
   "calculatorUrl": "/calculator/strict-press-1rm-calculator",
   "artwork": {
     "src": "/lifts/default/strict-press.svg",
-    "figure": "male"
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

@@ -37,6 +37,8 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 
 - **Theme logos (optional):** `src/lib/theme-logos.js` maps theme name -> logo asset for nav.
 
+- **Lift artwork decorations:** `StarryNightStars` in `src/components/lift-artwork.js` draws a static gold constellation behind the shared SVG artwork. Theme-class rules in `globals.css` show it only for Starry Night and its dark variant. It stays inside the existing canvas, so it adds no layout space. Occasional theme decorations can stay bespoke; there is no decoration registry.
+
 Checklist for adding a new theme (always add a dark variant too):
 
 1. Add `.your-theme` and `.your-theme-dark` blocks to `src/styles/globals.css` defining the core shadcn tokens + `--heatmap-0..4`.

@@ -2412,6 +2412,16 @@ html:not([data-restoring]) [data-returning-visit] {
     );
 }
 
+/* The shared artwork canvas carries stars only in these two theme variants. */
+.lift-artwork-stars {
+  display: none;
+}
+
+:is(.starry-night, .starry-night-dark) .lift-artwork-stars {
+  display: inline;
+  color: var(--gilt);
+}
+
 /* Primed canvas: a faint linen weave under the painting on the light theme. */
 .starry-night body {
   background-image:

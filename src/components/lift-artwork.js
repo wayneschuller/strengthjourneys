@@ -149,6 +149,7 @@ export function LiftArtworkImage({
         className={cn("h-auto max-w-full object-contain", className)}
         style={{ aspectRatio: `${width} / ${height}`, ...style }}
       >
+        <StarryNightStars />
         <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />
       </svg>
     );
@@ -167,6 +168,42 @@ export function LiftArtworkImage({
       style={style}
       onLoad={onLoad}
     />
+  );
+}
+
+// A small painted constellation just for Starry Night. Keep it behind the
+// drawing and inside its canvas so decorations never change layout or obscure
+// lifting technique. CSS selects the theme without a client-only render pass.
+function StarryNightStars() {
+  return (
+    <g className="lift-artwork-stars" aria-hidden="true" pointerEvents="none">
+      {[
+        [65, 155, 15],
+        [180, 65, 11],
+        [435, 115, 8],
+        [555, 45, 12],
+        [840, 80, 17],
+        [950, 245, 11],
+        [885, 410, 8],
+      ].map(([x, y, radius]) => (
+        <g key={`${x}-${y}`} transform={`translate(${x} ${y})`}>
+          <circle r={radius * 2.4} fill="var(--halo)" opacity="0.14" />
+          <path
+            d={`M ${-radius * 1.8} ${-radius * 0.4} C ${-radius * 1.3} ${-radius * 2.3}, ${radius * 1.5} ${-radius * 2.1}, ${radius * 1.9} ${-radius * 0.2} M ${radius * 1.7} ${radius * 0.7} C ${radius} ${radius * 2.2}, ${-radius * 1.1} ${radius * 2}, ${-radius * 1.8} ${radius * 0.7}`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            opacity="0.45"
+          />
+          <path
+            d={`M 0 ${-radius} Q ${radius * 0.2} ${-radius * 0.2} ${radius} 0 Q ${radius * 0.2} ${radius * 0.2} 0 ${radius} Q ${-radius * 0.2} ${radius * 0.2} ${-radius} 0 Q ${-radius * 0.2} ${-radius * 0.2} 0 ${-radius} Z`}
+            fill="currentColor"
+          />
+          <circle r={radius * 0.3} fill="var(--halo)" />
+        </g>
+      ))}
+    </g>
   );
 }
 

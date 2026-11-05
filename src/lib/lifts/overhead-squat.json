@@ -8,8 +8,9 @@
   },
   "tagline": "Strength, mobility and balance under one bar.",
   "artwork": {
-    "src": "/lifts/default/overhead-squat.png",
-    "figure": "female"
+    "src": "/lifts/default/overhead-squat.svg",
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

@@ -4,8 +4,9 @@
   "synonyms": ["Bent Over Row"],
   "tagline": "A strong back for every other lift.",
   "artwork": {
-    "src": "/lifts/default/barbell-row.png",
-    "figure": "male"
+    "src": "/lifts/default/barbell-row.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

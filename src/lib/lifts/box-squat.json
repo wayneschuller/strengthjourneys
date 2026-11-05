@@ -7,8 +7,9 @@
   },
   "tagline": "Sit back to the box, then drive up with the hips.",
   "artwork": {
-    "src": "/lifts/default/box-squat.png",
-    "figure": "female"
+    "src": "/lifts/default/box-squat.svg",
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

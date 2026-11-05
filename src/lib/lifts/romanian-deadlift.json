@@ -8,8 +8,9 @@
   },
   "tagline": "The hinge that builds hamstrings.",
   "artwork": {
-    "src": "/lifts/default/romanian-deadlift.png",
-    "figure": "male"
+    "src": "/lifts/default/romanian-deadlift.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

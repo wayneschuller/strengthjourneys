@@ -2598,9 +2598,9 @@ html:not([data-restoring]) [data-returning-visit] {
 }
 
 /* Lift artwork colours. A themed SVG drawing (see lift-artwork.js) reads these
-   five variables, each with the house colour as its fallback, so a theme only
+   colour variables, each with the house colour as its fallback, so a theme only
    lists what it changes. Light has no entry: the fallbacks are the light look.
-   kit is the singlet and shoes, plate the plate face. The shade, rim and hub
+   kit is the singlet and shoes, plate the plate face. The shade, highlight, rim and hub
    are derived so a theme names two colours, not five. Dark packs lift the
    plates to a mid grey, because house iron vanishes on a near-black page. */
 :is(
@@ -2617,6 +2617,7 @@ html:not([data-restoring]) [data-returning-visit] {
   .neo-brutalism-dark
 ) {
   --lift-kit-shade: color-mix(in oklch, var(--lift-kit) 78%, black);
+  --lift-kit-highlight: color-mix(in oklch, var(--lift-kit) 72%, white);
 }
 
 :is(.dark, .blueprint-dark, .evergreen-dark, .starry-night-dark) {

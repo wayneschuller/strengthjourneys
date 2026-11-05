@@ -8,8 +8,9 @@
   },
   "tagline": "The bench press, built for triceps.",
   "artwork": {
-    "src": "/lifts/default/close-grip-bench-press.png",
-    "figure": "female"
+    "src": "/lifts/default/close-grip-bench-press.svg",
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

@@ -8,8 +8,9 @@
   },
   "tagline": "The bench press with a dead stop on the chest.",
   "artwork": {
-    "src": "/lifts/default/pause-bench-press.png",
-    "figure": "male"
+    "src": "/lifts/default/pause-bench-press.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

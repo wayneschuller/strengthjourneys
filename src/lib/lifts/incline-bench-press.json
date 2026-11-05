@@ -8,8 +8,9 @@
   },
   "tagline": "Halfway between the bench and the press.",
   "artwork": {
-    "src": "/lifts/default/incline-bench-press.png",
-    "figure": "female"
+    "src": "/lifts/default/incline-bench-press.svg",
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

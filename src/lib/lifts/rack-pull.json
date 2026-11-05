@@ -8,8 +8,9 @@
   },
   "tagline": "The top half of the deadlift, overloaded.",
   "artwork": {
-    "src": "/lifts/default/rack-pull.png",
-    "figure": "male"
+    "src": "/lifts/default/rack-pull.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

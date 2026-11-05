@@ -3,8 +3,9 @@
   "slug": "barbell-curl",
   "tagline": "Strong arms, one strict rep at a time.",
   "artwork": {
-    "src": "/lifts/default/barbell-curl.png",
-    "figure": "male"
+    "src": "/lifts/default/barbell-curl.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

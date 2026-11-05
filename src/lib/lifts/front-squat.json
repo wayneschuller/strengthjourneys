@@ -7,8 +7,9 @@
   },
   "tagline": "Upright, quad driven, and honest.",
   "artwork": {
-    "src": "/lifts/default/front-squat.png",
-    "figure": "female"
+    "src": "/lifts/default/front-squat.svg",
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

@@ -3,8 +3,9 @@
   "slug": "power-clean",
   "tagline": "Floor to shoulders in one explosive pull.",
   "artwork": {
-    "src": "/lifts/default/power-clean.png",
-    "figure": "male"
+    "src": "/lifts/default/power-clean.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

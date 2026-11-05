@@ -3,8 +3,9 @@
   "slug": "power-snatch",
   "tagline": "The fastest lift in the gym.",
   "artwork": {
-    "src": "/lifts/default/power-snatch.png",
-    "figure": "male"
+    "src": "/lifts/default/power-snatch.svg",
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

@@ -3,8 +3,9 @@
   "slug": "hip-thrust",
   "tagline": "The lift made for glutes.",
   "artwork": {
-    "src": "/lifts/default/hip-thrust.png",
-    "figure": "female"
+    "src": "/lifts/default/hip-thrust.svg",
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

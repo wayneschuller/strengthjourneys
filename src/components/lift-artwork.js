@@ -150,6 +150,7 @@ export function LiftArtworkImage({
         style={{ aspectRatio: `${width} / ${height}`, ...style }}
       >
         <StarryNightStars src={src} />
+        {src === getLiftArtwork("Bench Press") && <BlueprintBenchSketch />}
         <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />
       </svg>
     );
@@ -168,6 +169,30 @@ export function LiftArtworkImage({
       style={style}
       onLoad={onLoad}
     />
+  );
+}
+
+// One lift as a trial: a fragment of the bench's underdrawing, offset from the
+// finished bar and far plate. Open contours keep it a sketch, not extra kit.
+function BlueprintBenchSketch() {
+  return (
+    <g
+      className="lift-artwork-construction"
+      aria-hidden="true"
+      pointerEvents="none"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M 785 30 C 815 4 849 27 853 68 C 858 101 839 125 819 122 M 796 119 C 776 109 769 80 775 56" />
+      <path
+        d="M 795 22 C 826 7 857 41 858 76 C 859 96 852 111 840 122"
+        opacity="0.55"
+      />
+      <path d="M 501 115 L 888 73 M 539 119 L 731 98" />
+    </g>
   );
 }
 

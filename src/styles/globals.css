@@ -2412,6 +2412,17 @@ html:not([data-restoring]) [data-returning-visit] {
     );
 }
 
+/* A bench-press underdrawing trial, separate from Blueprint's card markings. */
+.lift-artwork-construction {
+  display: none;
+}
+
+:is(.blueprint, .blueprint-dark) .lift-artwork-construction {
+  display: inline;
+  color: var(--primary);
+  opacity: 0.28;
+}
+
 /* The shared artwork canvas carries stars only in these two theme variants. */
 .lift-artwork-stars {
   display: none;

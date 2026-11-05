@@ -73,7 +73,7 @@ const LOG_PAGE_DESCRIPTION =
   "A free barbell workout log. Browse the live demo, log sets in seconds with warm-up and PR context, and keep every session in a Google Sheet you own.";
 const LOG_PAGE_CANONICAL_URL = "https://www.strengthjourneys.xyz/log";
 const LOG_PAGE_OG_IMAGE_URL =
-  "https://www.strengthjourneys.xyz/202409-og-image.png";
+  "https://www.strengthjourneys.xyz/og-image-2026-11.png";
 const LOG_PAGE_KEYWORDS =
   "workout log, strength training log, barbell log, lifting tracker, workout tracker, olympic lifting log, accessory lift tracker, Google Sheets workout log, PR tracker, warmup suggestions, strength journeys";
 // Copy note: this block only renders for signed-out visitors, so it is read by

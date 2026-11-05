@@ -171,9 +171,8 @@ export function LiftArtworkImage({
   );
 }
 
-// Painted eddies and broken brush marks just for Starry Night. They stay behind
-// the figures and inside the canvas; CSS selects the theme without a client-only
-// render pass. No filters or animation, so small tiles and exports stay crisp.
+// Generated painted motifs stay cached outside the JS bundle. A subdued layer
+// behind the figures keeps them background decoration rather than more content.
 function StarryNightStars({ src }) {
   // Seed from the registry asset: aliases and every rendering surface agree,
   // and server/client output stays identical without storing random state.
@@ -187,7 +186,8 @@ function StarryNightStars({ src }) {
     hash ^= hash >>> 13;
     return (hash >>> 0) / 4294967296;
   };
-  const windIndex = Math.floor(sample(0) * 3);
+  const motifFile = "/lifts/starry-night-decorations.svg";
+  const wind = ["wind-a", "wind-b", "wind-c"][Math.floor(sample(0) * 3)];
   const moon = sample(1) < 0.35;
   const stars = [
     [77, 142],
@@ -200,126 +200,48 @@ function StarryNightStars({ src }) {
     .map(([x, y], i) => ({
       x: x + sample(10 + i) * 24 - 12,
       y: y + sample(20 + i) * 24 - 12,
-      radius: 20 + sample(30 + i) * 6,
       angle: sample(40 + i) * 60 - 30,
       order: sample(50 + i),
+      motif: i % 2 ? "star-a" : "star-b",
     }))
     .sort((a, b) => a.order - b.order)
     .slice(0, moon ? 1 : 2);
-  const winds = [
-    "M 28 342 C 114 375 125 240 234 225 S 367 302 460 270 S 564 163 508 147 C 449 130 419 191 461 211 C 490 226 519 204 504 185",
-    "M 350 62 C 429 18 490 22 572 64 S 685 148 773 121 S 895 155 965 117",
-    "M 612 422 C 686 390 697 475 783 459 S 894 387 974 421",
-  ];
+
   return (
     <g className="lift-artwork-stars" aria-hidden="true" pointerEvents="none">
       <g
-        fill="none"
-        strokeLinecap="round"
-        strokeLinejoin="round"
         transform={
           sample(2) < 0.5 ? "translate(1000 0) scale(-1 1)" : undefined
         }
       >
-        {winds
-          .filter((_, i) => i === windIndex)
-          .map((d) => (
-            <g key={d}>
-              <path
-                d={d}
-                stroke="var(--chart-1)"
-                strokeWidth="40"
-                opacity="0.14"
-              />
-              <path
-                d={d}
-                stroke="var(--chart-1)"
-                strokeWidth="13"
-                strokeDasharray="28 4 12 5 37 6"
-                opacity="0.65"
-              />
-              <path
-                d={d}
-                transform={`translate(0 ${windIndex === 1 ? -12 : 12})`}
-                stroke="var(--chart-3)"
-                strokeWidth="7"
-                strokeDasharray="17 5 8 7 27 4"
-                opacity="0.7"
-              />
-              <path
-                d={d}
-                transform="translate(0 -9)"
-                stroke="var(--halo)"
-                strokeWidth="4"
-                strokeDasharray="5 13 17 9 3 10"
-                opacity="0.65"
-              />
-            </g>
-          ))}
+        <use
+          href={`${motifFile}#${wind}`}
+          x={35 + sample(5) * 280}
+          y={70 + sample(6) * 170}
+          width="640"
+          height="260"
+          opacity="0.65"
+        />
       </g>
-      {stars.map(({ x, y, radius, angle }) => (
-        <g
+      {stars.map(({ x, y, angle, motif }) => (
+        <use
           key={`${x}-${y}`}
-          transform={`translate(${x} ${y}) rotate(${angle}) scale(${radius / 30})`}
-        >
-          <path
-            d="M -53 -7 C -50 -49 -4 -62 32 -42 S 64 21 32 45 S -51 40 -53 -7 Z"
-            fill="var(--gilt)"
-            opacity="0.12"
-          />
-          <g fill="none" strokeLinecap="round">
-            <path
-              d="M -43 -9 C -37 -43 1 -49 28 -32 S 47 23 18 34 S -39 27 -36 -2 C -33 -26 -5 -32 14 -20 S 27 17 7 20"
-              stroke="var(--gilt)"
-              strokeWidth="7"
-            />
-            <path
-              d="M -48 9 C -39 44 1 51 30 28 M -29 -38 C -7 -55 24 -47 40 -23"
-              stroke="var(--halo)"
-              strokeWidth="5"
-            />
-            {Array.from({ length: 12 }, (_, i) => (
-              <path
-                key={i}
-                d={`M ${i % 2 ? 50 : 54} -3 l ${i % 3 === 0 ? 12 : 7} 2`}
-                transform={`rotate(${i * 30 + (i % 3) * 4})`}
-                stroke={i % 3 === 0 ? "var(--chart-3)" : "var(--gilt)"}
-                strokeWidth={i % 2 ? 4 : 6}
-              />
-            ))}
-          </g>
-          <path
-            d="M -19 -7 Q -16 -24 1 -20 Q 19 -22 22 -4 Q 25 14 7 19 Q -13 24 -20 8 Z"
-            fill="var(--halo)"
-          />
-          <path
-            d="M -8 -8 Q 6 -17 12 -3 Q 17 10 1 12 Q -10 11 -8 -8"
-            fill="var(--gilt)"
-          />
-          <path d="M -5 -5 Q 5 -12 8 -2 L 2 6 Z" fill="var(--halo)" />
-        </g>
+          href={`${motifFile}#${motif}`}
+          x={x - 55}
+          y={y - 55}
+          width="110"
+          height="110"
+          transform={`rotate(${angle} ${x} ${y})`}
+        />
       ))}
       {moon && (
-        <g
-          transform={`translate(${sample(3) < 0.5 ? 873 : 115} ${80 + sample(4) * 35}) rotate(-20)`}
-        >
-          <path
-            d="M 29 -46 C -34 -58 -66 -2 -38 39 C -14 75 42 56 53 20 C 18 44 -17 18 -12 -9 C -9 -28 4 -40 29 -46 Z"
-            fill="var(--gilt)"
-            opacity="0.18"
-          />
-          <path
-            d="M 21 -35 C -23 -39 -45 -2 -26 28 C -10 51 27 40 38 21 C 9 31 -16 10 -13 -10 C -11 -22 2 -32 21 -35 Z"
-            fill="var(--halo)"
-          />
-          <path
-            d="M 3 -31 C -31 -14 -28 21 -4 30 M -42 -17 C -54 16 -33 49 -5 51"
-            fill="none"
-            stroke="var(--gilt)"
-            strokeWidth="6"
-            strokeLinecap="round"
-          />
-        </g>
+        <use
+          href={`${motifFile}#moon`}
+          x={sample(3) < 0.5 ? 815 : 60}
+          y={25 + sample(4) * 35}
+          width="115"
+          height="125"
+        />
       )}
     </g>
   );

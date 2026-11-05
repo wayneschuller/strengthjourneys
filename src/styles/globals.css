@@ -2419,7 +2419,7 @@ html:not([data-restoring]) [data-returning-visit] {
 
 :is(.starry-night, .starry-night-dark) .lift-artwork-stars {
   display: inline;
-  color: var(--gilt);
+  opacity: 0.55;
 }
 
 /* Primed canvas: a faint linen weave under the painting on the light theme. */

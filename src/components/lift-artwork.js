@@ -182,9 +182,10 @@ function BlueprintBenchSketch() {
       pointerEvents="none"
       fill="none"
       stroke="currentColor"
-      strokeWidth="2.5"
+      strokeWidth="4.5"
       strokeLinecap="round"
       strokeLinejoin="round"
+      transform="translate(32 16)"
     >
       <path d="M 785 30 C 815 4 849 27 853 68 C 858 101 839 125 819 122 M 796 119 C 776 109 769 80 775 56" />
       <path

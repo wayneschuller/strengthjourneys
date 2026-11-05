@@ -37,7 +37,7 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 
 - **Theme logos (optional):** `src/lib/theme-logos.js` maps theme name -> logo asset for nav.
 
-- **Blueprint artwork trial:** `BlueprintBenchSketch` in `src/components/lift-artwork.js` adds a small offset underdrawing of the raised bar and far plate to Bench Press only. Theme CSS shows it at low opacity in both Blueprint variants, behind the finished illustration. This is a single-lift experiment, separate from the card markings.
+- **Blueprint artwork trial:** `BlueprintBenchSketch` in `src/components/lift-artwork.js` adds a small offset underdrawing of the raised bar and far plate to Bench Press only. Theme CSS shows it at 62% opacity in both Blueprint variants, with a 32×16 canvas-unit offset and 4.5-unit strokes so it remains visible beside the finished illustration. This is a single-lift experiment, separate from the card markings.
 
 - **Lift artwork decorations:** `StarryNightStars` in `src/components/lift-artwork.js` draws one blue eddy and two gold accents (star halos or a crescent moon) behind the shared SVG artwork, using the generated vector symbols in `public/lifts/starry-night-decorations.svg`. The shared layer is faded to 55% opacity, with the eddy subdued further; keep these as background paint rather than foreground emblems. Placement and motif selection are seeded from the registry artwork path, so each lift has a stable variation shared by its aliases and every rendering surface. Theme-class rules in `globals.css` show it only for Starry Night and its dark variant. It stays inside the existing canvas, so it adds no layout space. Occasional theme decorations can stay bespoke; there is no decoration registry.
 

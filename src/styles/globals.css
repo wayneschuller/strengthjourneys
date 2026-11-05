@@ -2420,7 +2420,7 @@ html:not([data-restoring]) [data-returning-visit] {
 :is(.blueprint, .blueprint-dark) .lift-artwork-construction {
   display: inline;
   color: var(--primary);
-  opacity: 0.28;
+  opacity: 0.62;
 }
 
 /* The shared artwork canvas carries stars only in these two theme variants. */

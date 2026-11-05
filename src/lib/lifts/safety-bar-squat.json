@@ -7,6 +7,11 @@
     "tonnageRatio": 1
   },
   "tagline": "Squat heavy while the bar looks after your shoulders.",
+  "artwork": {
+    "src": "/lifts/default/safety-bar-squat.svg",
+    "figure": "female",
+    "themed": true
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=CMn1Z9pzZAk",

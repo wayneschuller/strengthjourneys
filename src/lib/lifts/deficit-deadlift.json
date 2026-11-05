@@ -6,6 +6,11 @@
     "tonnageRatio": 1
   },
   "tagline": "A longer pull for a stronger start off the floor.",
+  "artwork": {
+    "src": "/lifts/default/deficit-deadlift.svg",
+    "figure": "male",
+    "themed": true
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=3KQP-CNKr9U",

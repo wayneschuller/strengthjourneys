@@ -50,6 +50,20 @@
  * The cleanup that gets a generated render to this standard lives outside the
  * repo with the original renders; AGENTS.md says where.
  *
+ * THEMED SVG (the newer route)
+ *
+ * A drawing generated as SVG takes the app theme's colours. Mark its artwork
+ * block "themed": true. The file is prepared by prepare_svg.mjs next to the
+ * original renders: the five colours a theme may change (singlet and shoes, the
+ * plates) become CSS variables with the house colour as the fallback, and the
+ * drawing sits in <symbol id="art">. LiftArtwork then draws it with an
+ * SVG <use>, so the file stays a cached static asset (nothing joins the JS
+ * bundle) and inherits --lift-kit, --lift-kit-shade, --lift-plate-rim,
+ * --lift-plate and --lift-plate-hub from the active theme (globals.css).
+ * A caller that puts getLiftArtwork's path on its own next/image still works:
+ * the fallbacks give the house colours.
+ * Same canvas rules as above, but 1600x960 is the SVG viewBox to ask for.
+ *
  * None of this is enforced. Odd sizes still render, builds never fail over
  * artwork, and development logs one console note per offending file.
  *
@@ -92,6 +106,17 @@ export function getLiftArtwork(liftType) {
 }
 
 /**
+ * Whether a lift's drawing is a themed SVG: one that takes the app theme's
+ * colours through <use> instead of loading as a plain image.
+ *
+ * @param {string} liftType - e.g. "Push Jerk".
+ * @returns {boolean}
+ */
+function isThemedArtwork(liftType) {
+  return getCuratedLift(liftType)?.artwork?.themed === true;
+}
+
+/**
  * Renders a lift's illustration, optionally with a spring entrance. Returns
  * null when we have no artwork, so a caller can render it unconditionally and
  * let it collapse. For the path alone, call getLiftArtwork.
@@ -130,6 +155,45 @@ export function LiftArtwork({
     lg: "h-36 w-auto max-w-full md:h-44",
   };
 
+  // The glow, the same for both kinds of drawing. The colour rides as a custom
+  // property so the gradient can sit behind a dark: variant, which already
+  // covers every dark theme pack.
+  const glowStyle = glow
+    ? {
+        "--lift-glow": `color-mix(in srgb, ${getColor(liftType)} 34%, transparent)`,
+      }
+    : undefined;
+  const glowClass = glow
+    ? "dark:[background-image:radial-gradient(closest-side,var(--lift-glow),transparent)]"
+    : "";
+
+  // A themed SVG is drawn by reference so the active theme can recolour it. The
+  // viewBox is the house canvas, so a drawing sized 5:3 fills it exactly.
+  if (isThemedArtwork(liftType)) {
+    const svg = (
+      <svg
+        viewBox={`0 0 ${IDEAL_WIDTH} ${IDEAL_HEIGHT}`}
+        role="img"
+        aria-label={`${liftType} diagram`}
+        style={glowStyle}
+        className={`aspect-[5/3] ${glowClass} ${sizeClasses[size]} ${className}`}
+      >
+        <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />
+      </svg>
+    );
+    if (!animate) return svg;
+    return (
+      <motion.div
+        initial={{ scale: 0, opacity: 0 }}
+        animate={isActive ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        className="inline-block"
+      >
+        {svg}
+      </motion.div>
+    );
+  }
+
   const img = (
     <Image
       src={src}
@@ -147,20 +211,8 @@ export function LiftArtwork({
       // starting at scale(0), and a zero-area box never satisfies an
       // intersection check, so a lazy image would wait on the animation.
       loading="eager"
-      // The colour rides as a custom property so the gradient can sit behind a
-      // dark: variant, which already covers every dark theme pack.
-      style={
-        glow
-          ? {
-              "--lift-glow": `color-mix(in srgb, ${getColor(liftType)} 34%, transparent)`,
-            }
-          : undefined
-      }
-      className={`object-contain ${
-        glow
-          ? "dark:[background-image:radial-gradient(closest-side,var(--lift-glow),transparent)]"
-          : ""
-      } ${sizeClasses[size]} ${className}`}
+      style={glowStyle}
+      className={`object-contain ${glowClass} ${sizeClasses[size]} ${className}`}
       onLoad={(e) => noteIfOffFormat(e.currentTarget, src)}
     />
   );

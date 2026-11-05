@@ -7,6 +7,11 @@
     "note": "The legs launch the bar and the lifter drops under it, so it counts at six tenths of a press."
   },
   "tagline": "Drive the bar up, then drop under and catch it.",
+  "artwork": {
+    "src": "/lifts/default/push-jerk.svg",
+    "figure": "female",
+    "themed": true
+  },
   "videos": [
     {
       "url": "https://www.youtube.com/watch?v=VrHNJXoSyXw",

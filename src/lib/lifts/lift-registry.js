@@ -38,7 +38,8 @@
  *
  *  Links, media and coaching
  *   calculatorUrl   Its 1RM calculator page, when one exists.
- *   artwork         { src, figure }. Drawing rules: components/lift-artwork.js.
+ *   artwork         { src, figure, themed? }. themed: true marks an SVG that takes
+ *                   the app theme's colours. Drawing rules: components/lift-artwork.js.
  *   videos          [{ url, title, channel }]. The guide shows them all; the
  *                   FIRST is the log's form check, so lead with the best
  *                   beginner intro.

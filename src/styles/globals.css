@@ -2596,3 +2596,71 @@ html:not([data-restoring]) [data-returning-visit] {
 .starry-night-dark .app-nav::after {
   filter: drop-shadow(0 0 3px oklch(0.88 0.15 90 / 0.6));
 }
+
+/* Lift artwork colours. A themed SVG drawing (see lift-artwork.js) reads these
+   five variables, each with the house colour as its fallback, so a theme only
+   lists what it changes. Light has no entry: the fallbacks are the light look.
+   kit is the singlet and shoes, plate the plate face. The shade, rim and hub
+   are derived so a theme names two colours, not five. Dark packs lift the
+   plates to a mid grey, because house iron vanishes on a near-black page. */
+:is(
+  .dark,
+  .blueprint,
+  .blueprint-dark,
+  .retro-arcade,
+  .retro-arcade-dark,
+  .evergreen,
+  .evergreen-dark,
+  .starry-night,
+  .starry-night-dark,
+  .neo-brutalism,
+  .neo-brutalism-dark
+) {
+  --lift-kit-shade: color-mix(in oklch, var(--lift-kit) 78%, black);
+}
+
+:is(.dark, .blueprint-dark, .evergreen-dark, .starry-night-dark) {
+  --lift-plate: #5f6164;
+  --lift-plate-rim: #727477;
+  --lift-plate-hub: #525356;
+}
+
+:is(.retro-arcade, .retro-arcade-dark, .neo-brutalism, .neo-brutalism-dark) {
+  --lift-plate-rim: color-mix(in oklch, var(--lift-plate) 78%, white);
+  --lift-plate-hub: color-mix(in oklch, var(--lift-plate) 72%, black);
+}
+
+.blueprint {
+  --lift-kit: hsl(214 95% 38%);
+}
+.blueprint-dark {
+  --lift-kit: hsl(196 100% 55%);
+}
+.retro-arcade {
+  --lift-kit: hsl(331 64% 52%);
+  --lift-plate: hsl(175.5 58.6% 28%);
+}
+.retro-arcade-dark {
+  --lift-kit: hsl(331 64% 52%);
+  --lift-plate: hsl(175.5 58.6% 39.8%);
+}
+.evergreen {
+  --lift-kit: oklch(0.42 0.09 160);
+}
+.evergreen-dark {
+  --lift-kit: oklch(0.62 0.1 155);
+}
+.starry-night {
+  --lift-kit: oklch(0.4 0.155 266);
+}
+.starry-night-dark {
+  --lift-kit: oklch(0.8 0.15 88);
+}
+.neo-brutalism {
+  --lift-kit: hsl(0 100% 60%);
+  --lift-plate: hsl(216 100% 50%);
+}
+.neo-brutalism-dark {
+  --lift-kit: hsl(0 100% 65%);
+  --lift-plate: hsl(210 100% 60%);
+}

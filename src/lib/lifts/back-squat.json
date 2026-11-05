@@ -13,8 +13,7 @@
   "calculatorUrl": "/calculator/squat-1rm-calculator",
   "artwork": {
     "src": "/lifts/default/back-squat.svg",
-    "figure": "male",
-    "themed": true
+    "figure": "male"
   },
   "videos": [
     {

@@ -83,7 +83,10 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
-import { getLiftArtwork } from "@/components/lift-artwork";
+import {
+  getLiftArtwork,
+  MotionLiftArtworkImage,
+} from "@/components/lift-artwork";
 const TARGET_TOTAL = 1000;
 const roundTo5 = (v) => Math.round(v / 5) * 5;
 const clampLb = (v) => Math.min(700, Math.max(0, roundTo5(v)));
@@ -403,7 +406,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   });
   const e1rmFormula = storedFormula ?? "Brzycki";
 
-  const [squat, setSquat, , , squatIsInitialized] =
+  const [squat, setSquat, , squatIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
       275,
@@ -412,7 +415,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       (value) => Number.isFinite(value) && value >= 0 && value <= 700,
       "squat",
     );
-  const [bench, setBench, , , benchIsInitialized] =
+  const [bench, setBench, , benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
       205,
@@ -421,7 +424,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       (value) => Number.isFinite(value) && value >= 0 && value <= 700,
       "bench",
     );
-  const [deadlift, setDeadlift, , , deadliftIsInitialized] =
+  const [deadlift, setDeadlift, , deadliftIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
       315,
@@ -858,7 +861,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
                     className="flex-shrink-0"
                     aria-hidden
                   >
-                    <motion.img
+                    <MotionLiftArtworkImage
                       src={getLiftArtwork(liftType)}
                       alt={`${liftType} exercise illustration`}
                       className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24 xl:h-32 xl:w-32"

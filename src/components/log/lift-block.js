@@ -4,7 +4,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 
 import { ChevronRight } from "lucide-react";
@@ -53,7 +52,7 @@ import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
 import { SetRow } from "@/components/log/set-row";
 import { getLiftBlockCoachingState } from "@/components/log/lift-block-coaching-state";
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 
 export function LiftBlock({
   liftType,
@@ -568,7 +567,7 @@ export function LiftBlock({
             // lines that text wraps to.
             className="flex w-[42%] max-w-48 shrink-0 items-center justify-center self-stretch md:w-auto md:max-w-none md:self-start"
           >
-            <Image
+            <LiftArtworkImage
               src={artworkSrc}
               alt=""
               // 5:3 like the drawings, so the lifter fills the box.

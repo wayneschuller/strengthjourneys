@@ -37,7 +37,10 @@ import { QuickLinkCard } from "@/components/quick-link-card";
 import { getNotFoundLine } from "@/lib/not-found-lines";
 import { gaTrackPageNotFound } from "@/lib/analytics/analytics";
 
-import { getLiftArtwork } from "@/components/lift-artwork";
+import {
+  getLiftArtwork,
+  MotionLiftArtworkImage,
+} from "@/components/lift-artwork";
 /**
  * Where to send a lost visitor. Logging leads because it is the thing the site
  * actually does, and someone who arrived on a dead URL has probably never seen
@@ -131,7 +134,7 @@ export default function NotFound() {
             aria-label="Back to the main page"
             className="absolute h-36 w-36 sm:h-52 sm:w-52 md:h-64 md:w-64"
           >
-            <motion.img
+            <MotionLiftArtworkImage
               src={getLiftArtwork("Deadlift")}
               alt=""
               aria-hidden="true"
@@ -139,7 +142,7 @@ export default function NotFound() {
               animate={{ scale: 1, opacity: 1 }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 220, damping: 22 }}
-              className="h-full w-full object-contain dark:invert"
+              className="h-full w-full object-contain"
             />
           </Link>
         </div>

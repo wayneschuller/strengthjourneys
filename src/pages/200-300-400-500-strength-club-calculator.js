@@ -64,7 +64,10 @@ import { LB_PER_KG, toLb } from "@/lib/weight-units";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import {
+  getLiftArtwork,
+  MotionLiftArtworkImage,
+} from "@/components/lift-artwork";
 
 const MILESTONES = [
   {
@@ -494,7 +497,7 @@ function StrengthClubMain({ relatedArticles }) {
   const [activeLiftKey, setActiveLiftKey] = useState(null);
   const [recent90dCutoffDate] = useState(() => getLocalYmdDaysAgo(90));
 
-  const [press, setPress, pressIsDefault, , pressIsInitialized] =
+  const [press, setPress, pressIsDefault, pressIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.STRENGTH_CLUB_PRESS,
       115,
@@ -502,7 +505,7 @@ function StrengthClubMain({ relatedArticles }) {
       null,
       (value) => Number.isFinite(value) && value >= 0 && value <= 400,
     );
-  const [bench, setBench, benchIsDefault, , benchIsInitialized] =
+  const [bench, setBench, benchIsDefault, benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.STRENGTH_CLUB_BENCH,
       185,
@@ -510,7 +513,7 @@ function StrengthClubMain({ relatedArticles }) {
       null,
       (value) => Number.isFinite(value) && value >= 0 && value <= 500,
     );
-  const [squat, setSquat, squatIsDefault, , squatIsInitialized] =
+  const [squat, setSquat, squatIsDefault, squatIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.STRENGTH_CLUB_SQUAT,
       255,
@@ -518,7 +521,7 @@ function StrengthClubMain({ relatedArticles }) {
       null,
       (value) => Number.isFinite(value) && value >= 0 && value <= 700,
     );
-  const [deadlift, setDeadlift, deadliftIsDefault, , deadliftIsInitialized] =
+  const [deadlift, setDeadlift, deadliftIsDefault, deadliftIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.STRENGTH_CLUB_DEADLIFT,
       315,
@@ -1273,7 +1276,7 @@ function MilestoneCard({
               className="flex-shrink-0"
               prefetch={false}
             >
-              <motion.img
+              <MotionLiftArtworkImage
                 src={getLiftArtwork(liftType)}
                 alt={`${liftType} illustration`}
                 className="h-20 w-20 origin-bottom object-contain sm:h-24 sm:w-24"

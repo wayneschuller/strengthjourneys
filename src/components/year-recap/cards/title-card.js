@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { useSession } from "next-auth/react";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 
 const TOP_LIFTS = ["Back Squat", "Bench Press"];
 const BOTTOM_LIFTS = ["Deadlift", "Strict Press"];
@@ -91,7 +91,7 @@ function CornerIcon({ liftType, index, isActive, variants }) {
             delay: isActive ? 0.35 + index * 0.05 : 0,
           }}
         >
-          <img
+          <LiftArtworkImage
             src={getLiftArtwork(liftType)}
             alt=""
             aria-hidden

@@ -21,7 +21,7 @@ import {
   LiftTypeIndicator,
   getLiftDetailUrl,
 } from "@/components/lift-type-indicator";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import {
   getStrengthLevelForWorkouts,
   getStandardForLiftDate,
@@ -498,7 +498,7 @@ export function SessionExerciseBlock({
   if (isCompact) {
     const liftTypeArea = svgPath ? (
       <div className="flex shrink-0 items-center">
-        <img
+        <LiftArtworkImage
           src={svgPath}
           alt={`${liftType} diagram`}
           className="h-16 w-auto object-contain"

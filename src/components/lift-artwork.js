@@ -60,8 +60,8 @@
  * SVG <use>, so the file stays a cached static asset (nothing joins the JS
  * bundle) and inherits --lift-kit, --lift-kit-shade, --lift-plate-rim,
  * --lift-plate and --lift-plate-hub from the active theme (globals.css).
- * A caller that puts getLiftArtwork's path on its own next/image still works:
- * the fallbacks give the house colours.
+ * Layouts that own image sizing use LiftArtworkImage with getLiftArtwork's
+ * path. All artwork must use one of these renderers to inherit theme colours.
  * Same canvas rules as above, but 1600x960 is the SVG viewBox to ask for.
  *
  * None of this is enforced. Odd sizes still render, builds never fail over
@@ -105,16 +105,71 @@ export function getLiftArtwork(liftType) {
   return getCuratedLift(liftType)?.artwork?.src ?? null;
 }
 
+// Resolve paths through the registry so callers with a saved artwork URL use
+// exactly the same theme behaviour as callers that render by lift name.
+const themedSources = new Set(
+  DRAWN_LIFT_TYPES.map((liftType) => getCuratedLift(liftType).artwork)
+    .filter((artwork) => artwork.themed)
+    .map((artwork) => artwork.src),
+);
+
 /**
- * Whether a lift's drawing is a themed SVG: one that takes the app theme's
- * colours through <use> instead of loading as a plain image.
- *
- * @param {string} liftType - e.g. "Push Jerk".
- * @returns {boolean}
+ * Shared artwork image for layouts that own their sizing and animation.
+ * Themed SVGs inherit CSS variables through a same-origin reference; other
+ * drawings remain unoptimized images. Both honour the caller's image box.
  */
-function isThemedArtwork(liftType) {
-  return getCuratedLift(liftType)?.artwork?.themed === true;
+export function LiftArtworkImage({
+  src,
+  alt = "",
+  width = IDEAL_WIDTH,
+  height = IDEAL_HEIGHT,
+  className = "",
+  style,
+  loading = "eager",
+  unoptimized: _unoptimized,
+  onLoad,
+  ref,
+  ...props
+}) {
+  if (!src) return null;
+  if (themedSources.has(src)) {
+    return (
+      <svg
+        {...props}
+        ref={ref}
+        viewBox={`0 0 ${IDEAL_WIDTH} ${IDEAL_HEIGHT}`}
+        width={width}
+        height={height}
+        role={alt ? "img" : undefined}
+        aria-label={alt || undefined}
+        aria-hidden={alt ? undefined : true}
+        className={`max-w-full object-contain ${className}`}
+        style={{ aspectRatio: `${width} / ${height}`, ...style }}
+      >
+        <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />
+      </svg>
+    );
+  }
+  return (
+    <Image
+      {...props}
+      ref={ref}
+      src={src}
+      alt={alt}
+      width={width}
+      height={height}
+      unoptimized
+      loading={loading}
+      className={className}
+      style={style}
+      onLoad={onLoad}
+    />
+  );
 }
+
+// Forward Motion's ref and animated styles to the actual SVG/image, keeping
+// existing hover and entrance animations without adding a layout wrapper.
+export const MotionLiftArtworkImage = motion.create(LiftArtworkImage);
 
 /**
  * Renders a lift's illustration, optionally with a spring entrance. Returns
@@ -168,35 +223,8 @@ export function LiftArtwork({
     ? "dark:[background-image:radial-gradient(closest-side,var(--lift-glow),transparent)]"
     : "";
 
-  // A themed SVG is drawn by reference so the active theme can recolour it. The
-  // viewBox is the house canvas, so a drawing sized 5:3 fills it exactly.
-  if (isThemedArtwork(liftType)) {
-    const svg = (
-      <svg
-        viewBox={`0 0 ${IDEAL_WIDTH} ${IDEAL_HEIGHT}`}
-        role="img"
-        aria-label={`${liftType} diagram`}
-        style={glowStyle}
-        className={`aspect-[5/3] ${glowClass} ${sizeClasses[size]} ${className}`}
-      >
-        <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />
-      </svg>
-    );
-    if (!animate) return svg;
-    return (
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={isActive ? { scale: 1, opacity: 1 } : { scale: 0, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className="inline-block"
-      >
-        {svg}
-      </motion.div>
-    );
-  }
-
   const img = (
-    <Image
+    <LiftArtworkImage
       src={src}
       alt={`${liftType} diagram`}
       // The same for every drawing, since all are 5:3. Reserves the box before

@@ -38,7 +38,7 @@ import { devLog } from "@/lib/processing-utils";
 import { gaTrackCalcShareCopy } from "@/lib/analytics/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
 import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { cn } from "@/lib/utils";
 
 import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";
@@ -332,18 +332,17 @@ export function E1RMCalculatorMain({
     bioDataIsDefault,
     bioDataIsInitialized,
   } = useAthleteBio();
-  const [reps, setReps, , , repsIsInitialized] =
-    useStateFromQueryOrLocalStorage(
-      LOCAL_STORAGE_KEYS.REPS,
-      5,
-      false,
-      null,
-      (value) => Number.isInteger(value) && value >= 1 && value <= 20,
-    );
+  const [reps, setReps, , repsIsInitialized] = useStateFromQueryOrLocalStorage(
+    LOCAL_STORAGE_KEYS.REPS,
+    5,
+    false,
+    null,
+    (value) => Number.isInteger(value) && value >= 1 && value <= 20,
+  );
   // For normal pages: URL query → localStorage → defaultFormula.
   // For formula slug pages: forceFormula prop drives the display directly (no state involved).
   // Clicking a different formula redirects to /calculator with all current state in the query.
-  const [hookFormula, setHookFormula, , , formulaIsInitialized] =
+  const [hookFormula, setHookFormula, , formulaIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.FORMULA,
       defaultFormula,
@@ -365,7 +364,7 @@ export function E1RMCalculatorMain({
             },
           })
       : setHookFormula;
-  const [weight, setWeight, , , weightIsInitialized] =
+  const [weight, setWeight, , weightIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.WEIGHT,
       225,
@@ -693,7 +692,7 @@ export function E1RMCalculatorMain({
                     Standards, PRs &amp; progress →
                   </p>
                 </div>
-                <img
+                <LiftArtworkImage
                   src={getLiftArtwork(forceLift)}
                   alt={forceLift}
                   className="h-24 w-24 flex-shrink-0 object-contain opacity-90 transition-opacity hover:opacity-50"
@@ -2053,7 +2052,7 @@ function BigFourStrengthBars({
             prefetch={false}
           >
             {svgPath ? (
-              <img
+              <LiftArtworkImage
                 src={svgPath}
                 alt={liftType}
                 className={cn(

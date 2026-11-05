@@ -4,7 +4,7 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { Dumbbell } from "lucide-react";
 import { computeTonnageForYear } from "@/lib/year-recap-stats";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { pickRecapPhrase } from "@/components/year-recap/phrases";
 import { useCountUp } from "@/components/year-recap/use-count-up";
 
@@ -155,7 +155,7 @@ export function TonnageCard({ year, isDemo, isActive = true }) {
               >
                 <div className="flex h-20 w-20 shrink-0 items-center justify-center">
                   {svgPath ? (
-                    <img
+                    <LiftArtworkImage
                       src={svgPath}
                       alt={liftType}
                       className="h-20 w-20 object-contain"

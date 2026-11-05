@@ -11,7 +11,7 @@ import {
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
 import {
   getAverageLiftSessionTonnageFromPrecomputed,
@@ -389,7 +389,7 @@ export function BigFourLiftCards({
                       damping: 24,
                     }}
                   >
-                    <img
+                    <LiftArtworkImage
                       src={getLiftArtwork(lift.liftType)}
                       alt={`${lift.liftType} diagram`}
                       className="h-36 w-auto max-w-full object-contain transition-transform group-hover:scale-110"

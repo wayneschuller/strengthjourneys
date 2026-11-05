@@ -5,7 +5,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
-import Image from "next/image";
 import Link from "next/link";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -53,7 +52,7 @@ import { importWriter } from "@/hooks/use-import-merge";
 import { getRepeatImportAppName } from "@/lib/import/import-sources";
 import { IMPORT_APP_PAGES } from "@/lib/import/import-app-guides";
 
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 const BIG_FOUR = [
   { name: "Back Squat", icon: getLiftArtwork("Back Squat") },
   { name: "Bench Press", icon: getLiftArtwork("Bench Press") },
@@ -268,13 +267,13 @@ function LiftSection({ lift, entries, onUpdate, unit }) {
         aria-expanded={expanded}
         aria-controls={contentId}
       >
-        <Image
+        <LiftArtworkImage
           src={lift.icon}
           alt=""
           width={48}
           height={48}
           aria-hidden="true"
-          className="object-contain dark:invert"
+          className="object-contain"
         />
         <span className="flex-1 font-semibold">{lift.name}</span>
         {filledCount > 0 && (

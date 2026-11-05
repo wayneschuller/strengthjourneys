@@ -87,7 +87,7 @@ import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl, parseQueryNumber } from "@/lib/share-url";
 
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import {
   ResponsiveContainer,
   AreaChart,
@@ -829,7 +829,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   const hasExplicitQueryRef = useRef(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  const [press, setPress, , , pressIsInitialized] =
+  const [press, setPress, , pressIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
       MILESTONES[0].defaultValue,
@@ -838,7 +838,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       (value) =>
         Number.isFinite(value) && value >= 0 && value <= MILESTONES[0].maxLb,
     );
-  const [bench, setBench, , , benchIsInitialized] =
+  const [bench, setBench, , benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_BENCH,
       MILESTONES[1].defaultValue,
@@ -847,7 +847,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       (value) =>
         Number.isFinite(value) && value >= 0 && value <= MILESTONES[1].maxLb,
     );
-  const [squat, setSquat, , , squatIsInitialized] =
+  const [squat, setSquat, , squatIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_SQUAT,
       MILESTONES[2].defaultValue,
@@ -856,7 +856,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       (value) =>
         Number.isFinite(value) && value >= 0 && value <= MILESTONES[2].maxLb,
     );
-  const [deadlift, setDeadlift, , , deadliftIsInitialized] =
+  const [deadlift, setDeadlift, , deadliftIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_DEADLIFT,
       MILESTONES[3].defaultValue,
@@ -2017,7 +2017,7 @@ function MilestoneRow({
             href={getLiftDetailUrl(liftType)}
             className="flex flex-shrink-0"
           >
-            <img
+            <LiftArtworkImage
               src={getLiftArtwork(liftType)}
               alt={`${liftType} illustration`}
               className="h-20 w-20 object-contain md:h-24 md:w-24"
@@ -2388,7 +2388,7 @@ function PlateTimelinesSection({
                   href={getLiftDetailUrl(milestone.liftType)}
                   className="flex flex-shrink-0 items-center"
                 >
-                  <img
+                  <LiftArtworkImage
                     src={getLiftArtwork(milestone.liftType)}
                     alt={`${milestone.liftType} illustration`}
                     className="h-24 w-24 object-contain md:h-28 md:w-28"

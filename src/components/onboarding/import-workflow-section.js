@@ -27,7 +27,6 @@ import {
   X,
 } from "lucide-react";
 
-import Image from "next/image";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import {
   useAthleteBio,
@@ -51,7 +50,7 @@ import {
   getWeekKeyFromDateStr,
 } from "@/lib/date-utils";
 import { getLiftDetailUrl } from "@/components/lift-type-indicator";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import {
   BIG_FOUR_LIFTS,
   getStrengthLevelsPath,
@@ -335,12 +334,12 @@ function ImportedDataOverview({ parsedData, label }) {
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     {svgPath && (
-                      <Image
+                      <LiftArtworkImage
                         src={svgPath}
                         alt={lift.name}
                         width={32}
                         height={32}
-                        className="shrink-0 object-contain dark:invert"
+                        className="shrink-0 object-contain"
                       />
                     )}
                     <div className="min-w-0">

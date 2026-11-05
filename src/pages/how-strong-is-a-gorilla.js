@@ -33,7 +33,7 @@ import { useCalculatorQuerySync } from "@/hooks/use-calculator-query-sync";
 import { buildShareUrl } from "@/lib/share-url";
 import { LB_PER_KG } from "@/lib/weight-units";
 
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 const KG_PER_LB = 1 / LB_PER_KG;
 const GORILLA_MULTIPLIER_LOW = 6;
 const GORILLA_MULTIPLIER_HIGH = 10;
@@ -180,7 +180,7 @@ export default function GorillaStrengthPage({ relatedArticles }) {
 function GorillaStrengthMain({ relatedArticles }) {
   const router = useRouter();
   const [isCopied, setIsCopied] = useState(false);
-  const [isMetric, setIsMetric, , , isMetricIsInitialized] =
+  const [isMetric, setIsMetric, , isMetricIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.GORILLA_IS_METRIC,
       false,
@@ -189,7 +189,7 @@ function GorillaStrengthMain({ relatedArticles }) {
       (value) => typeof value === "boolean",
       LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     );
-  const [bench, setBench, , , benchIsInitialized] =
+  const [bench, setBench, , benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.GORILLA_BENCH,
       DEFAULT_BENCH_LB,
@@ -448,7 +448,7 @@ function GorillaStrengthMain({ relatedArticles }) {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Image
+                <LiftArtworkImage
                   src={getLiftArtwork("Bench Press")}
                   alt=""
                   width={64}

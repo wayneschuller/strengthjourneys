@@ -16,7 +16,6 @@
  */
 
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { motion } from "motion/react";
@@ -73,7 +72,7 @@ import { LiftGuideNoHistory } from "@/components/lift-explorer/lift-guide-no-his
 import { SectionReveal } from "@/components/section-reveal";
 import { SingleLiftStrengthCirclesSection } from "@/components/strength-circles/single-lift-strength-circles-section";
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { getLiftIcon } from "@/components/lift-icon";
 
 // A lifter's own lift names become URL slugs, so anything that could not have
@@ -446,7 +445,7 @@ function CuratedLiftGuideMain({ page, relatedArticles, variations }) {
                 className="pointer-events-none absolute inset-0 -z-10 rounded-full opacity-20 blur-3xl"
                 style={{ backgroundColor: liftColor }}
               />
-              <img
+              <LiftArtworkImage
                 src={artSrc}
                 alt={`${liftType} Diagram`}
                 className="mx-auto"
@@ -755,7 +754,7 @@ function VariationsCard({ liftType, variations }) {
                 />
                 {related.artSrc && (
                   <div className="flex items-end justify-center px-3 pt-4 pb-1">
-                    <Image
+                    <LiftArtworkImage
                       src={related.artSrc}
                       alt={`${related.liftType} diagram`}
                       width={1000}

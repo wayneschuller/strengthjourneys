@@ -50,7 +50,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { BIG_FOUR_LIFT_TYPES, getDisplayWeight } from "@/lib/processing-utils";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import {
   BigFourNextUp,
   useNextLiftPlan,
@@ -1414,7 +1414,7 @@ function StartLiftPrompt({
               href={getStartLiftHref(liftType)}
               className="border-border bg-card hover:border-primary hover:bg-muted/40 flex items-center gap-3 rounded-xl border px-3 py-3 transition-colors"
             >
-              <Image
+              <LiftArtworkImage
                 src={icon}
                 alt=""
                 width={40}

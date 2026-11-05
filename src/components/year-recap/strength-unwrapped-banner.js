@@ -16,7 +16,7 @@ import {
 } from "@/lib/year-recap-stats";
 import { getLifetimePRsAchievedInYear } from "@/lib/processing-utils";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { getLiftArtwork } from "@/components/lift-artwork";
+import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { getRecapFirstName } from "@/components/year-recap/cards/title-card";
 
 // Wrapped season runs through December, and people are still looking back in
@@ -280,7 +280,7 @@ function MiniDeck({ year, liftType }) {
               "radial-gradient(circle at 30% 20%, var(--chart-4), transparent 70%)",
           }}
         />
-        <img
+        <LiftArtworkImage
           src={artwork}
           alt=""
           className="relative h-[18px] w-auto max-w-[90%] object-contain"

@@ -10,7 +10,8 @@
   "calculatorUrl": "/calculator/deadlift-1rm-calculator",
   "artwork": {
     "src": "/lifts/default/deadlift.svg",
-    "figure": "female"
+    "figure": "female",
+    "themed": true
   },
   "videos": [
     {

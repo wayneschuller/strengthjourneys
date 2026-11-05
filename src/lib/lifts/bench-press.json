@@ -11,7 +11,8 @@
   "calculatorUrl": "/calculator/bench-press-1rm-calculator",
   "artwork": {
     "src": "/lifts/default/bench-press.svg",
-    "figure": "male"
+    "figure": "male",
+    "themed": true
   },
   "videos": [
     {

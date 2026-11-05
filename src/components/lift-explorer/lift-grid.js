@@ -18,11 +18,11 @@
  */
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "motion/react";
 import { Search } from "lucide-react";
 
+import { LiftArtwork } from "@/components/lift-artwork";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
@@ -292,15 +292,11 @@ function LiftTile({ lift, stats, hasLoaded, color, index }) {
           style={{ backgroundColor: "var(--lift)" }}
         />
         <div className="relative flex flex-1 items-end justify-center px-3 pt-4 pb-1">
-          <Image
-            src={lift.artwork.src}
-            alt={`${lift.liftType} diagram`}
-            width={1000}
-            height={600}
-            // Lift artwork is always served straight from public/; see the
-            // rendering note at the top of components/lift-artwork.js.
-            unoptimized
-            className="h-16 w-auto max-w-full object-contain transition-transform duration-300 ease-out group-hover:scale-110 sm:h-20"
+          <LiftArtwork
+            liftType={lift.liftType}
+            size="card"
+            animate={false}
+            className="object-contain transition-transform duration-300 ease-out group-hover:scale-110"
           />
         </div>
         <div className="bg-card/70 relative flex flex-col gap-0.5 border-t px-3 py-2 backdrop-blur-sm">

@@ -123,7 +123,7 @@ function isThemedArtwork(liftType) {
  *
  * @param {Object} props
  * @param {string} props.liftType - The lift name, e.g. "Back Squat".
- * @param {string} [props.size] - Size preset: "sm", "tile", "md", or "lg".
+ * @param {string} [props.size] - Size preset: "sm", "tile", "card", "md", or "lg".
  * @param {boolean} [props.animate] - Wrap in a motion.div with a spring entrance.
  * @param {boolean} [props.isActive] - Whether that animation plays or reverses.
  * @param {string} [props.className] - Extra classes for the img.
@@ -151,6 +151,7 @@ export function LiftArtwork({
   const sizeClasses = {
     sm: "h-10 w-10",
     tile: "h-12 w-auto max-w-full md:h-14",
+    card: "h-16 w-auto max-w-full sm:h-20",
     md: "h-24 w-auto max-w-full md:h-32",
     lg: "h-36 w-auto max-w-full md:h-44",
   };

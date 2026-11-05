@@ -149,7 +149,7 @@ export function LiftArtworkImage({
         className={cn("h-auto max-w-full object-contain", className)}
         style={{ aspectRatio: `${width} / ${height}`, ...style }}
       >
-        <StarryNightStars />
+        <StarryNightStars src={src} />
         <use href={`${src}#art`} width={IDEAL_WIDTH} height={IDEAL_HEIGHT} />
       </svg>
     );
@@ -174,7 +174,38 @@ export function LiftArtworkImage({
 // Painted eddies and broken brush marks just for Starry Night. They stay behind
 // the figures and inside the canvas; CSS selects the theme without a client-only
 // render pass. No filters or animation, so small tiles and exports stay crisp.
-function StarryNightStars() {
+function StarryNightStars({ src }) {
+  // Seed from the registry asset: aliases and every rendering surface agree,
+  // and server/client output stays identical without storing random state.
+  const sample = (slot) => {
+    let hash = 2166136261;
+    for (const char of `${src}:${slot}`) {
+      hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+    }
+    hash ^= hash >>> 16;
+    hash = Math.imul(hash, 0x85ebca6b);
+    hash ^= hash >>> 13;
+    return (hash >>> 0) / 4294967296;
+  };
+  const windIndex = Math.floor(sample(0) * 3);
+  const moon = sample(1) < 0.35;
+  const stars = [
+    [77, 142],
+    [410, 74],
+    [553, 350],
+    [933, 282],
+    [160, 395],
+    [780, 170],
+  ]
+    .map(([x, y], i) => ({
+      x: x + sample(10 + i) * 24 - 12,
+      y: y + sample(20 + i) * 24 - 12,
+      radius: 20 + sample(30 + i) * 6,
+      angle: sample(40 + i) * 60 - 30,
+      order: sample(50 + i),
+    }))
+    .sort((a, b) => a.order - b.order)
+    .slice(0, moon ? 1 : 2);
   const winds = [
     "M 28 342 C 114 375 125 240 234 225 S 367 302 460 270 S 564 163 508 147 C 449 130 419 191 461 211 C 490 226 519 204 504 185",
     "M 350 62 C 429 18 490 22 572 64 S 685 148 773 121 S 895 155 965 117",
@@ -182,47 +213,51 @@ function StarryNightStars() {
   ];
   return (
     <g className="lift-artwork-stars" aria-hidden="true" pointerEvents="none">
-      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {winds.map((d, i) => (
-          <g key={d}>
-            <path
-              d={d}
-              stroke="var(--chart-1)"
-              strokeWidth="40"
-              opacity="0.14"
-            />
-            <path
-              d={d}
-              stroke="var(--chart-1)"
-              strokeWidth="13"
-              strokeDasharray="28 4 12 5 37 6"
-              opacity="0.65"
-            />
-            <path
-              d={d}
-              transform={`translate(0 ${i === 1 ? -12 : 12})`}
-              stroke="var(--chart-3)"
-              strokeWidth="7"
-              strokeDasharray="17 5 8 7 27 4"
-              opacity="0.7"
-            />
-            <path
-              d={d}
-              transform="translate(0 -9)"
-              stroke="var(--halo)"
-              strokeWidth="4"
-              strokeDasharray="5 13 17 9 3 10"
-              opacity="0.65"
-            />
-          </g>
-        ))}
+      <g
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        transform={
+          sample(2) < 0.5 ? "translate(1000 0) scale(-1 1)" : undefined
+        }
+      >
+        {winds
+          .filter((_, i) => i === windIndex)
+          .map((d) => (
+            <g key={d}>
+              <path
+                d={d}
+                stroke="var(--chart-1)"
+                strokeWidth="40"
+                opacity="0.14"
+              />
+              <path
+                d={d}
+                stroke="var(--chart-1)"
+                strokeWidth="13"
+                strokeDasharray="28 4 12 5 37 6"
+                opacity="0.65"
+              />
+              <path
+                d={d}
+                transform={`translate(0 ${windIndex === 1 ? -12 : 12})`}
+                stroke="var(--chart-3)"
+                strokeWidth="7"
+                strokeDasharray="17 5 8 7 27 4"
+                opacity="0.7"
+              />
+              <path
+                d={d}
+                transform="translate(0 -9)"
+                stroke="var(--halo)"
+                strokeWidth="4"
+                strokeDasharray="5 13 17 9 3 10"
+                opacity="0.65"
+              />
+            </g>
+          ))}
       </g>
-      {[
-        [77, 142, 30, -12],
-        [410, 74, 22, 18],
-        [553, 350, 26, -20],
-        [933, 282, 24, 10],
-      ].map(([x, y, radius, angle]) => (
+      {stars.map(({ x, y, radius, angle }) => (
         <g
           key={`${x}-${y}`}
           transform={`translate(${x} ${y}) rotate(${angle}) scale(${radius / 30})`}
@@ -264,24 +299,28 @@ function StarryNightStars() {
           <path d="M -5 -5 Q 5 -12 8 -2 L 2 6 Z" fill="var(--halo)" />
         </g>
       ))}
-      <g transform="translate(873 80) rotate(-20)">
-        <path
-          d="M 29 -46 C -34 -58 -66 -2 -38 39 C -14 75 42 56 53 20 C 18 44 -17 18 -12 -9 C -9 -28 4 -40 29 -46 Z"
-          fill="var(--gilt)"
-          opacity="0.18"
-        />
-        <path
-          d="M 21 -35 C -23 -39 -45 -2 -26 28 C -10 51 27 40 38 21 C 9 31 -16 10 -13 -10 C -11 -22 2 -32 21 -35 Z"
-          fill="var(--halo)"
-        />
-        <path
-          d="M 3 -31 C -31 -14 -28 21 -4 30 M -42 -17 C -54 16 -33 49 -5 51"
-          fill="none"
-          stroke="var(--gilt)"
-          strokeWidth="6"
-          strokeLinecap="round"
-        />
-      </g>
+      {moon && (
+        <g
+          transform={`translate(${sample(3) < 0.5 ? 873 : 115} ${80 + sample(4) * 35}) rotate(-20)`}
+        >
+          <path
+            d="M 29 -46 C -34 -58 -66 -2 -38 39 C -14 75 42 56 53 20 C 18 44 -17 18 -12 -9 C -9 -28 4 -40 29 -46 Z"
+            fill="var(--gilt)"
+            opacity="0.18"
+          />
+          <path
+            d="M 21 -35 C -23 -39 -45 -2 -26 28 C -10 51 27 40 38 21 C 9 31 -16 10 -13 -10 C -11 -22 2 -32 21 -35 Z"
+            fill="var(--halo)"
+          />
+          <path
+            d="M 3 -31 C -31 -14 -28 21 -4 30 M -42 -17 C -54 16 -33 49 -5 51"
+            fill="none"
+            stroke="var(--gilt)"
+            strokeWidth="6"
+            strokeLinecap="round"
+          />
+        </g>
+      )}
     </g>
   );
 }

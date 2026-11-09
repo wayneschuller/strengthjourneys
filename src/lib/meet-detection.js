@@ -22,7 +22,7 @@
  */
 
 import { recordTiming } from "@/lib/processing-utils";
-import { toKg } from "@/lib/weight-units";
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 
 const MEET_LABEL_PATTERN =
   /\b(comp|competition|meet|championships?|nationals)\b/i;
@@ -53,8 +53,6 @@ export const MEET_LIFTS = [
   { liftType: "Bench Press", name: "Bench" },
   { liftType: "Deadlift", name: "Deadlift" },
 ];
-
-const LB_PER_KG = 2.20462;
 
 /**
  * A meet's total in kg, or null. A total needs a single at each of squat,

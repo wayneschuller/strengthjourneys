@@ -26,9 +26,7 @@
 
 import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { BIG_FOUR_LIFT_TYPES } from "@/lib/lifts/lift-registry";
-import { toKg } from "@/lib/weight-units";
-
-const LB_PER_KG = 2.20462;
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 
 // Plate milestones: one to five plates a side, in the units the lifter reads.
 // Shared with the story of the day's "next milestone" story.

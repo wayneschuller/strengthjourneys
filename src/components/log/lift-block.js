@@ -299,7 +299,10 @@ export function LiftBlock({
     let bestVal = 0;
     sets.forEach((s, i) => {
       const reps = s.reps ?? 0;
-      const weight = s.weight ?? 0;
+      // In the unit the badge and percentile line read it in (isMetric), not
+      // the unit the set was logged in: a kg set under an lb preference was
+      // being rated as that many pounds.
+      const weight = getDisplayWeight(s, isMetric).value ?? 0;
       if (reps > 0 && weight > 0) {
         const e1rm = estimateE1RM(reps, weight, e1rmFormula);
         if (e1rm > bestVal) {
@@ -309,7 +312,7 @@ export function LiftBlock({
       }
     });
     return { bestE1rmIndex: bestIdx, bestE1rmValue: bestVal };
-  }, [sets, canShowStrength, e1rmFormula]);
+  }, [sets, canShowStrength, e1rmFormula, isMetric]);
 
   const prMeta = useMemo(() => {
     return sets.map((s) => {

@@ -20,7 +20,7 @@ import { estimateE1RM } from "@/lib/estimate-e1rm";
 import { BIG_FOUR_LIFT_TYPE_SET } from "@/lib/lifts/lift-registry";
 import { subtractDaysFromStr } from "@/lib/date-utils";
 import { MILESTONES } from "@/lib/home-dashboard/classic-lift";
-import { toKg } from "@/lib/weight-units";
+import { LB_PER_KG, toKg } from "@/lib/weight-units";
 
 export const ANNIVERSARY_WINDOW_DAYS = 7;
 export const RECENT_PR_WINDOW_DAYS = 7;
@@ -28,7 +28,6 @@ export const RECENT_PR_WINDOW_DAYS = 7;
 const RECENT_FORM_DAYS = 42;
 // Recent form must estimate at least this share of the milestone.
 const MILESTONE_REACH_SHARE = 0.95;
-const LB_PER_KG = 2.20462;
 
 const BIG_FOUR_ORDER = [
   "Back Squat",

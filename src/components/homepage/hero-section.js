@@ -39,7 +39,10 @@ export function HeroSection() {
       </div>
       <div className="grid grid-cols-1 items-center gap-8 xl:grid-cols-2 xl:gap-12">
         <div>
-          <div className="flex justify-center lg:justify-start">
+          {/* The text column only sits beside the showcase from xl, so it stays
+              centred until then. Left-aligning it any earlier strands it above a
+              centred showcase. */}
+          <div className="flex justify-center xl:justify-start">
             <a
               href="#free-tools"
               className="bg-background/85 text-muted-foreground hover:text-foreground inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium shadow-sm transition-colors"
@@ -52,11 +55,11 @@ export function HeroSection() {
               <ArrowRight className="h-3 w-3" aria-hidden />
             </a>
           </div>
-          <h1 className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance md:mb-5 lg:text-left lg:text-4xl xl:text-5xl">
+          <h1 className="mt-3 mb-4 text-center text-3xl leading-tight font-extrabold tracking-tight text-balance md:mb-5 lg:text-4xl xl:text-left xl:text-5xl">
             Every barbell set you&rsquo;ve ever lifted, in one place
             you&rsquo;ll never lose.
           </h1>
-          <p className="text-muted-foreground mb-6 max-w-xl text-center text-base leading-relaxed text-pretty md:text-lg lg:text-left">
+          <p className="text-muted-foreground mx-auto mb-6 max-w-xl text-center text-base leading-relaxed text-pretty md:text-lg xl:mx-0 xl:text-left">
             Log today&rsquo;s session in seconds, watch your estimated one rep
             max climb, and keep the whole history in a Google Sheet you own.
           </p>
@@ -93,12 +96,12 @@ function HeroPrimaryCta() {
     : "Hevy, Strong, Wodify, or a spreadsheet. No sign-in required.";
 
   return (
-    <div className="flex flex-col items-center gap-4 md:items-start">
+    <div className="flex flex-col items-center gap-4">
       {/* Primary + secondary CTAs side by side on sm+, stacked on mobile.
           Once side by side the columns must top-align: the two descriptions
           wrap to different line counts, so centering them vertically pushes the
           buttons out of line with each other. */}
-      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-center lg:justify-start">
+      <div className="flex w-full flex-col items-center gap-3 sm:flex-row sm:items-start sm:justify-center xl:justify-start">
         {/* Primary CTA column */}
         <div className="flex w-full flex-col items-center sm:w-auto">
           {isAuthed ? (
@@ -129,7 +132,7 @@ function HeroPrimaryCta() {
               <span className="sm:hidden">Start Your Journey</span>
             </GoogleSignInButton>
           )}
-          <p className="mt-1.5 text-xs text-slate-500">
+          <p className="text-muted-foreground mt-1.5 text-xs">
             Free forever. Your data stays yours.
           </p>
         </div>
@@ -155,7 +158,7 @@ function HeroPrimaryCta() {
               {importCtaLabel}
             </Link>
           </Button>
-          <p className="mt-1.5 max-w-[16rem] text-center text-xs text-slate-500 sm:text-left">
+          <p className="text-muted-foreground mt-1.5 max-w-[16rem] text-center text-xs text-balance">
             {importCtaDescription}
           </p>
         </div>

@@ -396,7 +396,7 @@ export function GettingStartedCard() {
               href="https://docs.google.com/spreadsheets/d/14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0/edit#gid=0"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-blue-600 underline visited:text-purple-600 hover:text-blue-800"
+              className="text-muted-foreground hover:text-foreground shrink-0 text-sm underline underline-offset-4 transition-colors"
             >
               Preview design
             </a>

@@ -438,7 +438,7 @@ export default function Home({ starterArticles = [] }) {
         )}
 
         {/* Tier 1: Training insight tools */}
-        <h2 className="mt-8 text-xl font-semibold">📊 Your Training</h2>
+        <h2 className="text-xl font-semibold">📊 Your Training</h2>
         <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {insightTools.map((card, index) => (
             <FeatureCard key={card.href} index={index} {...card} />
@@ -449,7 +449,7 @@ export default function Home({ starterArticles = [] }) {
 
         {/* Tier 2: Calculators and strength standards */}
         <h2 className="text-xl font-semibold">🧮 Calculators & Standards</h2>
-        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:gap-6 md:grid-cols-2 lg:grid-cols-4">
           {calculatorTools.map((card, index) => (
             <FeatureCard
               key={card.href}

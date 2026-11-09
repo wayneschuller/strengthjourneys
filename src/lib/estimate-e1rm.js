@@ -152,13 +152,19 @@ export function estimateLiftWeightForReps({
  * estimates from different sets are compared with each other ("kg" is the
  * neutral choice) or with a strength standard (the standard's unit).
  *
+ * The estimate is made in the unit the set was logged in and then converted,
+ * without rounding again. A set asked for in its own unit is therefore exactly
+ * estimateE1RM's answer, and a log in one unit ranks its sets just as it would
+ * on raw estimates: rounding to whole kilograms would tie two pound sets a
+ * pound or two apart.
+ *
  * @param {{ reps: number, weight: number, unitType: string }} entry
  * @param {string} equation
  * @param {"kg"|"lb"} unitType
  */
 export function estimateEntryE1RM(entry, equation, unitType) {
-  const weight = convertWeight(entry?.weight ?? 0, entry?.unitType, unitType);
-  return estimateE1RM(entry?.reps ?? 0, weight, equation);
+  const native = estimateE1RM(entry?.reps ?? 0, entry?.weight ?? 0, equation);
+  return convertWeight(native, entry?.unitType, unitType);
 }
 
 // Return a rounded 1 rep max

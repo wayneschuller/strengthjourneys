@@ -18,10 +18,10 @@ import {
   interpolateStandardKG,
   LiftingStandardsKG,
 } from "@/lib/lifting-standards-kg";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { LB_PER_KG, toKg } from "@/lib/weight-units";
+import { LB_PER_KG, toKg, unitTypeFor } from "@/lib/weight-units";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { isOwnData, useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -168,6 +168,8 @@ export function getTopLiftStats(
 /**
  * Finds the highest e1RM across workout sets and returns the corresponding
  * strength rating and best e1RM. Handles drop sets where an earlier set may beat the last.
+ * `standards` and the returned bestE1RM are in the display unit `isMetric` names;
+ * the sets may be logged in either unit.
  * Returns { rating, bestE1RM } or null.
  */
 export function getStrengthLevelForWorkouts(
@@ -175,16 +177,18 @@ export function getStrengthLevelForWorkouts(
   liftType,
   standards,
   e1rmFormula = "Brzycki",
+  isMetric = false,
 ) {
   const standard = standards?.[liftType];
   if (!standard || !workouts?.length) return null;
 
+  // The standards are in the lifter's display unit, so each set is estimated
+  // in that unit too, whatever unit it was logged in.
+  const displayUnit = unitTypeFor(isMetric);
   let bestE1RM = 0;
   for (const lift of workouts) {
-    const reps = lift.reps ?? 0;
-    const weight = lift.weight ?? 0;
-    if (reps === 0) continue;
-    const e1rm = estimateE1RM(reps, weight, e1rmFormula);
+    if ((lift.reps ?? 0) === 0) continue;
+    const e1rm = estimateEntryE1RM(lift, e1rmFormula, displayUnit);
     if (e1rm > bestE1RM) bestE1RM = e1rm;
   }
   if (bestE1RM === 0) return null;

@@ -8,7 +8,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getDisplayWeight } from "@/lib/processing-utils";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
 import { formatDateToYmdLocal, getReadableDateString } from "@/lib/date-utils";
 import {
   Tooltip,
@@ -126,14 +126,17 @@ export function StandardsSlider({
       if (latestSessionDate && entry.date === latestSessionDate) return;
 
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
+      // Sets are ranked in kg, since a log can hold both units.
+      const e1rmKg = estimateEntryE1RM(entry, e1rmFormula, "kg");
       const id = `${entry.date}-${entry.reps}-${entry.weight}-${entry.unitType || ""}`;
 
       PERIOD_KEYS.forEach((key) => {
         if (entry.date < thresholds[key]) return;
         const current = bestByPeriod[key];
-        if (!current || e1rm > current.e1rm) {
+        if (!current || e1rmKg > current.e1rmKg) {
           bestByPeriod[key] = {
             e1rm,
+            e1rmKg,
             unitType: entry.unitType || unitType,
             date: entry.date,
             reps: entry.reps,
@@ -199,8 +202,10 @@ export function StandardsSlider({
         continue;
 
       const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-      if (!bestOnLatest || e1rm > bestOnLatest.e1rm) {
+      const e1rmKg = estimateEntryE1RM(entry, e1rmFormula, "kg");
+      if (!bestOnLatest || e1rmKg > bestOnLatest.e1rmKg) {
         bestOnLatest = {
+          e1rmKg,
           date: entry.date,
           reps: entry.reps,
           weight: entry.weight,

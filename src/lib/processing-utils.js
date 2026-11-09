@@ -4,7 +4,11 @@
  * consume their derived PR, tonnage, and E1RM structures directly.
  */
 import { format } from "date-fns";
-import { estimateE1RM, estimateLiftE1RM } from "@/lib/estimate-e1rm";
+import {
+  estimateE1RM,
+  estimateEntryE1RM,
+  estimateLiftE1RM,
+} from "@/lib/estimate-e1rm";
 import { LB_PER_KG, toKg } from "@/lib/weight-units";
 import { BIG_FOUR_LIFT_TYPES as CANONICAL_BIG_FOUR_LIFT_TYPES } from "@/lib/lifts/lift-registry";
 
@@ -907,13 +911,15 @@ export function getPRHighlightsForYear(
     yearLifts.push({ ...entry, reps });
   });
 
-  // Per lift type: best e1RM and the lift that achieved it
+  // Per lift type: best e1RM and the lift that achieved it. Compared in kg,
+  // so a year holding both kg and lb sets still finds its real best.
   const bestByLiftType = {};
   yearLifts.forEach((lift) => {
     const e1rm = estimateE1RM(lift.reps, lift.weight ?? 0, e1rmFormula);
+    const e1rmKg = estimateEntryE1RM(lift, e1rmFormula, "kg");
     const existing = bestByLiftType[lift.liftType];
-    if (!existing || e1rm > existing.e1rm) {
-      bestByLiftType[lift.liftType] = { ...lift, e1rm };
+    if (!existing || e1rmKg > existing.e1rmKg) {
+      bestByLiftType[lift.liftType] = { ...lift, e1rm, e1rmKg };
     }
   });
 
@@ -936,8 +942,8 @@ export function getPRHighlightsForYear(
   // 2. Any lift: add 1RM, 3RM, 5RM within 5% of that lift type's best e1RM
   const within5Percent = (lift, best) => {
     if (!best) return false;
-    const liftE1rm = estimateE1RM(lift.reps, lift.weight ?? 0, e1rmFormula);
-    return liftE1rm >= best.e1rm * 0.95;
+    const liftE1rmKg = estimateEntryE1RM(lift, e1rmFormula, "kg");
+    return liftE1rmKg >= best.e1rmKg * 0.95;
   };
 
   yearLifts.forEach((lift) => {

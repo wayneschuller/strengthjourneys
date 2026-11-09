@@ -144,6 +144,23 @@ export function estimateLiftWeightForReps({
   );
 }
 
+/**
+ * The estimated 1RM of a logged set, in the unit asked for.
+ *
+ * A log can hold kg and lb sets side by side, so an estimate made from the raw
+ * weight is only comparable with others in that same unit. Use this whenever
+ * estimates from different sets are compared with each other ("kg" is the
+ * neutral choice) or with a strength standard (the standard's unit).
+ *
+ * @param {{ reps: number, weight: number, unitType: string }} entry
+ * @param {string} equation
+ * @param {"kg"|"lb"} unitType
+ */
+export function estimateEntryE1RM(entry, equation, unitType) {
+  const weight = convertWeight(entry?.weight ?? 0, entry?.unitType, unitType);
+  return estimateE1RM(entry?.reps ?? 0, weight, equation);
+}
+
 // Return a rounded 1 rep max
 // For theory see: https://en.wikipedia.org/wiki/One-repetition_maximum
 export function estimateE1RM(reps, weight, equation) {

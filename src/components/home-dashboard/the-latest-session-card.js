@@ -578,6 +578,7 @@ function getCreativeSessionRating(workouts, strengthContext, lastUsedAdlibRef) {
         liftType,
         { [liftType]: standard },
         strengthContext.e1rmFormula || "Brzycki",
+        strengthContext.isMetric ?? false,
       );
       if (
         result?.rating &&

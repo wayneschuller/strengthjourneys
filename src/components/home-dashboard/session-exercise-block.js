@@ -6,7 +6,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateEntryE1RM } from "@/lib/estimate-e1rm";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { cn } from "@/lib/utils";
 import {
@@ -28,6 +28,7 @@ import {
   STRENGTH_LEVEL_EMOJI,
 } from "@/hooks/use-athlete-biodata";
 import { getDisplayWeight } from "@/lib/processing-utils";
+import { unitTypeFor } from "@/lib/weight-units";
 import { getRatingBadgeVariant } from "@/lib/strength-level-ui";
 import { StrengthLevelTooltipBody } from "@/components/log/strength-bar";
 
@@ -96,9 +97,8 @@ export function SessionExerciseBlock({
 }) {
   const formula = e1rmFormula || "Brzycki";
   let bestE1rm = 0;
-  const e1rms = workouts.map((w) =>
-    estimateE1RM(w.reps ?? 0, w.weight ?? 0, formula),
-  );
+  // In kg, so sets logged in different units still compare.
+  const e1rms = workouts.map((w) => estimateEntryE1RM(w, formula, "kg"));
   workouts.forEach((w, i) => {
     const e1rm = e1rms[i];
     if (e1rm > bestE1rm) bestE1rm = e1rm;
@@ -716,6 +716,7 @@ export function LiftStrengthLevel({
     liftType,
     standardsForLift,
     formula,
+    isMetric ?? false,
   );
   if (!result) return null;
 
@@ -770,7 +771,8 @@ export function LiftStrengthLevel({
     const bestWorkout = workouts.find(
       (lift) =>
         (lift.reps ?? 0) > 0 &&
-        estimateE1RM(lift.reps, lift.weight ?? 0, formula) === bestE1RM,
+        estimateEntryE1RM(lift, formula, unitTypeFor(isMetric ?? false)) ===
+          bestE1RM,
     );
     return (
       <TooltipProvider delayDuration={0}>

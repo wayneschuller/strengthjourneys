@@ -10,7 +10,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
 import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { BIG_FOUR_LIFTS } from "@/lib/lifts/lift-registry";
 import {
@@ -160,8 +160,12 @@ export function BigFourLiftCards({
       const topAtReps = repRanges[repsIndex]?.[0];
       if (!topAtReps) continue;
 
-      const reps = repsIndex + 1;
-      const currentE1RM = estimateE1RM(reps, topAtReps.weight, e1rmFormula);
+      // In kg, so the best of a kg set and an lb set is the real best.
+      const currentE1RM = estimateEntryE1RM(
+        { ...topAtReps, reps: repsIndex + 1 },
+        e1rmFormula,
+        "kg",
+      );
 
       if (currentE1RM > bestE1RMWeight) {
         bestE1RMWeight = currentE1RM;
@@ -640,8 +644,11 @@ function getRecentPRTier(
   for (let repsIndex = 0; repsIndex < 10; repsIndex++) {
     const topAtReps = repRanges[repsIndex]?.[0];
     if (!topAtReps) continue;
-    const reps = repsIndex + 1;
-    const e1rm = estimateE1RM(reps, topAtReps.weight, e1rmFormula);
+    const e1rm = estimateEntryE1RM(
+      { ...topAtReps, reps: repsIndex + 1 },
+      e1rmFormula,
+      "kg",
+    );
     if (e1rm > bestE1RM) {
       bestE1RM = e1rm;
       bestLift = topAtReps;
@@ -795,12 +802,15 @@ function getMiniBarData(
 
   // Find the best E1RM for this lift type in the last month
   let best1ME1RM = 0;
+  let best1ME1RMKg = 0;
   let best1MNativeUnit = isMetric ? "kg" : "lb";
   for (const entry of parsedData) {
     if (entry.liftType !== liftType || !entry.reps || !entry.weight) continue;
     if (!entry.date || entry.date < cutoffStr) continue;
     const e1rm = estimateE1RM(entry.reps, entry.weight, e1rmFormula);
-    if (e1rm > best1ME1RM) {
+    const e1rmKg = estimateEntryE1RM(entry, e1rmFormula, "kg");
+    if (e1rmKg > best1ME1RMKg) {
+      best1ME1RMKg = e1rmKg;
       best1ME1RM = e1rm;
       best1MNativeUnit = entry.unitType || best1MNativeUnit;
     }

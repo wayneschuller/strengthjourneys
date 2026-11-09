@@ -36,7 +36,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { useImportMerge } from "@/hooks/use-import-merge";
 import { useToast } from "@/hooks/use-toast";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { convertWeight } from "@/lib/weight-units";
 import {
@@ -136,11 +136,19 @@ function ImportedDataOverview({ parsedData, label }) {
     for (const e of entries) {
       if (!e.weight || e.weight <= 0 || !e.reps || e.reps <= 0) continue;
       if (!liftMap[e.liftType]) {
-        liftMap[e.liftType] = { count: 0, bestE1RM: 0, bestSet: null };
+        liftMap[e.liftType] = {
+          count: 0,
+          bestE1RM: 0,
+          bestE1RMKg: 0,
+          bestSet: null,
+        };
       }
       liftMap[e.liftType].count++;
       const e1rm = estimateE1RM(e.reps, e.weight, e1rmFormula);
-      if (e1rm > liftMap[e.liftType].bestE1RM) {
+      // Ranked in kg: an import can hold both units.
+      const e1rmKg = estimateEntryE1RM(e, e1rmFormula, "kg");
+      if (e1rmKg > liftMap[e.liftType].bestE1RMKg) {
+        liftMap[e.liftType].bestE1RMKg = e1rmKg;
         liftMap[e.liftType].bestE1RM = e1rm;
         liftMap[e.liftType].bestSet = e;
       }

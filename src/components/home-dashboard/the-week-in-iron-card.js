@@ -29,7 +29,7 @@ import {
   AiReviewActions,
   buildCardCopyText,
 } from "@/components/ai-review-actions";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
+import { estimateEntryE1RM } from "@/lib/estimate-e1rm";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { calculateStreakFromDates } from "@/lib/home-dashboard/inspiration-card-metrics";
 import { openSheetSetupDialog } from "@/lib/sheet/open-sheet-setup";
@@ -408,9 +408,8 @@ function formatTopSetGroup(sets, group, isMetric) {
 function getLiftTopSetSummaries(sets, isMetric) {
   if (!Array.isArray(sets) || sets.length === 0) return [];
 
-  const e1rms = sets.map((set) =>
-    estimateE1RM(set.reps ?? 0, set.weight ?? 0, "Brzycki"),
-  );
+  // In kg, so sets logged in different units still compare.
+  const e1rms = sets.map((set) => estimateEntryE1RM(set, "Brzycki", "kg"));
   const bestE1rm = Math.max(...e1rms);
   const groups = getConsecutiveWorkoutGroups(sets);
 

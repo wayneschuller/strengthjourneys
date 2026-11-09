@@ -39,8 +39,8 @@ import {
   getStrengthRatingForE1RM,
   getStandardForLiftDate,
 } from "@/hooks/use-athlete-biodata";
-import { estimateE1RM } from "@/lib/estimate-e1rm";
-import { toKg } from "@/lib/weight-units";
+import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
+import { toKg, unitTypeFor } from "@/lib/weight-units";
 import { LiftArtwork } from "@/components/lift-artwork";
 import {
   getBigFourBodyBenefit,
@@ -1416,7 +1416,8 @@ function computeStrengthLevelStats(parsedData, boundaries, bio) {
 
     if (!inCurrent && !inLast) continue;
 
-    const e1rm = estimateE1RM(reps, entry.weight ?? 0);
+    // In the standard's unit (the display unit), not the unit it was logged in.
+    const e1rm = estimateEntryE1RM(entry, undefined, unitTypeFor(bio.isMetric));
     const standard = getStandardForLiftDate(
       bio.age,
       date,

@@ -1095,7 +1095,11 @@ export function SheetSetupDialog() {
 
   useEffect(() => {
     // The loader forgets a dismissed setup on sign-out; it is always mounted.
-    if (authStatus !== "authenticated") {
+    // Only a real sign-out resets the dialog. "loading" is not one: the Drive
+    // picker refreshes the session before it opens, which reports "loading"
+    // for a moment, and resetting on that left a lifter who cancelled the
+    // picker looking at an empty dialog that was waiting on nothing.
+    if (authStatus === "unauthenticated") {
       setOpen(false);
       provisioningStartedRef.current = false;
       outcomeReportedRef.current = false;
@@ -1250,7 +1254,11 @@ export function SheetSetupDialog() {
         oauthToken={session?.accessToken}
         selectSheet={selectSheet}
         onPickerOpen={() => setOpen(false)}
-        onPickerClose={() => setOpen(true)}
+        // Back to the screen the picker was opened from. If that screen has
+        // gone, stay closed sooner than show a dialog with nothing in it.
+        onPickerClose={() => {
+          if (onboardingState !== "idle") setOpen(true);
+        }}
         onPick={(doc) => {
           if (!doc?.id) return;
           runLinkAction({

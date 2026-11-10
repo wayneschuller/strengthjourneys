@@ -1,4 +1,3 @@
-import { kv } from "@/lib/kv";
 import { getVoteWeightFromMetrics } from "@/lib/rewards/vote-weight";
 import { getVerifiedTrainingMetrics } from "@/lib/rewards/server-metrics";
 

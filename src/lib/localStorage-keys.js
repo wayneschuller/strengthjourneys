@@ -50,7 +50,6 @@ export const LOCAL_STORAGE_KEYS = {
   WARMUP_REPS: "warmupReps",
   WARMUP_WEIGHT: "warmupWeight",
   CALC_IS_METRIC: "calcIsMetric",
-  E1RM_ADVANCED_ANALYSIS: "SJ_E1RMAdvancedAnalysis",
 
   // Warm-up calculator
   WARMUPS_BAR_TYPE: "SJ_WarmupsBarType",
@@ -119,9 +118,7 @@ export const LOCAL_STORAGE_KEYS = {
 
   // Gorilla comparison
   GORILLA_IS_METRIC: "SJ_gorilla_is_metric",
-  GORILLA_BODY_WEIGHT: "SJ_gorilla_body_weight",
   GORILLA_BENCH: "SJ_gorilla_bench",
-  GORILLA_PRESS: "SJ_gorilla_press",
 
   // Playlist leaderboard
   PLAYLIST_VOTES: "SJ_playlistVotes",
@@ -133,7 +130,6 @@ export const LOCAL_STORAGE_KEYS = {
   SHOW_LABEL_VALUES: "SJ_showLabelValues",
   VIS_MINI_SHOW_STANDARDS: "SJ_VisMiniShowStandards",
   VIS_MINI_SHOW_BODYWEIGHT_MULTIPLES: "SJ_VisMiniShowBodyweightMultiples",
-  TONNAGE_AGGREGATION_TYPE: "SJ_tonnageAggregationType",
 
   // AI assistant
   USER_LIFTING_METADATA: "userLiftingMetadata-selected-options",
@@ -183,17 +179,9 @@ export const LOCAL_STORAGE_KEYS = {
 };
 
 export const SESSION_STORAGE_KEYS = {
-  // Set to "1" when user clicks "I already have a sheet" escape hatch on onboarding.
-  // Uses sessionStorage (not localStorage) so the gate resets on tab close — a user
-  // who skips the template today will see the gate again next session, giving us
-  // another chance to guide them through Step 1.
-  ONBOARDING_ESCAPE_HATCH: "sj-onboarding-escape-hatch",
   FEEDBACK_TRIGGER_LABEL_INDEX: "sj-feedback-trigger-label-index",
   FEEDBACK_GIVEN: "sj-feedback-given",
   ARTICLE_FEEDBACK_PREFIX: "article_feedback_",
-  MINI_FEEDBACK_PREFIX: "mini_feedback_",
-  MINI_FEEDBACK_REASON_PREFIX: "mini_feedback_reason_",
-  MINI_FEEDBACK_PROMPT_INDEX_PREFIX: "mini_feedback_prompt_index_",
 };
 
 /**
@@ -221,7 +209,6 @@ export const getSheetScopedStorageKey = (baseKey, ssid) => {
  * @returns {string}
  */
 export const getSelectedLiftsKey = (dataSource, prefix = null) => {
-  const isDemoMode = dataSource === "demo";
   if (prefix) {
     return dataSource === "demo"
       ? `${prefix}_selectedLifts_demo`

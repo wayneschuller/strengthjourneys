@@ -17,7 +17,6 @@ import {
   ArrowBigUp,
   ArrowBigDown,
   Crown,
-  Flag,
   Heart,
   Music,
   Play,

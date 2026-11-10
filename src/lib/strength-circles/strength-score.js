@@ -75,17 +75,6 @@ export function getKilgorePosition(lift1RmKg, standard) {
   return 4 + (lift1RmKg - thresholds[4]) / gap;
 }
 
-export function averagePercentiles(percentilesByLift, universe) {
-  const values = percentilesByLift
-    .map((lift) => lift?.percentiles?.[universe])
-    .filter((value) => value != null);
-
-  if (!values.length) return null;
-  return Math.round(
-    values.reduce((sum, value) => sum + value, 0) / values.length,
-  );
-}
-
 export function sumStandards(standards) {
   if (!standards?.length) return null;
 

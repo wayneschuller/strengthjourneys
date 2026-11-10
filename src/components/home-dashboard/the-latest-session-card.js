@@ -21,7 +21,6 @@ import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 import {
   Card,
@@ -40,8 +39,6 @@ import {
 } from "@/components/ui/tooltip";
 
 import {
-  findLiftPositionInTopLifts,
-  getCelebrationEmoji,
   getAnalyzedSessionLifts,
   getAverageLiftSessionTonnageFromPrecomputed,
 } from "@/lib/processing-utils";
@@ -120,7 +117,6 @@ export function TheLatestSessionCard({
     [parsedData],
   );
   const isStarterSampleStage = dashboardStage === "starter_sample";
-  const isFirstRealWeekStage = dashboardStage === "first_real_week";
   const showPerLiftTonnage = dashboardStage === "established";
 
   useEffect(() => {

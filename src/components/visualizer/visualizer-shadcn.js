@@ -16,11 +16,8 @@ import {
   getSelectedLiftsKey,
 } from "@/lib/localStorage-keys";
 import { BIG_FOUR_LIFT_TYPES, devLog } from "@/lib/processing-utils";
-import { getReadableDateString } from "@/lib/date-utils";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
-import { subMonths } from "date-fns";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -48,14 +45,6 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
-
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 import {
   CartesianGrid,

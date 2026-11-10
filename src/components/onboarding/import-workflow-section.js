@@ -18,7 +18,6 @@ import { useReadLocalStorage } from "usehooks-ts";
 import {
   ArrowRight,
   AlertTriangle,
-  CheckCircle2,
   FileUp,
   Layers,
   Loader2,

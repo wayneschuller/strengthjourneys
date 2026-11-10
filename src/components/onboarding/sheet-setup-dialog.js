@@ -44,7 +44,6 @@ import {
   FolderOpen,
   LoaderCircle,
   Activity,
-  Sparkles,
 } from "lucide-react";
 import { PlateDiagram } from "@/components/plate-diagram";
 import { PLATE_SETS } from "@/lib/warmups";
@@ -266,7 +265,6 @@ export function SheetSetupDialog() {
   const {
     sheetInfo,
     parsedData,
-    isLoading,
     selectSheet,
     clearSheet,
     apiError,
@@ -568,14 +566,6 @@ export function SheetSetupDialog() {
       preferredRecommendedId = null,
     }) => {
       const discoveredCandidates = sortCandidatesForChooser(candidates);
-      const currentCandidateId =
-        intent === "switch_sheet" &&
-        currentSheetId &&
-        discoveredCandidates.some(
-          (candidate) => candidate.id === currentSheetId,
-        )
-          ? currentSheetId
-          : null;
       const serverRecommendedId =
         preferredRecommendedId &&
         discoveredCandidates.some(

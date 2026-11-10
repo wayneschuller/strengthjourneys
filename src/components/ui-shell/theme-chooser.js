@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo } from "react";
 import { useLocalStorage } from "usehooks-ts";
-import { Lock, Moon, Palette, Sun } from "lucide-react";
+import { Lock, Palette } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { GoogleSignInMenuItem } from "@/components/onboarding/google-sign-in";
@@ -32,7 +32,6 @@ import {
   getRewardUnlockRule,
 } from "@/lib/rewards/progression";
 import { getUnlockedThemes, isThemeLocked } from "@/lib/rewards/theme-unlocks";
-import { gaEvent, GA_EVENT_TAGS } from "@/lib/analytics/analytics";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { cn } from "@/lib/utils";
 
@@ -177,60 +176,5 @@ export function ThemeChooser() {
         )}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-const DARK_THEMES = [
-  "dark",
-  "blueprint-dark",
-  "neo-brutalism-dark",
-  "retro-arcade-dark",
-  "evergreen-dark",
-  "starry-night-dark",
-];
-
-/**
- * Simple icon button that toggles between light and dark themes.
- * @deprecated Replaced by ThemeChooser; kept for reference but no longer rendered in the app.
- */
-export function DarkModeToggle() {
-  const { theme, setTheme } = useTheme();
-  const isDark = DARK_THEMES.includes(theme ?? "");
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              const newTheme = theme === "dark" ? "light" : "dark";
-              setTheme(newTheme);
-
-              gaEvent(GA_EVENT_TAGS.THEME_CHANGED, {
-                event_category: "User Preferences",
-                event_label: `Theme changed to ${newTheme}`,
-              });
-            }}
-          >
-            <Moon
-              className={cn(
-                "absolute h-[1.2rem] w-[1.2rem] transition-all",
-                isDark ? "scale-100 rotate-0" : "scale-0 rotate-90",
-              )}
-            />
-            <Sun
-              className={cn(
-                "h-[1.2rem] w-[1.2rem] transition-all",
-                isDark ? "scale-0 -rotate-90" : "scale-100 rotate-0",
-              )}
-            />
-            <span className="sr-only">Toggle dark mode</span>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Toggle dark mode</TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
   );
 }

@@ -357,7 +357,6 @@ export function AthleteBioInlineSettings({
     toggleIsMetric,
     bioDataIsDefault,
     bodyWeightIsDefault,
-    bioDataIsInitialized,
   } = useAthleteBio();
 
   // Auto-open once bio data is genuinely at defaults (user has never personalised).

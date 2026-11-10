@@ -9,7 +9,7 @@ import {
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
-import { formatDateToYmdLocal, getReadableDateString } from "@/lib/date-utils";
+import { getReadableDateString } from "@/lib/date-utils";
 import {
   Tooltip,
   TooltipContent,

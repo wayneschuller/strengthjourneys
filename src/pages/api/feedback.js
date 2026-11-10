@@ -159,13 +159,11 @@ export default async function handler(req, res) {
     typeof triggerLabel === "string" && triggerLabel.trim().length > 0
       ? triggerLabel.trim()
       : "unknown";
-  const baseUrl = getBaseUrl(req);
   const pageUrl = toAbsolutePageUrl(req, pagePath);
   // Straight from public/ so the URL survives asset changes. The optimizer
   // path carries a content hash that dies whenever the logo is touched.
   const logoUrl = "https://www.strengthjourneys.xyz/nav_logo_light.png";
   const safeMessage = message.trim();
-  const safeName = escapeHtml(userName);
   const safeContactEmail = escapeHtml(contactEmailLabel);
   const safeAuthStatus = isLoggedIn ? "Logged in" : "Not logged in (anonymous)";
   const safePagePath = escapeHtml(pagePath);

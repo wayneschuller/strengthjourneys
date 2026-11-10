@@ -47,7 +47,7 @@ const BLUEPRINT_SQUARES = [
 
 /**
  * Fixed full-viewport decorative background layer. Renders a theme-appropriate
- * grid pattern, starry night layer, flickering grid, or warp effect depending
+ * grid pattern, starry night layer, sticker layer, or warp effect depending
  * on the active theme and the user's animated background preference.
  *
  * @param {Object} props - No props; reads theme and local storage settings internally.

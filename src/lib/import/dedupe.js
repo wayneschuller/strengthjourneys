@@ -106,13 +106,6 @@ function joinComparableKey(normalizedEntry, date = normalizedEntry.date) {
   ].join("|");
 }
 
-export function buildComparableLiftKey(entry) {
-  const normalizedEntry = normalizeComparableEntry(entry);
-  if (!normalizedEntry) return null;
-
-  return joinComparableKey(normalizedEntry);
-}
-
 function incrementCount(counts, key) {
   if (!key) return;
   counts.set(key, (counts.get(key) || 0) + 1);

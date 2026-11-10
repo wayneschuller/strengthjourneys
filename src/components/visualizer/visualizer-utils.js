@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { devLog, getDisplayWeight } from "@/lib/processing-utils";
+import { getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";

@@ -199,7 +199,7 @@ authenticated users.
   convention and the read-modify-write helpers. Never interpolate that key
   inline.
 - **Best-effort paths:** `feedback.js`, `onboarding-event.js`,
-  `import-limit-event.js`, `import/profile.js`, and founder/support emails must
+  `import/profile.js`, and founder/support emails must
   never block or slow a user path, or add visible extra client requests unless
   the user explicitly wants that tradeoff. Keep founder email metadata
   lightweight and support-oriented. The existing transport is

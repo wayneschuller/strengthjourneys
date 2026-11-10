@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { NextSeo } from "next-seo";
@@ -8,7 +7,6 @@ import {
   Anvil,
   BicepsFlexed,
   BookOpen,
-  Calculator,
   CircleDashed,
   Mountain,
 } from "lucide-react";
@@ -22,7 +20,7 @@ import {
   InlineMarkdown,
   inlineMarkdownToText,
 } from "@/components/inline-markdown";
-import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
+import { LiftArtwork } from "@/components/lift-artwork";
 import {
   PageContainer,
   PageHeader,

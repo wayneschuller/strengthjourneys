@@ -60,7 +60,6 @@ import {
   LineChart,
   Calculator,
   BicepsFlexed,
-  Bot,
   CircleDashed,
   Anvil,
   Mountain,
@@ -70,8 +69,6 @@ import {
   Loader2,
 } from "lucide-react";
 
-import { PlateDiagram } from "@/components/plate-diagram";
-import { calculatePlateBreakdown } from "@/lib/warmups";
 import { getRelatedArticles } from "@/lib/articles";
 import { gaTrackShareCopy } from "@/lib/analytics/analytics";
 import { ShareCopyButton } from "@/components/share-copy-button";
@@ -167,9 +164,6 @@ const MILESTONES = [
   },
 ];
 
-const PLATE_DIAGRAM_IS_METRIC = false;
-const PLATE_DIAGRAM_PLATE_PREFERENCE = "blue";
-
 const FAQ_ITEMS = [
   {
     question: 'What does "plates" mean in the gym?',
@@ -261,14 +255,6 @@ const displayWeight = (lbs, isMetric) =>
 const roundTo5 = (value) => Math.round(value / 5) * 5;
 const clampToMax = (value, max) => Math.min(max, Math.max(0, roundTo5(value)));
 
-const getPlateBreakdown = (totalWeightLb) =>
-  calculatePlateBreakdown(
-    totalWeightLb,
-    BAR_LB,
-    PLATE_DIAGRAM_IS_METRIC,
-    PLATE_DIAGRAM_PLATE_PREFERENCE,
-  );
-
 const plateLabel = (n) => `${n} plate${n === 1 ? "" : "s"}`;
 
 // Unit-aware plate threshold check.
@@ -358,7 +344,6 @@ function buildStatusSentence({ milestone, stats, isMetric }) {
     pr,
     single,
     now: nowSet,
-    periodBests,
     latestDate,
     daysSinceLatest,
     progress6mDelta,

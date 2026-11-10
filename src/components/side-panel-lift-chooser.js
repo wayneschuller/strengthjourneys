@@ -1,17 +1,13 @@
 import * as React from "react";
-import { useState, useEffect, useContext } from "react";
 import { Button } from "@/components/ui/button";
 import { getSelectedLiftsKey } from "@/lib/localStorage-keys";
-import { devLog } from "@/lib/processing-utils";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dumbbell } from "lucide-react";
 
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,

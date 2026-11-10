@@ -8,17 +8,15 @@ import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog } from "@/lib/processing-utils";
 
 import {
   E1RMFormulaSelect,
-  SpecialHtmlLabel,
   SingleLiftTooltipContent,
 } from "@/components/visualizer/visualizer-utils";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
-import { ReferenceLine, ReferenceArea, ReferenceDot } from "recharts";
+import { ReferenceLine, ReferenceArea } from "recharts";
 import { Checkbox } from "@/components/ui/checkbox";
 
 import {

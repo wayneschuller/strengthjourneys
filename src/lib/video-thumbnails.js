@@ -11,9 +11,6 @@
 export function extractYouTubeVideoId(url) {
   if (!url || typeof url !== "string") return null;
 
-  // Remove any query parameters and fragments
-  const cleanUrl = url.split("#")[0].split("?")[0];
-
   // Pattern 1: youtube.com/watch?v=VIDEO_ID
   const watchMatch = url.match(
     /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\s?#]+)/,

@@ -1,10 +1,7 @@
-import Head from "next/head";
-import { useEffect, useState, useContext } from "react";
+import { useState } from "react";
 import { NextSeo } from "next-seo";
-import { useSession, signIn } from "next-auth/react";
 import { StartLiftingLogCard } from "@/components/onboarding/instructions-cards";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
-import { devLog } from "@/lib/processing-utils";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
 import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
 import {

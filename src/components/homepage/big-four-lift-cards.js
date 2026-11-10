@@ -24,7 +24,6 @@ import { format } from "date-fns";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardFooter,
   CardTitle,
@@ -197,12 +196,10 @@ export function BigFourLiftCards({
     setStatsVisibleCount(0);
   }, [dataSource, topLiftsByTypeAndReps, animated]);
 
-  const {
-    liftTonnageMap,
-    averageTonnage,
-    favoriteLiftType,
-    leastFavoriteLiftType,
-  } = computeLiftTonnageMeta(sessionTonnageLookup, lifts);
+  const { favoriteLiftType, leastFavoriteLiftType } = computeLiftTonnageMeta(
+    sessionTonnageLookup,
+    lifts,
+  );
 
   const recentPRCutoffStr = (() => {
     const today = new Date();

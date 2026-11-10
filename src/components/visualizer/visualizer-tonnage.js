@@ -9,7 +9,7 @@ import { useLiftColors } from "@/hooks/use-lift-colors";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { devLog, logTiming, getDisplayWeight } from "@/lib/processing-utils";
+import { logTiming, getDisplayWeight } from "@/lib/processing-utils";
 import { getReadableDateString } from "@/lib/date-utils";
 import { LiftTypeIndicator } from "@/components/lift-type-indicator";
 import {

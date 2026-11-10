@@ -35,8 +35,6 @@ import { LB_PER_KG } from "@/lib/weight-units";
 
 import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 const KG_PER_LB = 1 / LB_PER_KG;
-const GORILLA_MULTIPLIER_LOW = 6;
-const GORILLA_MULTIPLIER_HIGH = 10;
 const GORILLA_MULTIPLIER_MID = 8;
 
 // Matches Deadlift color in use-lift-colors.js
@@ -47,12 +45,8 @@ const DEADLIFT_COLOR_SOFT = "rgba(0, 95, 115, 0.12)";
 const TRAINED_HUMAN_BASE_BENCH_LB = 175;
 
 // Gorilla bench equivalents (fixed — nobody is actually measuring this)
-const GORILLA_BENCH_LOW_LB =
-  TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_LOW; // 1050
 const GORILLA_BENCH_MID_LB =
   TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_MID; // 1400
-const GORILLA_BENCH_HIGH_LB =
-  TRAINED_HUMAN_BASE_BENCH_LB * GORILLA_MULTIPLIER_HIGH; // 1750
 
 const DEFAULT_BENCH_LB = 135;
 const ASSUMED_BODYWEIGHT_LB = 185;
@@ -136,8 +130,6 @@ export default function GorillaStrengthPage({ relatedArticles }) {
   const title = "How Much Can a Gorilla Bench Press? Silverback vs You";
   const description =
     "A silverback gorilla's bench press is estimated at roughly 1,050–1,750 lb (475–795 kg), about 6–10x a trained lifter. Enter your bench to see how you compare.";
-  const keywords =
-    "how strong is a gorilla, gorilla strength, gorilla vs human strength, how strong are you";
 
   return (
     <>
@@ -230,7 +222,6 @@ function GorillaStrengthMain({ relatedArticles }) {
 
   const scoreUnit = isMetric ? "kg" : "lb";
   const displayBench = Math.round(bench);
-  const displayGorillaMid = formatWeightInt(GORILLA_BENCH_MID_LB, isMetric);
   const displayGorillaCardValue = isMetric ? 600 : 1320;
 
   const bragLine = getBragLine(gorillaPercent, benchLb);
@@ -619,11 +610,6 @@ function getEstimatedPercentiles(ratio) {
     humans: HUMAN_PERCENTILE_TABLE[HUMAN_PERCENTILE_TABLE.length - 1].humans,
     gym: HUMAN_PERCENTILE_TABLE[HUMAN_PERCENTILE_TABLE.length - 1].gym,
   };
-}
-
-function formatWeightInt(valueLb, isMetric) {
-  const value = isMetric ? valueLb * KG_PER_LB : valueLb;
-  return Math.round(value);
 }
 
 function convertWeight(value, fromMetric, toMetric) {

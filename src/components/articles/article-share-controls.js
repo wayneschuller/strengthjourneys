@@ -52,21 +52,6 @@ function buildArticleClipboardText(title, url) {
   return `${introLine}\n${url}`;
 }
 
-/**
- * Renders the primary share control for an article page. Uses the Web Share API
- * when available and falls back to copying the URL to the clipboard.
- *
- * @param {Object} props
- * @param {string} props.title - Article title passed to the share payload.
- * @param {string} props.slug - Article slug used for analytics tracking.
- * @param {string} props.url - Canonical article URL to share or copy.
- */
-export function ArticleShareControls({ title, slug, url }) {
-  const { handleShare, isSharing } = useArticleShare({ title, slug, url });
-
-  return <TopArticleShareButton isSharing={isSharing} onShare={handleShare} />;
-}
-
 function useArticleShare({ title, slug, url }) {
   const { toast } = useToast();
   const [isSharing, setIsSharing] = useState(false);

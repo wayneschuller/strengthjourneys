@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Label, Pie, PieChart } from "recharts";
 
-import { ChartConfig, ChartContainer } from "@/components/ui/chart";
+import { ChartContainer } from "@/components/ui/chart";
 import { getGradeAndColor } from "@/lib/consistency-grades";
 
 const SIZES = {

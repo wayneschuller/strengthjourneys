@@ -168,7 +168,6 @@ export function generateSessionSets(
         platePreference,
       );
       const actualWeight = breakdown.closestWeight;
-      const newPlateMap = buildPlateCountMap(breakdown.platesPerSide);
 
       if (
         actualWeight <= previousWeight + effectiveMinJump ||

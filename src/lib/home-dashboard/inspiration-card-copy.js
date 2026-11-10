@@ -1,26 +1,3 @@
-export const STREAK_ENCOURAGMENTS = [
-  "Go have a beer.",
-  "You've earned couch time.",
-  "You're on track.",
-  "Winner winner chicken dinner.",
-  "Crushing it. Keep going.",
-  "Consistency looks good on you.",
-  "This is how PR streaks start.",
-  "Text a friend and brag a little.",
-  "You showed up. That matters most.",
-  "Momentum is on your side.",
-  "Future you is very grateful.",
-  "Your streak graph would be proud.",
-  "Log it, then relax. You did work.",
-  "Tiny habits, big results.",
-  "You vs. last week: you're winning.",
-  "Banked another week. Nice.",
-  "Coach brain: approved.",
-  "Solid work. Sleep like an athlete.",
-  "You did the hard part today.",
-  "Bookmark this feeling.",
-];
-
 export const JOURNEY_COMPLIMENT_POOLS = {
   underOneYear: [
     "building strong foundations",

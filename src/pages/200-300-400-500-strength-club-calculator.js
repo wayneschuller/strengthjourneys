@@ -6,14 +6,7 @@
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import {
-  useState,
-  useEffect,
-  useRef,
-  useId,
-  useCallback,
-  useMemo,
-} from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { motion, useReducedMotion } from "motion/react";
 import { RelatedArticles } from "@/components/articles/article-cards";
@@ -108,7 +101,6 @@ const MILESTONES = [
   },
 ];
 
-const COMBINED_TARGET = 1400; // 200 + 300 + 400 + 500 (for display only)
 const BAR_WEIGHT_LB = 45;
 const STRENGTH_CLUB_DIAGRAM_IS_METRIC = false;
 const STRENGTH_CLUB_PLATE_PREFERENCE = "blue";

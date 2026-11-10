@@ -10,7 +10,6 @@
 import {
   getBodyweightShare,
   isBodyweightLoadLiftName,
-  STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES,
 } from "@/lib/import/parsers/parser-utilities";
 import { convertWeight } from "@/lib/weight-units";
 
@@ -24,8 +23,6 @@ export const e1rmFormulae = [
   "OConner",
   "Wathan",
 ];
-
-export const BODYWEIGHT_LOAD_LIFT_TYPES = STANDARD_BODYWEIGHT_LOAD_LIFT_TYPES;
 
 // Bodyweight can arrive as a string from a form field, so guard before converting.
 function convertWeightUnit(weight, fromUnitType, toUnitType) {

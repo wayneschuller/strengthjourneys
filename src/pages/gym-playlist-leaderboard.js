@@ -1,12 +1,9 @@
 import { useState, useEffect } from "react";
 import Head from "next/head";
-import { useRouter } from "next/router";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { devLog } from "@/lib/processing-utils";
-import { cn } from "@/lib/utils";
 import { useLocalStorage } from "usehooks-ts";
-import { useSession, signIn } from "next-auth/react";
-import { gaTrackSignInClick } from "@/lib/analytics/analytics";
+import { useSession } from "next-auth/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +85,6 @@ export default function GymPlaylistLeaderboard({
   initialPlaylists,
   relatedArticles,
 }) {
-  const router = useRouter();
   const { data: session, status: authStatus } = useSession();
   const [playlists, setPlaylists] = useState(initialPlaylists);
   const [currentPage, setCurrentPage] = useState(1);

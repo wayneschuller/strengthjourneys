@@ -276,14 +276,6 @@ export function getLiftVariationGuides(lift) {
 }
 
 /**
- * Big four guide paths keyed by lift name. Kept for callers that only ever
- * link the big four (classic lift memories).
- */
-export const BIG_FOUR_PROGRESS_GUIDE_PATHS = Object.fromEntries(
-  BIG_FOUR_LIFTS.map((lift) => [lift.liftType, `/progress-guide/${lift.slug}`]),
-);
-
-/**
  * A big four lift as an invitation: its tagline, so the dashboard and the hub
  * pages describe each lift the same way, and what the lift gives the body.
  * Null outside the big four.

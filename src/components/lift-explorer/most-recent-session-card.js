@@ -97,94 +97,85 @@ export function MostRecentSessionCard({
   const hasBioData =
     age && bodyWeight && standards && Object.keys(standards).length > 0;
 
-  const {
-    recentSessions,
-    singleSession,
-    isFirstDate,
-    isLastDate,
-    datesForNav,
-  } = useMemo(() => {
-    if (!parsedData?.length)
+  const { recentSessions, singleSession, isFirstDate, isLastDate } =
+    useMemo(() => {
+      if (!parsedData?.length)
+        return {
+          recentSessions: [],
+          singleSession: null,
+          isFirstDate: true,
+          isLastDate: true,
+        };
+
+      let sessionDate = null;
+      if (liftType) {
+        const recentDates = getSessionDatesContainingLiftType(
+          parsedData,
+          liftType,
+        ).reverse();
+        const recentSessions = recentDates
+          .map((date) => {
+            const allAnalyzed = getAnalyzedSessionLifts(
+              date,
+              parsedData,
+              topLiftsByTypeAndReps,
+              topLiftsByTypeAndRepsLast12Months,
+            );
+            const analyzedSessionLifts = allAnalyzed[liftType]
+              ? { [liftType]: allAnalyzed[liftType] }
+              : {};
+            return { sessionDate: date, analyzedSessionLifts };
+          })
+          .filter((s) => Object.keys(s.analyzedSessionLifts).length > 0);
+
+        return {
+          recentSessions,
+          singleSession: null,
+          isFirstDate: true,
+          isLastDate: true,
+        };
+      }
+
+      if (highlightDate) {
+        sessionDate = highlightDate;
+      } else {
+        sessionDate = parsedData[parsedData.length - 1]?.date ?? null;
+      }
+
+      const isFirstDate =
+        parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
+      const isLastDate =
+        parsedData?.length > 0 &&
+        sessionDate === parsedData[parsedData.length - 1]?.date;
+
+      if (!sessionDate)
+        return {
+          recentSessions: [],
+          singleSession: null,
+          isFirstDate: true,
+          isLastDate: true,
+        };
+
+      const allAnalyzed = getAnalyzedSessionLifts(
+        sessionDate,
+        parsedData,
+        topLiftsByTypeAndReps,
+        topLiftsByTypeAndRepsLast12Months,
+      );
+
       return {
         recentSessions: [],
-        singleSession: null,
-        isFirstDate: true,
-        isLastDate: true,
-        datesForNav: [],
+        singleSession: { sessionDate, analyzedSessionLifts: allAnalyzed },
+        isFirstDate,
+        isLastDate,
       };
-
-    let sessionDate = null;
-    let datesForNav = [];
-
-    if (liftType) {
-      datesForNav = getSessionDatesContainingLiftType(parsedData, liftType);
-      const recentDates = datesForNav.slice().reverse();
-      const recentSessions = recentDates
-        .map((date) => {
-          const allAnalyzed = getAnalyzedSessionLifts(
-            date,
-            parsedData,
-            topLiftsByTypeAndReps,
-            topLiftsByTypeAndRepsLast12Months,
-          );
-          const analyzedSessionLifts = allAnalyzed[liftType]
-            ? { [liftType]: allAnalyzed[liftType] }
-            : {};
-          return { sessionDate: date, analyzedSessionLifts };
-        })
-        .filter((s) => Object.keys(s.analyzedSessionLifts).length > 0);
-
-      return {
-        recentSessions,
-        singleSession: null,
-        isFirstDate: true,
-        isLastDate: true,
-        datesForNav,
-      };
-    }
-
-    if (highlightDate) {
-      sessionDate = highlightDate;
-    } else {
-      sessionDate = parsedData[parsedData.length - 1]?.date ?? null;
-    }
-
-    const isFirstDate =
-      parsedData?.length > 0 && sessionDate === parsedData[0]?.date;
-    const isLastDate =
-      parsedData?.length > 0 &&
-      sessionDate === parsedData[parsedData.length - 1]?.date;
-
-    if (!sessionDate)
-      return {
-        recentSessions: [],
-        singleSession: null,
-        isFirstDate: true,
-        isLastDate: true,
-        datesForNav: [],
-      };
-
-    const allAnalyzed = getAnalyzedSessionLifts(
-      sessionDate,
+    }, [
       parsedData,
       topLiftsByTypeAndReps,
       topLiftsByTypeAndRepsLast12Months,
-    );
-
-    return {
-      recentSessions: [],
-      singleSession: { sessionDate, analyzedSessionLifts: allAnalyzed },
-      isFirstDate,
-      isLastDate,
-      datesForNav,
-    };
-  }, [
-    parsedData,
-    topLiftsByTypeAndReps,
-    topLiftsByTypeAndRepsLast12Months,
-    highlightDate,
-    liftType,
-  ]);
+      highlightDate,
+      liftType,
+    ]);
   const visibleRecentSessions = useMemo(
     () => recentSessions.slice(0, visibleCount),
     [recentSessions, visibleCount],

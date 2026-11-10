@@ -1,5 +1,5 @@
 import Head from "next/head";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 
@@ -27,7 +27,6 @@ import {
 } from "@/components/page-header";
 
 import { AthleteBioInlineSettings } from "@/components/athlete-bio-quick-settings";
-import { getLiftDetailUrl } from "@/components/lift-type-indicator";
 import Link from "next/link";
 
 import { e1rmFormulae } from "@/lib/estimate-e1rm";
@@ -41,7 +40,7 @@ import { LiftResultCopyButton } from "@/components/lift-result-copy-button";
 import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import { cn } from "@/lib/utils";
 
-import { useLocalStorage, useIsClient, useReadLocalStorage } from "usehooks-ts";
+import { useReadLocalStorage } from "usehooks-ts";
 import { calculatePlateBreakdown } from "@/lib/warmups";
 import { PlateDiagram } from "@/components/plate-diagram";
 
@@ -407,19 +406,8 @@ export function E1RMCalculatorMain({
       weightIsInitialized &&
       bioDataIsInitialized,
   });
-  const isClient = useIsClient();
-  const [isCapturingImage, setIsCapturingImage] = useState(false);
   const { isSuccess: isTextCopied, triggerSuccess: triggerTextCopied } =
     useTransientSuccess();
-  const portraitRef = useRef(null);
-  // Capture the resolved theme font at mount time so html2canvas gets the actual
-  // font name (not just the unresolved --font-sans CSS variable)
-  const [themeFontFamily, setThemeFontFamily] = useState(
-    "system-ui, sans-serif",
-  );
-  useEffect(() => {
-    setThemeFontFamily(window.getComputedStyle(document.body).fontFamily);
-  }, []);
   const handleWeightSliderChange = (value) => {
     let newWeight = value[0];
 
@@ -555,84 +543,9 @@ export function E1RMCalculatorMain({
         textarea.parentNode.removeChild(textarea);
       }
     }
-
-    // This fails in React - but it's the new API
-    // if (navigator?.clipboard?.writeText) {
-    //   try {
-    //     await navigator.clipboard.writeText(sentenceToCopy);
-    //     alert("Result copied to clipboard. Use ctrl-v to paste elsewhere.");
-    //   } catch (error) {
-    //     console.error("Unable to copy to clipboard:", error);
-    //   }
-    // } else {
-    //   // Fallback for browsers that do not support the Clipboard API
-    //   console.warn("Clipboard API not supported. You may need to copy the text manually.");
-    // }
-  };
-
-  const handleCopyImage = async () => {
-    if (!portraitRef.current) return;
-    setIsCapturingImage(true);
-    try {
-      const html2canvas = (await import("html2canvas-pro")).default;
-
-      let watermarkEl = null;
-      try {
-        watermarkEl = document.createElement("div");
-        watermarkEl.textContent = "strengthjourneys.xyz";
-        Object.assign(watermarkEl.style, {
-          position: "absolute",
-          right: "12px",
-          bottom: "12px",
-          padding: "4px 12px",
-          borderRadius: "9999px",
-          background: "rgba(15, 23, 42, 0.86)",
-          color: "rgba(248, 250, 252, 0.98)",
-          fontSize: "11px",
-          fontWeight: "500",
-          letterSpacing: "0.03em",
-          fontFamily:
-            'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-          boxShadow: "0 6px 16px rgba(15, 23, 42, 0.55)",
-          pointerEvents: "none",
-          zIndex: "10",
-        });
-        portraitRef.current.appendChild(watermarkEl);
-
-        const canvas = await html2canvas(portraitRef.current, {
-          backgroundColor: null,
-          scale: 3,
-        });
-
-        canvas.toBlob((blob) => {
-          navigator.clipboard
-            .write([new ClipboardItem({ "image/png": blob })])
-            .then(() => {
-              toast({
-                title: "Image copied! Paste into Instagram or anywhere.",
-              });
-              gaTrackCalcShareCopy("image", { page: router.asPath });
-            })
-            .catch((err) => {
-              console.error("Copy image error:", err);
-              toast({
-                variant: "destructive",
-                title: "Could not copy image to clipboard",
-              });
-            });
-        }, "image/png");
-      } finally {
-        if (watermarkEl && watermarkEl.parentNode) {
-          watermarkEl.parentNode.removeChild(watermarkEl);
-        }
-      }
-    } finally {
-      setIsCapturingImage(false);
-    }
   };
 
   const e1rmWeight = estimateE1RM(reps, weight, e1rmFormula);
-  const unit = getUnitSuffix(isMetric);
 
   // Floating plate annotation state (reads warmup-calc prefs from localStorage)
   const storedBarType =
@@ -773,71 +686,6 @@ export function E1RMCalculatorMain({
 
           <div className="mb-6">
             <div>
-              {/* Hidden portrait card — 9:16 for Instagram Stories image capture */}
-              <div
-                ref={portraitRef}
-                style={{
-                  position: "fixed",
-                  left: "-9999px",
-                  top: 0,
-                  width: "360px",
-                  height: "640px",
-                  fontFamily: themeFontFamily,
-                }}
-                className="bg-card text-card-foreground relative flex flex-col items-center justify-center gap-6 rounded-xl border-4 px-8 py-10"
-              >
-                <div
-                  className="w-full text-center"
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      letterSpacing: "0.1em",
-                      textTransform: "uppercase",
-                      opacity: 0.5,
-                    }}
-                  >
-                    One Rep Max
-                  </div>
-                  <div style={{ fontSize: "20px", opacity: 0.6 }}>
-                    {reps} reps @ {weight}
-                    {isMetric ? "kg" : "lb"}
-                  </div>
-                </div>
-                <div style={{ textAlign: "center", lineHeight: 1 }}>
-                  <div
-                    style={{
-                      fontSize: "128px",
-                      fontWeight: 800,
-                      letterSpacing: "-0.04em",
-                    }}
-                  >
-                    {e1rmWeight}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "40px",
-                      fontWeight: 700,
-                      opacity: 0.55,
-                      marginTop: "4px",
-                    }}
-                  >
-                    {isMetric ? "kg" : "lb"}
-                  </div>
-                </div>
-                <div style={{ fontSize: "15px", opacity: 0.45 }}>
-                  {Number(reps) === 1
-                    ? "lifted, not estimated"
-                    : `${e1rmFormula} formula`}
-                </div>
-              </div>
-
               {/* Hero card — centered, with plate annotation floating in whitespace to the right */}
               <div className="relative my-6 flex flex-col items-center gap-3">
                 <div className="relative flex w-full justify-center">
@@ -1428,18 +1276,9 @@ function AlgorithmRangeBars({
   // Fallback padding only when all algorithms agree (range === 0) so the dot stays visible.
   const trackRange = range > 0 ? range : isMetric ? 10 : 25;
   const detailMin = range > 0 ? minVal : minVal - trackRange / 2;
-  const detailMax = detailMin + trackRange;
   const detailPct = (v) => ((v - detailMin) / trackRange) * 100;
   const detailBandLeft = detailPct(minVal);
   const detailBandWidth = detailPct(maxVal) - detailBandLeft;
-
-  // Helper used by both merge passes.
-  const getLabelText = (formulas, values) => {
-    const minV = Math.min(...values);
-    const maxV = Math.max(...values);
-    const wStr = minV === maxV ? `${minV}${unit}` : `${minV}–${maxV}${unit}`;
-    return formulas.join(" / ") + " " + wStr;
-  };
 
   // Desktop merge — classic centre-to-centre threshold. Less aggressive; desktop tracks are
   // wide enough that only truly overlapping neighbours need grouping.

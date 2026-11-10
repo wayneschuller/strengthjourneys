@@ -6,7 +6,6 @@ import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { motion, useInView } from "motion/react";
 import confetti from "canvas-confetti";
-import { useSession } from "next-auth/react";
 import { addDays, format } from "date-fns";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -70,7 +69,6 @@ export function TheMonthInIronCard({
   const { dataSource, parsedData, sheetInfo } = useUserLiftingData();
   const bio = useAthleteBio();
   const { isMetric } = bio;
-  const { status: authStatus } = useSession();
   const sessionCount = useMemo(() => {
     if (typeof sessionCountFromParent === "number")
       return sessionCountFromParent;
@@ -1986,167 +1984,6 @@ function getStrengthLastColumnTooltip(boundaries, liftType) {
 
 function getTonnageLastColumnTooltip(liftType) {
   return `Previous month ${formatLiftTypeLabel(liftType).toLowerCase()} tonnage.`;
-}
-
-// ─── Status colors ─────────────────────────────────────────────────────────
-
-const STATUS_COLORS = {
-  ahead: "bg-emerald-500",
-  "on-pace": "bg-amber-400",
-  behind: "bg-red-500",
-  "no-data": "bg-muted",
-};
-
-const STATUS_TRACK_COLORS = {
-  ahead: "bg-emerald-100 dark:bg-emerald-950",
-  "on-pace": "bg-amber-100 dark:bg-amber-950",
-  behind: "bg-red-100 dark:bg-red-950",
-  "no-data": "bg-muted/40",
-};
-
-function PaceStatusLine({ status, needed, hideNeeded, projectedLabel }) {
-  if (status === "no-data") {
-    return (
-      <p className="text-muted-foreground text-xs">
-        No data for last month yet — keep logging!
-      </p>
-    );
-  }
-  if (status === "ahead") {
-    return (
-      <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-        ▲ On pace for {projectedLabel}
-      </p>
-    );
-  }
-  if (status === "on-pace") {
-    return (
-      <p className="text-xs font-medium text-amber-600 dark:text-amber-400">
-        → On pace for {projectedLabel}
-      </p>
-    );
-  }
-  return (
-    <p className="text-xs font-medium text-red-600 dark:text-red-400">
-      {hideNeeded
-        ? "▼ Behind last month"
-        : `▼ Behind pace · Need ${needed.toLocaleString()} more to win`}
-    </p>
-  );
-}
-
-// ─── MetricRow ─────────────────────────────────────────────────────────────
-
-function MetricRow({
-  label,
-  currentLabel,
-  lastLabel,
-  paceStatus,
-  index,
-  progressRatio,
-  showPaceMarker = true,
-  hideNeeded = false,
-  paceTooltip,
-  projectedLabel,
-  vsTooltip,
-  labelTooltip,
-}) {
-  const { status, fillPct } = paceStatus;
-  const rowDelay = index * 0.08;
-  const paceMarkerPct = Math.min(100, progressRatio * 100);
-
-  const labelEl = labelTooltip ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="text-sm font-medium">{label}</span>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={4}>
-          <p className="max-w-52 text-center text-xs">{labelTooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  ) : (
-    <span className="text-sm font-medium">{label}</span>
-  );
-
-  const vsEl = vsTooltip ? (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="text-muted-foreground text-xs">
-            <span className="text-foreground font-semibold">
-              {currentLabel}
-            </span>
-            {" vs "}
-            {lastLabel}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" sideOffset={4}>
-          <p className="max-w-44 text-center text-xs">{vsTooltip}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  ) : (
-    <span className="text-muted-foreground text-xs">
-      <span className="text-foreground font-semibold">{currentLabel}</span>
-      {" vs "}
-      {lastLabel}
-    </span>
-  );
-
-  return (
-    <motion.div
-      className="space-y-1"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: rowDelay, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        {labelEl}
-        {vsEl}
-      </div>
-      <div
-        className={`relative h-2.5 w-full rounded-full ${STATUS_TRACK_COLORS[status]}`}
-      >
-        <div className="absolute inset-0 overflow-hidden rounded-full">
-          <motion.div
-            className={`h-full rounded-full ${STATUS_COLORS[status]}`}
-            initial={{ width: "0%" }}
-            animate={{ width: `${fillPct}%` }}
-            transition={{
-              duration: 0.7,
-              delay: rowDelay + 0.1,
-              ease: "easeOut",
-            }}
-          />
-        </div>
-        {showPaceMarker && status !== "no-data" && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div
-                  className="absolute top-0 h-full w-2 -translate-x-1/2 cursor-default"
-                  style={{ left: `${paceMarkerPct}%` }}
-                >
-                  <div className="bg-foreground/40 mx-auto h-full w-0.5" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" sideOffset={4}>
-                <p className="max-w-44 text-center text-xs">{paceTooltip}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-      </div>
-      <PaceStatusLine
-        status={status}
-        needed={paceStatus.needed}
-        hideNeeded={hideNeeded}
-        projectedLabel={projectedLabel}
-      />
-    </motion.div>
-  );
 }
 
 // ─── Big Four Criteria Table (Strength + Tonnage per lift) ────────────────

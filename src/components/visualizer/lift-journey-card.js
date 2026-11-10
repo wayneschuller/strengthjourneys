@@ -497,9 +497,6 @@ export function LiftJourneyCard({
   ];
 
   const Wrapper = asCard ? Card : "div";
-  const feedbackContextId = `lift_journey_card_${liftType
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")}`;
 
   const firstDate = journey?.firstDate ?? oldestDate;
 

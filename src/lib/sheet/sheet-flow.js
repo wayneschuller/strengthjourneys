@@ -941,32 +941,6 @@ function describeCreatedSheet({ ssid, title, spreadsheetUrl }, sheetName) {
   };
 }
 
-export async function createBlankSheet(sheetName, headers) {
-  const created = await createSpreadsheet(sheetName, headers);
-  const { ssid } = created;
-
-  const headerResponse = await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${ssid}/values/A1:F1?valueInputOption=RAW`,
-    {
-      method: "PUT",
-      headers: {
-        ...headers,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        range: "A1:F1",
-        majorDimension: "ROWS",
-        values: [BOOTSTRAP_HEADERS],
-      }),
-    },
-  );
-  if (!headerResponse.ok) {
-    const body = await headerResponse.json().catch(() => ({}));
-    throw new Error(body?.error?.message || "Failed to seed sheet headers");
-  }
-  return describeCreatedSheet(created, sheetName);
-}
-
 export async function createBootstrapSheet(sheetName, headers) {
   const created = await createSpreadsheet(sheetName, headers);
   const { ssid, sheetId } = created;

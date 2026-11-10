@@ -31,7 +31,7 @@ Theme system is a mix of `next-themes` + CSS variable packs.
 
 - **Theme-specific backgrounds:** `src/components/ui-shell/app-background.js` picks a background layer based on theme + animated preference.
   - Vanilla `light/dark`: grid pattern; animated version uses `AnimatedGridPattern`.
-  - `neo-brutalism*`: when animated enabled, uses layered `FlickeringGrid` with theme-tuned colors.
+  - `neo-brutalism*`: uses `NeoBrutalistStickerBombLayer` from `src/components/ui-shell/theme-backgrounds.js`.
   - `retro-arcade*`: when animated enabled, uses `WarpBackground` from `src/components/ui-shell/theme-backgrounds.js`.
   - `starry-night*`: uses `StarryNightLayer` from `src/components/ui-shell/theme-backgrounds.js` (static or gently animated depending on the toggle) and suppresses the grid. Its two paintings, `public/swirls-starry-{light,dark}.webp`, are pre-tinted per variant (ultramarine strokes with chrome yellow stars, cobalt with gold), so the layer needs no blend mode.
 

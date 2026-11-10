@@ -237,28 +237,6 @@ export async function readFirstSheetId({ ssid, headers }) {
   return sheetId;
 }
 
-export function buildEditableSnapshot({
-  date,
-  liftType,
-  reps,
-  weight,
-  unitType,
-  notes,
-  url,
-}) {
-  return {
-    date: date != null ? String(date) : "",
-    liftType: liftType != null ? String(liftType) : "",
-    reps: reps != null ? String(reps) : "",
-    weight:
-      weight != null
-        ? `${weight}${unitType != null ? String(unitType) : ""}`
-        : "",
-    notes: notes != null ? String(notes) : "",
-    url: url != null ? String(url) : "",
-  };
-}
-
 export async function readRawRow({ ssid, rowIndex, headers, columns }) {
   const [cells] = await readSheetRows({
     ssid,

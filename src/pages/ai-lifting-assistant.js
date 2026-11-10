@@ -4,7 +4,6 @@
  */
 import { differenceInCalendarDays, format, parseISO, subYears } from "date-fns";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
@@ -241,7 +240,6 @@ function AILiftingAssistantMain({ relatedArticles, openingScores }) {
 
   const {
     parsedData,
-    isLoading,
     dataSource,
     liftTypes,
     topLiftsByTypeAndReps,

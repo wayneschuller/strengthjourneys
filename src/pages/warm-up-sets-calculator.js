@@ -555,7 +555,6 @@ function WarmupSetsDisplayCard({
             // Use the plate breakdown calculated during generation
             const breakdown = set.plateBreakdown;
             const isTopSet = set.isTopSet || idx === sessionSets.length - 1;
-            const isLastSet = idx === sessionSets.length - 1;
 
             return (
               <div

@@ -48,9 +48,7 @@ export const GA_EVENT_TAGS = Object.freeze({
   FUNNEL_SHEET_PICKER_CANCELLED: "funnel_sheet_picker_cancelled", // ~Feb 2026: User closed Drive picker without selecting.
   FUNNEL_SHEET_SELECTED: "funnel_sheet_selected", // ~Feb 2026: User selected a spreadsheet in Drive picker.
   FUNNEL_SHEET_LINKED: "funnel_sheet_linked", // ~Feb 2026: App linked selected sheet into local app state.
-  FUNNEL_SHEET_AUTOPROVISIONED: "funnel_sheet_autoprovisioned", // ~Mar 2026: App auto-provisioned a personal sheet from template.
   SHARE_BUTTON_CLICK: "share_button_click", // ~Feb 2026: Generic share/copy action with feature metadata.
-  THEME_CHANGED: "theme_changed", // ~Apr 2024: Theme toggle changed between light/dark variants.
   TIMER_START_STOP_TOGGLE: "timer_start_stop_toggle", // ~May 2024: Timer play/pause toggled.
   TIMER_RESET: "timer_reset", // ~May 2024: Timer reset to zero and stopped.
   TIMER_RESTARTED: "timer_restarted", // ~Apr 2024: Timer restarted from zero and running.
@@ -236,10 +234,6 @@ export function gaTrackSheetSelected() {
 
 export function gaTrackSheetLinked() {
   gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_LINKED);
-}
-
-export function gaTrackSheetAutoprovisioned() {
-  gaEvent(GA_EVENT_TAGS.FUNNEL_SHEET_AUTOPROVISIONED);
 }
 
 /**

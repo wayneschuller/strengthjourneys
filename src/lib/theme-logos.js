@@ -4,21 +4,15 @@
 import logoDark from "../../public/nav_logo_light.png";
 import logoLight from "../../public/nav_logo_dark.png";
 import logoNeoBrutalism from "../../public/nav_logo_neo-brutalism.png";
-// import logoNeoBrutalismDark from "../../public/nav_logo_neo-brutalism-dark.png";
 import logoRetroArcade from "../../public/nav_logo_retro-arcade.png";
-//import logoRetroArcadeDark from "../../public/nav_logo_retro-arcade-dark.png";
 import logoStarryNight from "../../public/nav_logo_starry-night.png";
 // Evergreen is vector, Fraunces lettering outlined to paths; pine ink by day,
 // cream at night.
 import logoEvergreen from "../../public/nav_logo_evergreen.svg";
 import logoEvergreenDark from "../../public/nav_logo_evergreen-dark.svg";
 
-// Fallback logos (existing light/dark logic)
-import fallbackDarkLogo from "../../public/nav_logo_light.png";
-import fallbackLightLogo from "../../public/nav_logo_dark.png";
-
 // Mapping object: theme name -> logo import
-export const logoMap = {
+const logoMap = {
   light: logoLight,
   dark: logoDark,
   "neo-brutalism": logoNeoBrutalism,
@@ -32,27 +26,15 @@ export const logoMap = {
 };
 
 /**
- * Get the appropriate logo for a given theme
- * Falls back to light/dark logic if theme-specific logo not found
+ * The nav logo for a theme. A theme with no logo of its own (blueprint) gets
+ * the stock light or dark one.
+ *
  * @param {string} theme - The theme name (e.g., "light", "dark", "neo-brutalism")
  * @returns {object} - The logo import object for Next.js Image component
  */
 export function getLogoForTheme(theme) {
-  if (!theme) {
-    return fallbackLightLogo;
-  }
-
-  // Check if theme-specific logo exists
-  if (logoMap[theme]) {
-    return logoMap[theme];
-  }
-
-  // Fallback to existing light/dark logic
-  if (theme.includes("dark")) {
-    return fallbackDarkLogo;
-  }
-
-  return fallbackLightLogo;
+  if (theme && logoMap[theme]) return logoMap[theme];
+  return theme?.includes("dark") ? logoDark : logoLight;
 }
 
 /**

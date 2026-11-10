@@ -249,11 +249,10 @@ function getSheetDialogCopy({
     const hasMultipleCandidates = candidateCount > 1;
     if (intent === "switch_sheet") {
       return {
-        eyebrow: "Choose a new data source",
-        title: "Select your lifting data.",
-        description: hasMultipleCandidates
-          ? `${candidateCount} sheets on the rack. Our pick is up top.`
-          : "Here is the one worth switching to.",
+        eyebrow: "Your data source",
+        title: "Your lifting data.",
+        description:
+          "Switch sheets, bring in your history from another app, or start fresh.",
         tone: "ready",
       };
     }
@@ -1364,6 +1363,12 @@ export function SheetSetupDialog() {
                       onCreateBlank={() =>
                         runLinkAction({ mode: "create_blank" })
                       }
+                      onImportFromApp={() => {
+                        // The import page previews the file first, then
+                        // merges it into the linked sheet or saves a new one.
+                        closeDialog();
+                        void router.push("/import");
+                      }}
                       onDisconnectCurrent={() => {
                         void disconnectCurrentSheet();
                       }}

@@ -1,18 +1,28 @@
 /**
  * Sheet chooser shown inside the setup dialog once Drive has been asked to spot us.
- * Single column on purpose: recommendation first, escape hatches second, the long
- * tail of other sheets folded away. Keep sheet selection separate from "open in
- * Google Sheets" so titles are not mistaken for primary CTAs.
+ * Single column on purpose, in two arrangements:
+ *   setting up  our recommendation, then the other ways in, then the long tail
+ *               of other sheets folded away
+ *   switching   the sheet connected now (never a "recommendation": it is
+ *               already theirs), then the other ways in, then every other
+ *               sheet laid open, since choosing one is why they came
+ * "Import from another app" sits with the other ways in because a lifter who
+ * wants a Hevy or Strong export in their log looks for it here.
+ * Keep sheet selection separate from "open in Google Sheets" so titles are not
+ * mistaken for primary CTAs.
  */
 import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { LiftArtwork } from "@/components/lift-artwork";
 import {
+  CheckCircle2,
   ChevronDown,
   ChevronUp,
   ExternalLink,
+  FileUp,
   Link2,
   LoaderCircle,
   Unplug,
@@ -215,96 +225,6 @@ function SheetNameWithExternalLink({
   );
 }
 
-/**
- * Secondary escape hatches: browse Drive by hand, or rack a brand new sheet.
- * Rendered full width under the recommendation so "start fresh" reads as a real
- * choice rather than the third button in a side rail.
- */
-function OtherOptionsRow({
-  hasPrimary,
-  isSwitchSheet,
-  openPicker,
-  isWorking,
-  onCreateBlank,
-}) {
-  return (
-    <div className="border-border/60 bg-muted/30 rounded-xl border px-4 py-4">
-      <p className="text-foreground text-sm font-semibold">
-        {hasPrimary ? "Not the right sheet?" : "Two ways to get started"}
-      </p>
-      <p className="text-muted-foreground mt-0.5 text-sm">
-        {hasPrimary
-          ? "Pick a different sheet from your Drive, or start with an empty one."
-          : "Choose a sheet from your Drive, or start with an empty one."}
-      </p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <Button
-          variant="outline"
-          className="w-full"
-          disabled={!openPicker || isWorking}
-          onClick={() => {
-            if (openPicker) handleOpenFilePicker(openPicker);
-          }}
-        >
-          <GoogleDriveIcon className="mr-2 h-4 w-4" />
-          Browse Google Drive
-        </Button>
-        <Button
-          // With nothing detected there is no hero CTA, so this becomes the
-          // primary path rather than a fallback.
-          variant={hasPrimary ? "outline" : "default"}
-          className="w-full"
-          onClick={onCreateBlank}
-          disabled={isWorking}
-        >
-          <img
-            src={GOOGLE_SHEETS_ICON_URL}
-            alt=""
-            className="mr-2 h-4 w-4"
-            aria-hidden
-          />
-          {isSwitchSheet ? "Start a fresh sheet" : "Start fresh"}
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-/** Compact reminder of what is connected today, shown only when switching. */
-function CurrentSourceStrip({
-  currentSheetInfo,
-  isWorking,
-  isDisconnectingCurrent,
-  onDisconnectCurrent,
-}) {
-  return (
-    <div className="border-border/70 bg-card/70 flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0 space-y-0.5">
-        <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-          Currently connected
-        </p>
-        <SheetNameWithExternalLink
-          name={currentSheetInfo.filename || "Connected lifting log"}
-          url={currentSheetInfo?.url || null}
-          textClassName="text-foreground truncate text-sm font-semibold"
-          linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
-          iconClassName="h-3.5 w-3.5"
-        />
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-        disabled={isWorking || isDisconnectingCurrent}
-        onClick={onDisconnectCurrent}
-      >
-        <Unplug className="mr-2 h-4 w-4" />
-        {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
-      </Button>
-    </div>
-  );
-}
-
 export function ChooseSheetPanel({
   intent = "recovery",
   candidates,
@@ -323,26 +243,40 @@ export function ChooseSheetPanel({
   onChooseSheet,
   onCreateBlank,
   onDisconnectCurrent,
+  onImportFromApp,
 }) {
   const isSwitchSheet = intent === "switch_sheet";
-  const primaryCandidate =
-    candidates.find((candidate) => candidate.id === recommendedId) ||
-    candidates[0] ||
-    null;
+  const hasCurrentSheet = Boolean(currentSheetInfo?.ssid);
+  // Switching never recommends: the top card is the sheet connected now, and
+  // every other sheet is a plain choice below it.
+  const primaryCandidate = isSwitchSheet
+    ? null
+    : candidates.find((candidate) => candidate.id === recommendedId) ||
+      candidates[0] ||
+      null;
+  // Drive may not list the connected sheet among the candidates; the card
+  // then shows its name alone.
+  const currentCandidate = hasCurrentSheet
+    ? candidates.find((candidate) => candidate.id === currentSsid) || null
+    : null;
   const otherCandidates = candidates.filter(
-    (candidate) => candidate.id !== primaryCandidate?.id,
+    (candidate) =>
+      candidate.id !== primaryCandidate?.id &&
+      !(isSwitchSheet && candidate.id === currentSsid),
   );
-  const isPrimaryCurrent =
-    primaryCandidate?.id && currentSsid === primaryCandidate.id;
-  const [showOtherSheets, setShowOtherSheets] = useState(false);
+  // Folded away while setting up, laid open while switching.
+  const [showOtherSheets, setShowOtherSheets] = useState(isSwitchSheet);
   const freshnessLabel = formatRelativeFreshness(
     primaryCandidate?.modifiedByMeTime || primaryCandidate?.modifiedTime,
   );
   const recommendedMeta = primaryCandidate
     ? formatRecommendedMeta(primaryCandidate, isEnriching)
     : "";
-  const showCurrentSourceStrip =
-    isSwitchSheet && currentSheetInfo?.ssid && !isPrimaryCurrent;
+  const chooseLabel = !isSwitchSheet
+    ? "Use this"
+    : hasCurrentSheet
+      ? "Switch to this sheet"
+      : "Connect this sheet";
 
   return (
     <div className="space-y-4">
@@ -389,9 +323,11 @@ export function ChooseSheetPanel({
         </div>
       )}
 
-      {showCurrentSourceStrip && (
-        <CurrentSourceStrip
+      {isSwitchSheet && hasCurrentSheet && (
+        <ConnectedSheetCard
           currentSheetInfo={currentSheetInfo}
+          candidate={currentCandidate}
+          isEnriching={isEnriching}
           isWorking={isWorking}
           isDisconnectingCurrent={isDisconnectingCurrent}
           onDisconnectCurrent={onDisconnectCurrent}
@@ -402,8 +338,8 @@ export function ChooseSheetPanel({
         <div className="border-primary/25 bg-card/80 space-y-5 rounded-2xl border px-5 py-5 shadow-sm sm:px-6">
           <div className="min-w-0 space-y-2">
             {candidates.length > 1 && (
-              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                {isSwitchSheet ? "Best replacement" : "Recommended for you"}
+              <p className="text-primary text-sm font-medium">
+                Recommended for you
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2">
@@ -426,9 +362,7 @@ export function ChooseSheetPanel({
               )}
             </div>
             <p className="text-muted-foreground text-sm">
-              {isSwitchSheet
-                ? "This looks like the best replacement for your current data source."
-                : "This looks like your main lifting log."}{" "}
+              This looks like your main lifting log.{" "}
               {recommendedMeta ? (
                 <span className="text-foreground/80 font-medium">
                   {recommendedMeta}
@@ -449,82 +383,31 @@ export function ChooseSheetPanel({
                   </span>
                 )}
             </div>
-            {isPrimaryCurrent && (
-              <p className="text-primary text-xs font-semibold tracking-wide uppercase">
-                Currently connected
-              </p>
-            )}
-            {Array.isArray(primaryCandidate.bigFourPreview) &&
-              primaryCandidate.bigFourPreview.length > 0 && (
-                <div className="space-y-2 pt-1">
-                  <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
-                    Best actual sets detected
-                  </p>
-                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {primaryCandidate.bigFourPreview.map((preview) => (
-                      <div
-                        key={preview.liftType}
-                        className="bg-background/90 border-border/70 flex items-center gap-2 rounded-md border px-2.5 py-2"
-                      >
-                        <LiftArtwork
-                          liftType={preview.liftType}
-                          size="sm"
-                          animate={false}
-                          className="h-8 w-8"
-                        />
-                        <div className="min-w-0">
-                          <p className="text-muted-foreground text-[11px] leading-tight font-medium">
-                            {getPreviewLiftLabel(preview.liftType)}
-                          </p>
-                          <p className="text-foreground text-base leading-tight font-semibold">
-                            {formatPreviewPrimaryValue(preview)}
-                          </p>
-                          <p className="text-muted-foreground truncate text-[10px] leading-tight">
-                            {formatPreviewSetDetail(preview)}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            <BestSetsGrid previews={primaryCandidate.bigFourPreview} />
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-            <Button
-              size="lg"
-              className="w-full sm:w-auto sm:min-w-64"
-              disabled={isWorking || currentSsid === primaryCandidate.id}
-              onClick={() => onChooseSheet(primaryCandidate.id)}
-            >
-              <Link2 className="mr-2 h-4 w-4" />
-              {currentSsid === primaryCandidate.id
-                ? "Currently connected"
-                : isSwitchSheet
-                  ? "Switch to this sheet"
-                  : "Connect this lifting log"}
-            </Button>
-            {isPrimaryCurrent && (
-              <Button
-                variant="destructive"
-                size="lg"
-                className="w-full sm:w-auto"
-                disabled={isWorking || isDisconnectingCurrent}
-                onClick={onDisconnectCurrent}
-              >
-                <Unplug className="mr-2 h-4 w-4" />
-                {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
-              </Button>
-            )}
-          </div>
+          <Button
+            size="lg"
+            className="w-full sm:w-auto sm:min-w-64"
+            disabled={isWorking || currentSsid === primaryCandidate.id}
+            onClick={() => onChooseSheet(primaryCandidate.id)}
+          >
+            <Link2 className="mr-2 h-4 w-4" />
+            {currentSsid === primaryCandidate.id
+              ? "Connected"
+              : "Connect this lifting log"}
+          </Button>
         </div>
       )}
 
       <OtherOptionsRow
         hasPrimary={Boolean(primaryCandidate)}
         isSwitchSheet={isSwitchSheet}
+        hasCurrentSheet={hasCurrentSheet}
         openPicker={openPicker}
         isWorking={isWorking}
         onCreateBlank={onCreateBlank}
+        // A preview is already open: its banner is where that import goes.
+        onImportFromApp={showImportedPreviewWarning ? null : onImportFromApp}
       />
 
       {otherCandidates.length > 0 && (
@@ -538,12 +421,15 @@ export function ChooseSheetPanel({
             <div>
               <p className="text-foreground text-sm font-semibold">
                 {isSwitchSheet
-                  ? "Other accessible sheets"
+                  ? hasCurrentSheet
+                    ? "Switch to another sheet"
+                    : "Connect a sheet"
                   : "Other detected sheets"}
               </p>
               <p className="text-muted-foreground text-sm">
-                {otherCandidates.length} more option
-                {otherCandidates.length === 1 ? "" : "s"}
+                {isSwitchSheet
+                  ? `${otherCandidates.length} lifting ${otherCandidates.length === 1 ? "log" : "logs"} in your Google Drive`
+                  : `${otherCandidates.length} more option${otherCandidates.length === 1 ? "" : "s"}`}
               </p>
             </div>
             {showOtherSheets ? (
@@ -586,11 +472,7 @@ export function ChooseSheetPanel({
                     onClick={() => onChooseSheet(candidate.id)}
                   >
                     <Link2 className="mr-2 h-4 w-4" />
-                    {currentSsid === candidate.id
-                      ? "Currently connected"
-                      : isSwitchSheet
-                        ? "Switch to this sheet"
-                        : "Use this"}
+                    {currentSsid === candidate.id ? "Connected" : chooseLabel}
                   </Button>
                 </div>
               ))}
@@ -598,6 +480,187 @@ export function ChooseSheetPanel({
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * The sheet connected now, shown first when switching. It states a fact, so it
+ * carries no call to action: the one control is a quiet Disconnect, kept small
+ * so the way out of a 12-year log never looks like the main button.
+ */
+function ConnectedSheetCard({
+  currentSheetInfo,
+  candidate,
+  isEnriching,
+  isWorking,
+  isDisconnectingCurrent,
+  onDisconnectCurrent,
+}) {
+  const meta = candidate ? formatRecommendedMeta(candidate, isEnriching) : "";
+
+  return (
+    <div className="border-primary/25 bg-card/80 space-y-4 rounded-2xl border px-5 py-5 shadow-sm sm:px-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-2">
+          <p className="text-primary inline-flex items-center gap-1.5 text-sm font-medium">
+            <CheckCircle2 className="h-4 w-4" aria-hidden />
+            Connected now
+          </p>
+          <div className="flex min-w-0 items-center gap-2">
+            <img
+              src={GOOGLE_SHEETS_ICON_URL}
+              alt=""
+              className="h-5 w-5 shrink-0"
+              aria-hidden
+            />
+            <SheetNameWithExternalLink
+              name={
+                candidate?.name ||
+                currentSheetInfo.filename ||
+                "Your lifting log"
+              }
+              url={getCandidateUrl(candidate) || currentSheetInfo.url || null}
+              textClassName="text-foreground truncate text-lg font-semibold"
+              linkClassName="text-muted-foreground hover:text-primary shrink-0 transition-colors"
+            />
+          </div>
+          {meta ? (
+            <p className="text-muted-foreground text-sm">{meta}</p>
+          ) : null}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 -ml-3 shrink-0 self-start sm:ml-0"
+          disabled={isWorking || isDisconnectingCurrent}
+          onClick={onDisconnectCurrent}
+        >
+          <Unplug className="mr-2 h-4 w-4" />
+          {isDisconnectingCurrent ? "Disconnecting..." : "Disconnect"}
+        </Button>
+      </div>
+      <BestSetsGrid previews={candidate?.bigFourPreview} />
+    </div>
+  );
+}
+
+/** The heaviest real set found for each big-four lift: proof it is their log. */
+function BestSetsGrid({ previews }) {
+  if (!Array.isArray(previews) || previews.length === 0) return null;
+
+  return (
+    <div className="space-y-2 pt-1">
+      <p className="text-muted-foreground text-sm">Best sets in this sheet</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {previews.map((preview) => (
+          <div
+            key={preview.liftType}
+            className="bg-background/90 border-border/70 flex items-center gap-2 rounded-md border px-2.5 py-2"
+          >
+            <LiftArtwork
+              liftType={preview.liftType}
+              size="sm"
+              animate={false}
+              className="h-8 w-8"
+            />
+            <div className="min-w-0">
+              <p className="text-muted-foreground text-[11px] leading-tight font-medium">
+                {getPreviewLiftLabel(preview.liftType)}
+              </p>
+              <p className="text-foreground text-base leading-tight font-semibold">
+                {formatPreviewPrimaryValue(preview)}
+              </p>
+              <p className="text-muted-foreground truncate text-[10px] leading-tight">
+                {formatPreviewSetDetail(preview)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The other ways in: bring a history over from another app, browse Drive by
+ * hand, or rack a brand new sheet. Rendered full width so each reads as a real
+ * choice rather than a button in a side rail.
+ */
+function OtherOptionsRow({
+  hasPrimary,
+  isSwitchSheet,
+  hasCurrentSheet,
+  openPicker,
+  isWorking,
+  onCreateBlank,
+  onImportFromApp,
+}) {
+  const title = isSwitchSheet
+    ? hasCurrentSheet
+      ? "Add to it, or change it"
+      : "Ways to get started"
+    : hasPrimary
+      ? "Not the right sheet?"
+      : "Ways to get started";
+  const description =
+    isSwitchSheet && hasCurrentSheet
+      ? onImportFromApp
+        ? "Bring your history over from another app and merge it into this sheet, pick a different sheet from your Drive, or start an empty one."
+        : "Pick a different sheet from your Drive, or start an empty one."
+      : onImportFromApp
+        ? "Bring your history over from another app, choose a sheet from your Drive, or start with an empty one."
+        : "Choose a sheet from your Drive, or start with an empty one.";
+
+  return (
+    <div className="border-border/60 bg-muted/30 rounded-xl border px-4 py-4">
+      <p className="text-foreground text-sm font-semibold">{title}</p>
+      <p className="text-muted-foreground mt-0.5 text-sm">{description}</p>
+      <div
+        className={cn(
+          "mt-3 grid gap-2",
+          onImportFromApp ? "sm:grid-cols-3" : "sm:grid-cols-2",
+        )}
+      >
+        {onImportFromApp && (
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={isWorking}
+            onClick={onImportFromApp}
+          >
+            <FileUp className="mr-2 h-4 w-4" />
+            Import from another app
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          className="w-full"
+          disabled={!openPicker || isWorking}
+          onClick={() => {
+            if (openPicker) handleOpenFilePicker(openPicker);
+          }}
+        >
+          <GoogleDriveIcon className="mr-2 h-4 w-4" />
+          Browse Google Drive
+        </Button>
+        <Button
+          // With nothing detected there is no hero CTA, so this becomes the
+          // primary path rather than a fallback.
+          variant={hasPrimary || isSwitchSheet ? "outline" : "default"}
+          className="w-full"
+          onClick={onCreateBlank}
+          disabled={isWorking}
+        >
+          <img
+            src={GOOGLE_SHEETS_ICON_URL}
+            alt=""
+            className="mr-2 h-4 w-4"
+            aria-hidden
+          />
+          {isSwitchSheet ? "Start a fresh sheet" : "Start fresh"}
+        </Button>
+      </div>
     </div>
   );
 }

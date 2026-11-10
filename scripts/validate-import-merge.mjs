@@ -13,49 +13,8 @@
  */
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
-import { registerHooks } from "node:module";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 
-const repositoryRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
-const sourceRoot = path.join(repositoryRoot, "src");
-
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    if (!specifier.startsWith("@/")) {
-      return nextResolve(specifier, context);
-    }
-    const target = path.join(sourceRoot, specifier.slice(2));
-    return {
-      shortCircuit: true,
-      url: pathToFileURL(path.extname(target) ? target : `${target}.js`).href,
-    };
-  },
-  load(url, context, nextLoad) {
-    // The lift registry imports its JSON files the way the Next bundlers
-    // allow, with no import attribute, which bare Node refuses before a hook
-    // could step in. Serve them here as modules exporting the parsed object.
-    if (
-      url.startsWith(pathToFileURL(sourceRoot).href) &&
-      url.endsWith(".json")
-    ) {
-      return {
-        shortCircuit: true,
-        format: "module",
-        source: `export default ${readFileSync(fileURLToPath(url), "utf8")};`,
-      };
-    }
-    const loaded = nextLoad(url, context);
-    if (url.startsWith(pathToFileURL(sourceRoot).href) && url.endsWith(".js")) {
-      return { ...loaded, format: "module" };
-    }
-    return loaded;
-  },
-});
+import "./source-loader.mjs";
 
 const { decodeCSV } = await import("../src/lib/import/decode-csv.js");
 const { parseImportedRows } =

@@ -16,16 +16,10 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { registerHooks } from "node:module";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
 
-const repositoryRoot = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-);
-const sourceRoot = path.join(repositoryRoot, "src");
+import { repositoryRoot } from "./source-loader.mjs";
 
 // Outside the repo on purpose: the prompt text must never reach the public git
 // history. The folder is plain files so diff, grep and editors all just work.
@@ -33,25 +27,6 @@ const BACKUP_DIR = path.join(
   os.homedir(),
   "hacking/strengthjourneys-private/prompts/editions",
 );
-
-// Resolve the app's `@/` imports, as the validate-* scripts do.
-registerHooks({
-  resolve(specifier, context, nextResolve) {
-    if (!specifier.startsWith("@/")) return nextResolve(specifier, context);
-    const target = path.join(sourceRoot, specifier.slice(2));
-    return {
-      shortCircuit: true,
-      url: pathToFileURL(path.extname(target) ? target : `${target}.js`).href,
-    };
-  },
-  load(url, context, nextLoad) {
-    const loaded = nextLoad(url, context);
-    if (url.startsWith(pathToFileURL(sourceRoot).href) && url.endsWith(".js")) {
-      return { ...loaded, format: "module" };
-    }
-    return loaded;
-  },
-});
 
 // The KV client reads its credentials at import time, so load .env first.
 process.loadEnvFile(path.join(repositoryRoot, ".env"));

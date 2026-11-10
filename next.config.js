@@ -39,7 +39,6 @@ function readChangelogSummary(slug) {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["geist"],
 
   env: {
     NEXT_PUBLIC_CHANGELOG_LATEST: CHANGELOG_LATEST,

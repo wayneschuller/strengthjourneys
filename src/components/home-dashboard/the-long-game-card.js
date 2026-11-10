@@ -38,6 +38,8 @@ import {
   copyFullLongGameCardImageFast,
   copyYearHeatmapImageFast,
 } from "@/components/home-dashboard/long-game/long-game-share-utils";
+import { getYearFromYmd } from "@/lib/date-utils";
+
 import {
   findTrainingHistoryDateBounds,
   getTrainingHistoryTitleOptions,
@@ -405,9 +407,9 @@ export function TheLongGameCard({
                         "Your journey has begun. "}
                       {dashboardStage === "first_month"
                         ? "A close-up of your first months of training."
-                        : `Your strength journey from ${new Date(intervals[0].startDate).getFullYear()} - ${new Date(
+                        : `Your strength journey from ${getYearFromYmd(intervals[0].startDate)} - ${getYearFromYmd(
                             intervals[intervals.length - 1].endDate,
-                          ).getFullYear()}.`}
+                          )}.`}
                     </span>
                   </CardDescription>
                 )
@@ -536,7 +538,9 @@ export function TheLongGameCard({
                 >
                   <div className="flex flex-col gap-2">
                     {intervals.map((interval, index) => {
-                      const year = new Date(interval.startDate).getFullYear();
+                      // Read the year from the string: new Date("2026-01-01") is UTC
+                      // midnight, which is still 2025 for lifters west of Greenwich.
+                      const year = getYearFromYmd(interval.startDate);
                       const isCurrentYear = year === new Date().getFullYear();
                       return (
                         <div
@@ -612,20 +616,20 @@ export function TheLongGameCard({
               {!isFirstMonthFocusState && effectiveViewMode === "weekly" && (
                 <WeeklyTrainingPatternGrid
                   parsedData={parsedData}
-                  startYear={new Date(intervals[0].startDate).getFullYear()}
-                  endYear={new Date(
+                  startYear={getYearFromYmd(intervals[0].startDate)}
+                  endYear={getYearFromYmd(
                     intervals[intervals.length - 1].endDate,
-                  ).getFullYear()}
+                  )}
                   isSharing={isSharing}
                 />
               )}
               {!isFirstMonthFocusState && effectiveViewMode === "monthly" && (
                 <MonthlyTrainingPatternGrid
                   parsedData={parsedData}
-                  startYear={new Date(intervals[0].startDate).getFullYear()}
-                  endYear={new Date(
+                  startYear={getYearFromYmd(intervals[0].startDate)}
+                  endYear={getYearFromYmd(
                     intervals[intervals.length - 1].endDate,
-                  ).getFullYear()}
+                  )}
                   isSharing={isSharing}
                 />
               )}

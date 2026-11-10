@@ -5,6 +5,8 @@
 
 import { devLog } from "@/lib/processing-utils";
 
+import { getYearFromYmd } from "@/lib/date-utils";
+
 async function writePngToClipboard(blobPromise) {
   await navigator.clipboard.write([
     new ClipboardItem({ "image/png": blobPromise }),
@@ -324,7 +326,7 @@ export async function copyFullLongGameCardImageFast({
   );
 
   for (const interval of dateRanges) {
-    const year = new Date(interval.startDate).getFullYear();
+    const year = getYearFromYmd(interval.startDate);
     const yearNode = yearRowRefs.current[year];
     if (!yearNode) continue;
     const yearStart = performance.now();

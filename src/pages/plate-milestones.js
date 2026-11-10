@@ -829,7 +829,7 @@ function PlateMilestonesMain({ relatedArticles }) {
   const hasExplicitQueryRef = useRef(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  const [press, setPress, , pressIsInitialized] =
+  const [press, setPress, , , pressIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_PRESS,
       MILESTONES[0].defaultValue,
@@ -838,7 +838,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       (value) =>
         Number.isFinite(value) && value >= 0 && value <= MILESTONES[0].maxLb,
     );
-  const [bench, setBench, , benchIsInitialized] =
+  const [bench, setBench, , , benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_BENCH,
       MILESTONES[1].defaultValue,
@@ -847,7 +847,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       (value) =>
         Number.isFinite(value) && value >= 0 && value <= MILESTONES[1].maxLb,
     );
-  const [squat, setSquat, , squatIsInitialized] =
+  const [squat, setSquat, , , squatIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_SQUAT,
       MILESTONES[2].defaultValue,
@@ -856,7 +856,7 @@ function PlateMilestonesMain({ relatedArticles }) {
       (value) =>
         Number.isFinite(value) && value >= 0 && value <= MILESTONES[2].maxLb,
     );
-  const [deadlift, setDeadlift, , deadliftIsInitialized] =
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.PLATE_MILESTONE_DEADLIFT,
       MILESTONES[3].defaultValue,

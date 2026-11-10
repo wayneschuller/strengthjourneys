@@ -407,7 +407,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
   });
   const e1rmFormula = storedFormula ?? "Brzycki";
 
-  const [squat, setSquat, , squatIsInitialized] =
+  const [squat, setSquat, , , squatIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.THOUSAND_SQUAT,
       275,
@@ -416,7 +416,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       (value) => Number.isFinite(value) && value >= 0 && value <= 700,
       "squat",
     );
-  const [bench, setBench, , benchIsInitialized] =
+  const [bench, setBench, , , benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.THOUSAND_BENCH,
       205,
@@ -425,7 +425,7 @@ function ThousandPoundClubCalculatorMain({ relatedArticles }) {
       (value) => Number.isFinite(value) && value >= 0 && value <= 700,
       "bench",
     );
-  const [deadlift, setDeadlift, , deadliftIsInitialized] =
+  const [deadlift, setDeadlift, , , deadliftIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.THOUSAND_DEADLIFT,
       315,

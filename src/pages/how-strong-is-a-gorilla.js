@@ -181,7 +181,7 @@ export default function GorillaStrengthPage({ relatedArticles }) {
 function GorillaStrengthMain({ relatedArticles }) {
   const router = useRouter();
   const [isCopied, setIsCopied] = useState(false);
-  const [isMetric, setIsMetric, , isMetricIsInitialized] =
+  const [isMetric, setIsMetric, , , isMetricIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.GORILLA_IS_METRIC,
       false,
@@ -190,7 +190,7 @@ function GorillaStrengthMain({ relatedArticles }) {
       (value) => typeof value === "boolean",
       LOCAL_STORAGE_KEYS.CALC_IS_METRIC,
     );
-  const [bench, setBench, , benchIsInitialized] =
+  const [bench, setBench, , , benchIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.GORILLA_BENCH,
       DEFAULT_BENCH_LB,

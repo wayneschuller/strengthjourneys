@@ -60,11 +60,13 @@ function stringifyStateValue(value) {
  * @param {Record<string, *>|null} [includeWhenSyncing=null] - Legacy field-level URL extras.
  * @param {Function|null} [validateValue=null] - Optional validator for URL/localStorage values.
  * @param {string} [queryKey=key] - Optional URL key when it differs from the localStorage key.
- * @returns {[*, Function, boolean, Function]} [state, setter, isDefault, silentSetter]
+ * @returns {[*, Function, boolean, Function, boolean]} [state, setter, isDefault, silentSetter, isInitialized]
  *   - setter: marks value as user-supplied, persists to localStorage + URL
  *   - isDefault: true when the value was never explicitly provided (URL, localStorage, or setter)
  *   - silentSetter: changes value without flipping isDefault — use for derived updates like unit
  *     conversion that shouldn't be mistaken for an explicit user preference
+ *   - isInitialized: FIFTH slot, true once the URL/localStorage read has run. Callers that skip
+ *     silentSetter need two holes before it: `[value, setValue, , , isInitialized]`
  */
 export const useStateFromQueryOrLocalStorage = (
   key,

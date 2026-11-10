@@ -332,17 +332,18 @@ export function E1RMCalculatorMain({
     bioDataIsDefault,
     bioDataIsInitialized,
   } = useAthleteBio();
-  const [reps, setReps, , repsIsInitialized] = useStateFromQueryOrLocalStorage(
-    LOCAL_STORAGE_KEYS.REPS,
-    5,
-    false,
-    null,
-    (value) => Number.isInteger(value) && value >= 1 && value <= 20,
-  );
+  const [reps, setReps, , , repsIsInitialized] =
+    useStateFromQueryOrLocalStorage(
+      LOCAL_STORAGE_KEYS.REPS,
+      5,
+      false,
+      null,
+      (value) => Number.isInteger(value) && value >= 1 && value <= 20,
+    );
   // For normal pages: URL query → localStorage → defaultFormula.
   // For formula slug pages: forceFormula prop drives the display directly (no state involved).
   // Clicking a different formula redirects to /calculator with all current state in the query.
-  const [hookFormula, setHookFormula, , formulaIsInitialized] =
+  const [hookFormula, setHookFormula, , , formulaIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.FORMULA,
       defaultFormula,
@@ -364,7 +365,7 @@ export function E1RMCalculatorMain({
             },
           })
       : setHookFormula;
-  const [weight, setWeight, , weightIsInitialized] =
+  const [weight, setWeight, , , weightIsInitialized] =
     useStateFromQueryOrLocalStorage(
       LOCAL_STORAGE_KEYS.WEIGHT,
       225,

@@ -14,8 +14,6 @@ import { devLog } from "@/lib/processing-utils";
 import { getUserKvKey, mergeUserRecord } from "@/lib/user-kv-keys";
 import { authOptions, promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 
-export const SAMPLE_TEMPLATE_SSID =
-  "14J9z9iJBCeJksesf3MdmpTUmo2TIckDxIQcTx1CPEO0";
 export const PROVISION_VERSION = 3;
 const MAX_HEADER_CHECKS = 12;
 const MAX_DEEP_ENRICH_CANDIDATES = 12;
@@ -36,11 +34,7 @@ const BOOTSTRAP_HEADERS = [
 ];
 
 const VALID_INTENTS = new Set(["bootstrap", "recovery", "switch_sheet"]);
-const VALID_LINK_MODES = new Set([
-  "select_existing",
-  "create_blank",
-  "create_sample",
-]);
+const VALID_LINK_MODES = new Set(["select_existing", "create_blank"]);
 const isDevEnv =
   process.env.NEXT_PUBLIC_STRENGTH_JOURNEYS_ENV === "development";
 
@@ -880,25 +874,6 @@ export async function validateAndFetchSelectedSheet(ssid, headers, debug) {
   return metadata;
 }
 
-export async function copyTemplate(sheetName, templateSsid, headers) {
-  const response = await fetch(
-    `https://www.googleapis.com/drive/v3/files/${templateSsid}/copy?supportsAllDrives=true&fields=id,name,webViewLink,modifiedTime,modifiedByMeTime`,
-    {
-      method: "POST",
-      headers: {
-        ...headers,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: sheetName }),
-    },
-  );
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new Error(body?.error?.message || "Failed to copy template sheet");
-  }
-  return response.json();
-}
-
 async function createSpreadsheet(sheetName, headers) {
   const createResponse = await fetch(
     "https://sheets.googleapis.com/v4/spreadsheets",
@@ -927,9 +902,8 @@ async function createSpreadsheet(sheetName, headers) {
 }
 
 // spreadsheets.create already hands back the title and the URL, and a sheet
-// made moments ago has no modified time worth asking Drive about. copyTemplate
-// has always taken its metadata straight off the create call; these two used to
-// spend a whole extra round trip re-reading what they had just been told.
+// made moments ago has no modified time worth asking Drive about, so nothing
+// here spends a round trip re-reading what it has just been told.
 function describeCreatedSheet({ ssid, title, spreadsheetUrl }, sheetName) {
   const nowIso = new Date().toISOString();
   return {

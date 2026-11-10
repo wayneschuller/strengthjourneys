@@ -6,15 +6,13 @@
  */
 import { handleOpenFilePicker } from "@/lib/sheet/handle-open-picker";
 import { GOOGLE_SHEETS_ICON_URL } from "@/lib/sheet/google-sheets-icon";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 import { LiftArtwork } from "@/components/lift-artwork";
 import {
   ChevronDown,
   ChevronUp,
   ExternalLink,
-  FileUp,
   Link2,
   LoaderCircle,
   Unplug,
@@ -227,13 +225,8 @@ function OtherOptionsRow({
   isSwitchSheet,
   openPicker,
   isWorking,
-  showImportOption,
-  onImportFile,
   onCreateBlank,
 }) {
-  const importFileRef = useRef(null);
-  const buttonCount = showImportOption ? 3 : 2;
-
   return (
     <div className="border-border/60 bg-muted/30 rounded-xl border px-4 py-4">
       <p className="text-foreground text-sm font-semibold">
@@ -244,12 +237,7 @@ function OtherOptionsRow({
           ? "Pick a different sheet from your Drive, or start with an empty one."
           : "Choose a sheet from your Drive, or start with an empty one."}
       </p>
-      <div
-        className={cn(
-          "mt-3 grid gap-2",
-          buttonCount === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2",
-        )}
-      >
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <Button
           variant="outline"
           className="w-full"
@@ -261,30 +249,6 @@ function OtherOptionsRow({
           <GoogleDriveIcon className="mr-2 h-4 w-4" />
           Browse Google Drive
         </Button>
-        {showImportOption && (
-          <>
-            <Button
-              variant="outline"
-              className="w-full"
-              disabled={isWorking || !onImportFile}
-              onClick={() => importFileRef.current?.click()}
-            >
-              <FileUp className="mr-2 h-4 w-4" />
-              Import data file
-            </Button>
-            <input
-              ref={importFileRef}
-              type="file"
-              accept=".csv,.txt"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file && onImportFile) onImportFile(file);
-                e.target.value = "";
-              }}
-            />
-          </>
-        )}
         <Button
           // With nothing detected there is no hero CTA, so this becomes the
           // primary path rather than a fallback.
@@ -359,8 +323,6 @@ export function ChooseSheetPanel({
   onChooseSheet,
   onCreateBlank,
   onDisconnectCurrent,
-  onImportFile,
-  showImportOption = true,
 }) {
   const isSwitchSheet = intent === "switch_sheet";
   const primaryCandidate =
@@ -562,8 +524,6 @@ export function ChooseSheetPanel({
         isSwitchSheet={isSwitchSheet}
         openPicker={openPicker}
         isWorking={isWorking}
-        showImportOption={showImportOption}
-        onImportFile={onImportFile}
         onCreateBlank={onCreateBlank}
       />
 

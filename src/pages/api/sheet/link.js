@@ -5,21 +5,24 @@
 // or chosen to create a new one). Persists the linked sheet to KV and returns
 // the sheet metadata to the client, which stores it in localStorage as sheetInfo.
 //
-// Three link modes:
-//   select_existing  — user picked a sheet from the candidate list. Validates
-//                      that the sheet is accessible and has the required headers.
+// Two link modes:
+//   select_existing  — user picked a sheet from the candidate list or the
+//                      Drive picker. Validates that the sheet is accessible
+//                      and has the required columns.
 //   create_blank     — create a new empty sheet with the correct header row.
-//   create_sample    — copy the Strength Journeys sample template sheet.
 //
 // Body: {
 //   intent: "bootstrap" | "recovery" | "switch_sheet",
-//   mode: "select_existing" | "create_blank" | "create_sample",
+//   mode: "select_existing" | "create_blank",
 //   selectedSsid?: string,      // required when mode = select_existing
+//   importedFileName?: string,  // create_blank for an import: names the sheet
 //   hadLocalSheetBefore?: bool, // hint for lifecycle classification
 // }
 //
-// Returns: { ssid, url, filename, modifiedTime, modifiedByMeTime }
-//          (same shape as sheetInfo in localStorage)
+// Returns: { action: "link_existing", reason, ssid, name, webViewLink,
+//            modifiedTime, modifiedByMeTime, wasCreated }
+//          reason is user_selection or created_blank; wasCreated tells the
+//          client which of the two confirmations to show.
 
 import { devLog } from "@/lib/processing-utils";
 import { classifySheetFlowError } from "@/lib/sheet/sheet-flow-errors";
@@ -27,7 +30,6 @@ import {
   buildImportedSheetName,
   buildSheetName,
   classifyLifecycle,
-  copyTemplate,
   createBootstrapSheet,
   createDebug,
   getExistingRecord,
@@ -37,10 +39,8 @@ import {
   normalizeLinkMode,
   persistLinkedSheet,
   requireSheetFlowContext,
-  respondCreateNewUserSheet,
   respondLinkExisting,
   validateAndFetchSelectedSheet,
-  SAMPLE_TEMPLATE_SSID,
 } from "@/lib/sheet/sheet-flow";
 
 export default async function handler(req, res) {
@@ -121,21 +121,6 @@ export default async function handler(req, res) {
       wasCreated = true;
     }
 
-    if (mode === "create_sample") {
-      metadata = await copyTemplate(
-        sheetName,
-        SAMPLE_TEMPLATE_SSID,
-        base.headers,
-      );
-      connectionMethod =
-        intent === "switch_sheet"
-          ? "switch_sheet_selection"
-          : "user_created_sample";
-      provisioningMethod = "template_copy";
-      reason = "created_sample";
-      wasCreated = true;
-    }
-
     if (!metadata?.id) {
       throw new Error("Link flow produced no sheet metadata");
     }
@@ -190,10 +175,6 @@ export default async function handler(req, res) {
         connectionMethod,
         provisioningMethod,
       });
-    }
-
-    if (reason === "true_new_user") {
-      return respondCreateNewUserSheet(res, metadata, debug);
     }
 
     return respondLinkExisting(res, metadata, {

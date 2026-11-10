@@ -1,6 +1,36 @@
 /**
- * Sheet setup dialog powers first-run onboarding and later sheet switching.
- * Keep the chooser aligned with the server-side recommendation flow.
+ * Sheet setup dialog: first-run onboarding, recovery and sheet switching.
+ *
+ * The server decides what a signed-in lifter needs (/api/sheet/resolve, whose
+ * header holds the policy); this dialog asks, then shows the answer.
+ *
+ * What starts a flow (each is one effect near the bottom of SheetSetupDialog):
+ *   auto      signed in, no sheet, setup not dismissed    -> resolve bootstrap
+ *   ask       openSheetSetupDialog() from anywhere        -> resolve bootstrap
+ *             or switch_sheet, or save an import preview into a new sheet
+ *   recover   Google says the linked sheet is gone        -> resolve recovery
+ *   resume    back from re-consenting to Drive access     -> the saved action
+ *
+ * States (onboardingState) and where each goes next:
+ *   idle                   closed
+ *   discovering            resolve in flight -> any state below
+ *   choose_sheet           picker; a choice -> linking_or_creating
+ *   linking_or_creating    /api/sheet/link in flight -> created_confirmation,
+ *                          closed, or an error state
+ *   created_confirmation   linked or created; the button closes the dialog
+ *   fallback_error         nothing could be linked unasked; retry or browse
+ *   scope_reauth_required  Drive access was declined at sign-in; sign in again
+ *
+ * The cases, by what resolve answers:
+ *   new lifter                        create_new_user_sheet -> confirmation
+ *   this browser forgot the sheet,    link_existing (the one log in Drive, or
+ *   or a new device                   the last one linked) -> confirmation
+ *   several logs and no last link     choose_sheet -> picker
+ *   a returning lifter, none found    recover_returning_user -> fallback_error
+ *
+ * Two things outlive the dialog, both in localStorage: SHEET_SETUP_DISMISSED
+ * (closing setup without a sheet stops it opening itself) and the pending
+ * action that carries an interrupted save across the Google redirect.
  */
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -49,7 +79,6 @@ import { PlateDiagram } from "@/components/plate-diagram";
 import { PLATE_SETS } from "@/lib/warmups";
 
 const ENRICH_CANDIDATE_LIMIT = 12;
-const SHEET_FLOW_QUERY_KEY = "sheetFlow";
 const FORCE_SHEET_SYNC_TOAST_KEY = "SJ_forceNextSheetSyncToast";
 const SHEET_SETUP_QUIPS = [
   "The bar rewards patience.",
@@ -168,6 +197,17 @@ function shouldShowSyncToastOnAutoLink(payload) {
   );
 }
 
+// The sheetInfo shape the app stores, from a resolve or link answer.
+function toSheetInfo(payload) {
+  return {
+    ssid: payload.ssid,
+    url: payload.webViewLink ?? null,
+    filename: payload.name ?? null,
+    modifiedTime: payload.modifiedTime ?? null,
+    modifiedByMeTime: payload.modifiedByMeTime ?? null,
+  };
+}
+
 function buildClientFlowError(message, errorCode = null) {
   const error = new Error(message || "Automatic setup failed");
   error.errorCode = errorCode;
@@ -180,10 +220,11 @@ function getSheetDialogCopy({
   candidateCount,
   statusMessage,
   loadingQuip,
+  wasCreated,
 }) {
   if (state === "created_confirmation") {
     return {
-      eyebrow: "Lifting log created",
+      eyebrow: wasCreated ? "Lifting log created" : "Lifting log connected",
       title: "Your lifting log is ready.",
       description: null,
       tone: "ready",
@@ -268,7 +309,6 @@ export function SheetSetupDialog() {
     selectSheet,
     clearSheet,
     apiError,
-    importFile,
     clearImportedData,
     dataSource,
     importedFileName,
@@ -284,10 +324,14 @@ export function SheetSetupDialog() {
   const [open, setOpen] = useState(false);
   // Once a signed-in lifter closes setup without a sheet (or disconnects one),
   // setup waits to be asked instead of opening itself on every visit.
+  // Read on the first render, unlike every other useLocalStorage in the app:
+  // this component only ever mounts in the browser, after sign-in (see the
+  // loader), and the effect that opens setup runs on that same first render.
+  // With the usual late read it saw "not dismissed" every time and opened.
   const [isSetupDismissed, setIsSetupDismissed] = useLocalStorage(
     LOCAL_STORAGE_KEYS.SHEET_SETUP_DISMISSED,
     false,
-    { initializeWithValue: false },
+    { initializeWithValue: true },
   );
   const [onboardingState, setOnboardingState] = useState("idle");
   const [provisionError, setProvisionError] = useState(null);
@@ -307,11 +351,13 @@ export function SheetSetupDialog() {
   const [hadLocalSheetBefore, setHadLocalSheetBefore] = useState(false);
   const [createdSheetInfo, setCreatedSheetInfo] = useState(null);
   const [createdSheetReason, setCreatedSheetReason] = useState(null);
-  const [createdSheetAction, setCreatedSheetAction] = useState(null);
+  // A new sheet and a sheet found in Drive get different words on the
+  // confirmation. The server says which; a blank sheet the lifter asked for
+  // arrives as link_existing, so the action name cannot tell them apart.
+  const [createdSheetIsNew, setCreatedSheetIsNew] = useState(false);
   const [dialogAction, setDialogAction] = useState(null);
   const [isDisconnectingCurrentSheet, setIsDisconnectingCurrentSheet] =
     useState(false);
-  const launchedFromUserRef = useRef(false);
   const provisioningStartedRef = useRef(false);
   // The sheet the read-failure recovery last unlinked, to spot a repeat.
   const lastRecoveredSsidRef = useRef(null);
@@ -319,12 +365,15 @@ export function SheetSetupDialog() {
   const flowStartedAtRef = useRef(null);
   const outcomeReportedRef = useRef(false);
   const onboardingFlowTokenRef = useRef(null);
+  // What the last resolve was asked, so Retry asks the same thing again.
+  const lastResolveRequestRef = useRef(null);
   const dialogCopy = getSheetDialogCopy({
     intent: flowIntent,
     state: onboardingState,
     candidateCount: candidateSheets.length,
     statusMessage: sheetDiscoveryStatusMessage,
     loadingQuip,
+    wasCreated: createdSheetIsNew,
   });
   // Discovering and linking are one visual beat: sharing a phase key keeps the
   // barbell loading up instead of resetting when the flow moves between them.
@@ -356,7 +405,7 @@ export function SheetSetupDialog() {
     setHadLocalSheetBefore(false);
     setCreatedSheetInfo(null);
     setCreatedSheetReason(null);
-    setCreatedSheetAction(null);
+    setCreatedSheetIsNew(false);
     setDialogAction(null);
     setIsDisconnectingCurrentSheet(false);
     onboardingFlowTokenRef.current = null;
@@ -390,18 +439,28 @@ export function SheetSetupDialog() {
     [authStatus],
   );
 
+  // One outcome per flow, timed from when the flow began.
+  const reportOutcome = useCallback(
+    (event, meta = {}) => {
+      if (outcomeReportedRef.current) return;
+      outcomeReportedRef.current = true;
+      void reportOnboardingEvent(event, {
+        ...meta,
+        durationMs: flowStartedAtRef.current
+          ? Date.now() - flowStartedAtRef.current
+          : null,
+      });
+    },
+    [reportOnboardingEvent],
+  );
+
   const routeToScopeRepair = useCallback(
     ({ actionType, message, intent }) => {
       const nextIntent = intent || flowIntent || "bootstrap";
 
-      // Rare recovery rail: only persist enough context to resume the save that
-      // just failed. Do not turn this into a first-class app mode.
-      persistPendingSheetAction({
-        type: actionType,
-        hadLocalBefore: hadLocalSheetBefore,
-        intent: nextIntent,
-        returnPath: router.asPath,
-      });
+      // Rare recovery rail. Nothing is saved for later here: the panel's
+      // sign-in button saves the interrupted action as the lifter leaves for
+      // Google (onBeforeReauth), from the action and intent set below.
       setDialogAction(actionType);
       setFlowIntent(nextIntent);
       setProvisionError(message);
@@ -409,7 +468,7 @@ export function SheetSetupDialog() {
       setSheetDiscoveryStatusMessage("");
       setOpen(true);
     },
-    [flowIntent, hadLocalSheetBefore, router.asPath],
+    [flowIntent],
   );
 
   const handleActionFailure = useCallback(
@@ -561,7 +620,6 @@ export function SheetSetupDialog() {
     ({
       candidates,
       intent,
-      currentSheetId = null,
       enrichCandidateIds = null,
       preferredRecommendedId = null,
     }) => {
@@ -618,7 +676,6 @@ export function SheetSetupDialog() {
             ? payload.candidates
             : [],
           intent: payload?.intent || intent,
-          currentSheetId: sheetInfo?.ssid || null,
           preferredRecommendedId: payload?.recommendedId || null,
           enrichCandidateIds: Array.isArray(payload.enrichCandidateIds)
             ? payload.enrichCandidateIds
@@ -631,18 +688,12 @@ export function SheetSetupDialog() {
         clearPendingSheetAction();
         setOnboardingState("fallback_error");
         setSheetDiscoveryStatusMessage("");
-        if (!outcomeReportedRef.current) {
-          outcomeReportedRef.current = true;
-          void reportOnboardingEvent("onboarding-failed", {
-            intent,
-            state: "recover_returning_user",
-            reason: payload?.reason || "no_match",
-            hadLocalSheetBefore,
-            durationMs: flowStartedAtRef.current
-              ? Date.now() - flowStartedAtRef.current
-              : null,
-          });
-        }
+        reportOutcome("onboarding-failed", {
+          intent,
+          state: "recover_returning_user",
+          reason: payload?.reason || "no_match",
+          hadLocalSheetBefore,
+        });
         return;
       }
 
@@ -651,13 +702,7 @@ export function SheetSetupDialog() {
         payload?.action === "create_new_user_sheet"
       ) {
         clearPendingSheetAction();
-        const nextSheetInfo = {
-          ssid: payload.ssid,
-          url: payload.webViewLink ?? null,
-          filename: payload.name ?? null,
-          modifiedTime: payload.modifiedTime ?? null,
-          modifiedByMeTime: payload.modifiedByMeTime ?? null,
-        };
+        const nextSheetInfo = toSheetInfo(payload);
 
         if (dataSource === "import") {
           clearImportedData();
@@ -672,7 +717,7 @@ export function SheetSetupDialog() {
         if (shouldShowConfirmation(payload)) {
           setCreatedSheetInfo(nextSheetInfo);
           setCreatedSheetReason(payload?.reason || null);
-          setCreatedSheetAction(payload?.action || null);
+          setCreatedSheetIsNew(Boolean(payload?.wasCreated));
           setSheetDiscoveryStatusMessage("");
           setOnboardingState("created_confirmation");
         } else {
@@ -688,31 +733,24 @@ export function SheetSetupDialog() {
         ) {
           void router.replace("/");
         }
-        if (!outcomeReportedRef.current) {
-          outcomeReportedRef.current = true;
-          void reportOnboardingEvent("onboarding-success", {
-            intent,
-            resultAction: payload.action,
-            reason: payload?.reason || null,
-            ssid: payload?.ssid || null,
-            sheetName: payload?.name || null,
-            hadLocalSheetBefore,
-            durationMs: flowStartedAtRef.current
-              ? Date.now() - flowStartedAtRef.current
-              : null,
-          });
-        }
+        reportOutcome("onboarding-success", {
+          intent,
+          resultAction: payload.action,
+          reason: payload?.reason || null,
+          ssid: payload?.ssid || null,
+          sheetName: payload?.name || null,
+          hadLocalSheetBefore,
+        });
       }
     },
     [
       hadLocalSheetBefore,
-      reportOnboardingEvent,
+      reportOutcome,
       resetUiState,
       router,
       clearImportedData,
       dataSource,
       selectSheet,
-      sheetInfo?.ssid,
       showCandidateChooser,
     ],
   );
@@ -726,6 +764,11 @@ export function SheetSetupDialog() {
       dialogInitialSsidRef.current = sheetInfo?.ssid || null;
       flowStartedAtRef.current = Date.now();
       outcomeReportedRef.current = false;
+      lastResolveRequestRef.current = {
+        intent: intent || "bootstrap",
+        hadLocalBefore: Boolean(hadLocalBefore),
+        skipAutoLinkSsid,
+      };
       setLoadingQuip(pickRandomSheetSetupQuip());
       setOpen(true);
       setProvisionError(null);
@@ -769,29 +812,18 @@ export function SheetSetupDialog() {
         });
         setIsCandidateEnrichmentLoading(false);
         provisioningStartedRef.current = false;
-        if (!outcomeReportedRef.current) {
-          outcomeReportedRef.current = true;
-          void reportOnboardingEvent("onboarding-failed", {
-            intent: intent || "bootstrap",
-            state: "resolve_failed",
-            reason: "automatic_setup_failed",
-            hadLocalSheetBefore: Boolean(hadLocalBefore),
-            durationMs: flowStartedAtRef.current
-              ? Date.now() - flowStartedAtRef.current
-              : null,
-            provisionError: error?.message || "Automatic setup failed",
-          });
-        }
+        reportOutcome("onboarding-failed", {
+          intent: intent || "bootstrap",
+          state: "resolve_failed",
+          reason: "automatic_setup_failed",
+          hadLocalSheetBefore: Boolean(hadLocalBefore),
+          provisionError: error?.message || "Automatic setup failed",
+        });
       } finally {
         setIsProvisionActionLoading(false);
       }
     },
-    [
-      handleActionFailure,
-      handleResolvedAction,
-      reportOnboardingEvent,
-      sheetInfo?.ssid,
-    ],
+    [handleActionFailure, handleResolvedAction, reportOutcome, sheetInfo?.ssid],
   );
 
   const runLinkAction = useCallback(
@@ -838,16 +870,12 @@ export function SheetSetupDialog() {
               : PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION,
           intent,
         });
-        if (!outcomeReportedRef.current && intent !== "switch_sheet") {
-          outcomeReportedRef.current = true;
-          void reportOnboardingEvent("onboarding-failed", {
+        if (intent !== "switch_sheet") {
+          reportOutcome("onboarding-failed", {
             intent,
             state: "link_failed",
             reason: "sheet_linking_failed",
             hadLocalSheetBefore,
-            durationMs: flowStartedAtRef.current
-              ? Date.now() - flowStartedAtRef.current
-              : null,
             provisionError: error?.message || "Sheet linking failed",
           });
         }
@@ -861,7 +889,7 @@ export function SheetSetupDialog() {
       dialogAction,
       handleActionFailure,
       handleResolvedAction,
-      reportOnboardingEvent,
+      reportOutcome,
     ],
   );
 
@@ -929,15 +957,7 @@ export function SheetSetupDialog() {
           formatName: importedFormatName,
           source: "sheet_setup_write",
         });
-        const nextSheetInfo = {
-          ssid: linkPayload.ssid,
-          url: linkPayload.webViewLink ?? null,
-          filename: linkPayload.name ?? null,
-          modifiedTime: linkPayload.modifiedTime ?? null,
-          modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
-        };
-
-        selectSheet(linkPayload.ssid, nextSheetInfo);
+        selectSheet(linkPayload.ssid, toSheetInfo(linkPayload));
         clearImportedData();
         mutate();
         clearPendingSheetAction();
@@ -953,22 +973,14 @@ export function SheetSetupDialog() {
           void router.replace("/");
         }
 
-        if (!outcomeReportedRef.current) {
-          outcomeReportedRef.current = true;
-          void reportOnboardingEvent("onboarding-success", {
-            intent: "bootstrap",
-            resultAction: "create_from_import",
-            reason: resumeAfterReauth ? "scope_reauth_resume" : "preview_save",
-            ssid: linkPayload.ssid,
-            sheetName: linkPayload.name || null,
-            hadLocalSheetBefore,
-            importedEntryCount: importedEntries.length,
-            importedFileName: importedFileName || null,
-            durationMs: flowStartedAtRef.current
-              ? Date.now() - flowStartedAtRef.current
-              : null,
-          });
-        }
+        reportOutcome("onboarding-success", {
+          intent: "bootstrap",
+          resultAction: "create_from_import",
+          reason: resumeAfterReauth ? "scope_reauth_resume" : "preview_save",
+          ssid: linkPayload.ssid,
+          sheetName: linkPayload.name || null,
+          hadLocalSheetBefore,
+        });
       } catch (error) {
         handleActionFailure({
           error,
@@ -989,134 +1001,11 @@ export function SheetSetupDialog() {
       importedFormatName,
       mutate,
       parsedData,
-      reportOnboardingEvent,
+      reportOutcome,
       resetUiState,
       router,
       selectSheet,
       toast,
-    ],
-  );
-
-  // Inline file import from the onboarding dialog: parse → create sheet → populate → link → done.
-  const handleImportFile = useCallback(
-    async (file) => {
-      setProvisionError(null);
-      setIsProvisionActionLoading(true);
-      setOnboardingState("linking_or_creating");
-      setSheetDiscoveryStatusMessage("Reading your file.");
-      try {
-        // Step 1: Parse the file
-        const {
-          count,
-          formatId,
-          formatName,
-          entries = [],
-        } = await importFile(file);
-        if (count === 0) {
-          throw new Error("No valid entries found in the file.");
-        }
-
-        // Step 2: Create a blank sheet
-        setSheetDiscoveryStatusMessage(
-          `Racking a fresh sheet for ${count.toLocaleString()} ${formatName} entries.`,
-        );
-        const linkRes = await fetch("/api/sheet/link", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            intent: "bootstrap",
-            mode: "create_blank",
-          }),
-        });
-        const linkPayload = await linkRes.json().catch(() => ({}));
-        if (linkPayload?.onboardingFlowToken) {
-          onboardingFlowTokenRef.current = linkPayload.onboardingFlowToken;
-        }
-        if (!linkRes.ok || !linkPayload?.ssid) {
-          throw new Error(
-            linkPayload?.error || "Failed to create Google Sheet",
-          );
-        }
-
-        // Step 3: Use the parsed entries returned from importFile so the flow
-        // does not depend on sessionStorage remaining writable.
-        const importedEntries = entries;
-
-        if (importedEntries.length > 0) {
-          setSheetDiscoveryStatusMessage(
-            `Loading ${importedEntries.length.toLocaleString()} entries onto the bar.`,
-          );
-          await importWriter.writeWholeImport({
-            ssid: linkPayload.ssid,
-            entries: importedEntries,
-            formatId,
-            formatName,
-            source: "sheet_setup_create",
-          });
-        }
-
-        // Step 4: Link the sheet
-        const nextSheetInfo = {
-          ssid: linkPayload.ssid,
-          url: linkPayload.webViewLink ?? null,
-          filename: linkPayload.name ?? null,
-          modifiedTime: linkPayload.modifiedTime ?? null,
-          modifiedByMeTime: linkPayload.modifiedByMeTime ?? null,
-        };
-        selectSheet(linkPayload.ssid, nextSheetInfo);
-        clearImportedData();
-        mutate();
-
-        toast({
-          title: "Google Sheet created from your data!",
-          description: `Imported ${count} ${formatName} entries into a new Strength Journeys sheet.`,
-        });
-
-        setOpen(false);
-        resetUiState();
-        if (router.pathname !== "/") {
-          void router.replace("/");
-        }
-
-        if (!outcomeReportedRef.current) {
-          outcomeReportedRef.current = true;
-          void reportOnboardingEvent("onboarding-success", {
-            intent: "bootstrap",
-            resultAction: "create_from_import",
-            reason: "file_import",
-            ssid: linkPayload.ssid,
-            sheetName: linkPayload.name || null,
-            hadLocalSheetBefore,
-            importedEntryCount: count,
-            importedFormatName: formatName,
-            durationMs: flowStartedAtRef.current
-              ? Date.now() - flowStartedAtRef.current
-              : null,
-          });
-        }
-      } catch (error) {
-        setProvisionError(error?.message || "File import failed");
-        setOnboardingState("fallback_error");
-        toast({
-          title: "File import failed",
-          description:
-            error?.message || "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsProvisionActionLoading(false);
-      }
-    },
-    [
-      importFile,
-      clearImportedData,
-      selectSheet,
-      mutate,
-      toast,
-      router,
-      resetUiState,
-      hadLocalSheetBefore,
-      reportOnboardingEvent,
     ],
   );
 
@@ -1158,31 +1047,28 @@ export function SheetSetupDialog() {
   }, [clearSheet, setIsSetupDismissed]);
 
   const closeDialog = useCallback(() => {
-    const shouldReportAbort =
+    if (
       authStatus === "authenticated" &&
       !sheetInfo?.ssid &&
-      provisioningStartedRef.current &&
-      !outcomeReportedRef.current;
-    if (shouldReportAbort) {
-      outcomeReportedRef.current = true;
-      void reportOnboardingEvent("onboarding-aborted", {
+      provisioningStartedRef.current
+    ) {
+      reportOutcome("onboarding-aborted", {
         intent: flowIntent,
         state: onboardingState,
         reason: "dialog_closed",
         hadLocalSheetBefore,
-        durationMs: flowStartedAtRef.current
-          ? Date.now() - flowStartedAtRef.current
-          : null,
         provisionError: provisionError || null,
       });
     }
+    // Closing abandons a save that was waiting on Drive access. Left behind,
+    // it would start setup again on every later page load.
+    clearPendingSheetAction();
     setOpen(false);
     dialogInitialSsidRef.current = sheetInfo?.ssid || null;
     if (authStatus === "authenticated" && !sheetInfo?.ssid) {
       setIsSetupDismissed(true);
     }
     resetUiState();
-    launchedFromUserRef.current = false;
     provisioningStartedRef.current = Boolean(sheetInfo?.ssid);
   }, [
     authStatus,
@@ -1190,7 +1076,7 @@ export function SheetSetupDialog() {
     hadLocalSheetBefore,
     onboardingState,
     provisionError,
-    reportOnboardingEvent,
+    reportOutcome,
     resetUiState,
     setIsSetupDismissed,
     sheetInfo?.ssid,
@@ -1209,16 +1095,15 @@ export function SheetSetupDialog() {
   }, [closeDialog, router]);
 
   useEffect(() => {
-    if (authStatus === "unauthenticated") setIsSetupDismissed(false);
+    // The loader forgets a dismissed setup on sign-out; it is always mounted.
     if (authStatus !== "authenticated") {
       setOpen(false);
-      launchedFromUserRef.current = false;
       provisioningStartedRef.current = false;
       outcomeReportedRef.current = false;
       flowStartedAtRef.current = null;
       resetUiState();
     }
-  }, [authStatus, resetUiState, setIsSetupDismissed]);
+  }, [authStatus, resetUiState]);
 
   useEffect(() => {
     if (!open || !sheetInfo?.ssid) return;
@@ -1230,10 +1115,11 @@ export function SheetSetupDialog() {
     setOpen(false);
     dialogInitialSsidRef.current = sheetInfo.ssid;
     resetUiState();
-    launchedFromUserRef.current = false;
     provisioningStartedRef.current = true;
   }, [onboardingState, open, resetUiState, sheetInfo?.ssid]);
 
+  // Trigger "auto": signed in with no sheet, and setup has not been dismissed.
+  // provisioningStartedRef gives it one turn per page load.
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) return;
@@ -1243,7 +1129,6 @@ export function SheetSetupDialog() {
     if (provisioningStartedRef.current) return;
 
     provisioningStartedRef.current = true;
-    launchedFromUserRef.current = false;
     void resolveSheetFlow({ intent: "bootstrap", hadLocalBefore: false });
   }, [
     authStatus,
@@ -1253,6 +1138,7 @@ export function SheetSetupDialog() {
     sheetInfo?.ssid,
   ]);
 
+  // Trigger "resume": back from Google with the save that was interrupted.
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     if (sheetInfo?.ssid) {
@@ -1264,23 +1150,24 @@ export function SheetSetupDialog() {
     if (open) return;
     if (isProvisionActionLoading) return;
 
-    launchedFromUserRef.current = true;
     provisioningStartedRef.current = true;
     flowStartedAtRef.current = Date.now();
     outcomeReportedRef.current = false;
 
-    if (pendingAction.type === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT) {
-      if (dataSource !== "import") return;
+    if (
+      pendingAction.type === PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT &&
+      dataSource === "import"
+    ) {
       void handleCreateSheetFromImportedPreview({ resumeAfterReauth: true });
       return;
     }
 
-    if (pendingAction.type === PENDING_SHEET_ACTIONS.BOOTSTRAP_PROVISION) {
-      void resolveSheetFlow({
-        intent: pendingAction.intent || "bootstrap",
-        hadLocalBefore: Boolean(pendingAction.hadLocalBefore),
-      });
-    }
+    // Ordinary setup, which is also where a saved import ends up once its
+    // preview has gone (another tab, a closed browser).
+    void resolveSheetFlow({
+      intent: pendingAction.intent || "bootstrap",
+      hadLocalBefore: Boolean(pendingAction.hadLocalBefore),
+    });
   }, [
     authStatus,
     handleCreateSheetFromImportedPreview,
@@ -1291,13 +1178,13 @@ export function SheetSetupDialog() {
     sheetInfo?.ssid,
   ]);
 
+  // Trigger "ask": openSheetSetupDialog() from a button somewhere in the app.
   useEffect(() => {
     if (authStatus !== "authenticated") return undefined;
 
     const handleOpenSheetSetup = (event) => {
       const requestedIntent = event?.detail?.intent || "bootstrap";
       const requestedAction = event?.detail?.action || null;
-      launchedFromUserRef.current = true;
       provisioningStartedRef.current = true;
       flowStartedAtRef.current = Date.now();
       outcomeReportedRef.current = false;
@@ -1328,30 +1215,7 @@ export function SheetSetupDialog() {
     sheetInfo?.ssid,
   ]);
 
-  useEffect(() => {
-    if (authStatus !== "authenticated") return;
-    if (router.query?.[SHEET_FLOW_QUERY_KEY] !== "switch") return;
-
-    launchedFromUserRef.current = true;
-    provisioningStartedRef.current = true;
-    void resolveSheetFlow({
-      intent: "switch_sheet",
-      hadLocalBefore: Boolean(sheetInfo?.ssid),
-    });
-    const nextQuery = { ...router.query };
-    delete nextQuery[SHEET_FLOW_QUERY_KEY];
-    router.replace({ pathname: router.pathname, query: nextQuery }, undefined, {
-      shallow: true,
-    });
-  }, [
-    authStatus,
-    resolveSheetFlow,
-    router,
-    router.pathname,
-    router.query,
-    sheetInfo?.ssid,
-  ]);
-
+  // Trigger "recover": Google says the linked sheet is gone.
   useEffect(() => {
     if (authStatus !== "authenticated") return;
     if (!sheetInfo?.ssid) return;
@@ -1372,7 +1236,6 @@ export function SheetSetupDialog() {
 
     clearSheet();
     provisioningStartedRef.current = true;
-    launchedFromUserRef.current = false;
     void resolveSheetFlow({
       intent: "recovery",
       hadLocalBefore: true,
@@ -1501,8 +1364,6 @@ export function SheetSetupDialog() {
                       onCreateBlank={() =>
                         runLinkAction({ mode: "create_blank" })
                       }
-                      onImportFile={handleImportFile}
-                      showImportOption={false}
                       onDisconnectCurrent={() => {
                         void disconnectCurrentSheet();
                       }}
@@ -1513,14 +1374,26 @@ export function SheetSetupDialog() {
                       intent={flowIntent}
                       openPicker={openPicker}
                       onRetry={() => {
-                        provisioningStartedRef.current = false;
-                        resolveSheetFlow({
-                          intent:
-                            flowIntent === "switch_sheet"
-                              ? "switch_sheet"
-                              : "recovery",
-                          hadLocalBefore: true,
-                        });
+                        // Retry what failed. A preview that could not be
+                        // saved is saved again; a resolve would link or
+                        // create a sheet and drop the preview. Anything else
+                        // repeats the last resolve as it was asked, so a new
+                        // lifter whose first try failed is still treated as
+                        // new.
+                        if (
+                          dialogAction ===
+                            PENDING_SHEET_ACTIONS.CREATE_SHEET_FROM_IMPORT &&
+                          dataSource === "import"
+                        ) {
+                          void handleCreateSheetFromImportedPreview();
+                          return;
+                        }
+                        void resolveSheetFlow(
+                          lastResolveRequestRef.current || {
+                            intent: flowIntent,
+                            hadLocalBefore: hadLocalSheetBefore,
+                          },
+                        );
                       }}
                       isWorking={isProvisionActionLoading}
                       errorMessage={provisionError}
@@ -1554,7 +1427,7 @@ export function SheetSetupDialog() {
                     <CreatedSheetPanel
                       sheetInfo={createdSheetInfo || sheetInfo}
                       reason={createdSheetReason}
-                      action={createdSheetAction}
+                      wasCreated={createdSheetIsNew}
                       intent={flowIntent}
                       onGoToDashboard={goToDashboard}
                     />
@@ -1780,7 +1653,7 @@ function ScopeRepairPanel({
 function CreatedSheetPanel({
   sheetInfo,
   reason,
-  action,
+  wasCreated,
   intent,
   onGoToDashboard,
 }) {
@@ -1788,7 +1661,7 @@ function CreatedSheetPanel({
   const sheetLabel =
     sheetInfo?.filename || "Your Strength Journeys lifting log";
   const showRecoveryHint = reason === "reprovision_after_missing_sheet";
-  const isLinked = action === "link_existing";
+  const isLinked = !wasCreated;
   const badgeText = isLinked
     ? "Connected from your Google Drive"
     : "Created in your Google Drive";

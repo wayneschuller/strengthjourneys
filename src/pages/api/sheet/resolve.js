@@ -45,14 +45,32 @@ import { promptDeveloper } from "@/pages/api/auth/[...nextauth]";
 //
 // Body: {
 //   intent: "bootstrap" | "recovery" | "switch_sheet",
-//   skipAutoLinkSsid?: string,  // a sheet that must not be linked unasked
+//   hadLocalSheetBefore?: boolean, // this browser held a linked sheet
+//   skipAutoLinkSsid?: string,     // a sheet that must not be linked unasked
 // }
 //
-// Returns one of:
-//   { action: "linked",   sheet: SheetMeta }            auto-linked, ready to use
-//   { action: "choose",   candidates: Candidate[] }     show picker
-//   { action: "create" }                                no candidates, create new
-//   { action: "recover" }                               returning user, no sheet found
+// Returns one of (the sheet's fields sit beside `action`, see sheet-flow.js):
+//   { action: "link_existing", reason, ssid, name, ... }
+//       linked without asking. reason: drive_single | legacy_drive_relink |
+//       last_linked
+//   { action: "create_new_user_sheet", reason, ssid, name, ... }
+//       a new sheet was made. reason: true_new_user |
+//       reprovision_after_missing_sheet
+//   { action: "choose_sheet", intent, candidates, recommendedId }
+//       show the picker
+//   { action: "recover_returning_user", reason: "no_match" }
+//       a returning lifter and nothing to link; the client offers a retry and
+//       the Drive picker
+//
+// The decision, in the order the code takes it:
+//   switch_sheet                        -> choose_sheet, always
+//   one lifting log in Drive            -> link_existing
+//   several, one of them linked last    -> link_existing (last_linked)
+//   several otherwise                   -> choose_sheet
+//   none, bootstrap, a true new user    -> create_new_user_sheet
+//   none, and the sheet they had is     -> create_new_user_sheet
+//     gone from Drive or was unlinked
+//   none otherwise                      -> recover_returning_user
 //
 // ─── Lifecycle policy ───────────────────────────────────────────────────────
 //
@@ -231,8 +249,10 @@ export default async function handler(req, res) {
         intent,
         candidateCount: rankedCandidates.length,
       });
+      // "recovery" is what the picker's wording keys on for a lifter who is
+      // not switching, whichever intent brought them here.
       return respondChooseSheet(res, {
-        intent: intent === "switch_sheet" ? "switch_sheet" : "recovery",
+        intent: "recovery",
         candidates: rankedCandidates,
         recommendedId: rankedCandidates[0]?.id || null,
         debug,
@@ -286,11 +306,8 @@ export default async function handler(req, res) {
       });
     }
 
-    if (
-      intent !== "switch_sheet" &&
-      lifecycle.hasKvRecord &&
-      rankedCandidates.length === 0
-    ) {
+    // No candidates from here on: every other count has returned above.
+    if (lifecycle.hasKvRecord) {
       const previousProvisionedSheetId =
         existingRecord?.provisionedSheetId || null;
       const priorSheetCheck = await inspectProvisionedSheet(

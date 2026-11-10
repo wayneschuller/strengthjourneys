@@ -259,11 +259,22 @@ export function ChooseSheetPanel({
   const currentCandidate = hasCurrentSheet
     ? candidates.find((candidate) => candidate.id === currentSsid) || null
     : null;
-  const otherCandidates = candidates.filter(
-    (candidate) =>
-      candidate.id !== primaryCandidate?.id &&
-      !(isSwitchSheet && candidate.id === currentSsid),
-  );
+  // Our analysis still has a verdict when switching, and the lifter should
+  // hear it: either the sheet they are on is the most complete log we found,
+  // or another one is and it leads the list with a badge. Held back until the
+  // analysis has finished, so the verdict never changes in front of them.
+  const bestMatchId = isSwitchSheet && !isEnriching ? recommendedId : null;
+  const isCurrentBestMatch =
+    Boolean(bestMatchId) && bestMatchId === currentSsid;
+  const otherCandidates = candidates
+    .filter(
+      (candidate) =>
+        candidate.id !== primaryCandidate?.id &&
+        !(isSwitchSheet && candidate.id === currentSsid),
+    )
+    .sort(
+      (a, b) => Number(b.id === bestMatchId) - Number(a.id === bestMatchId),
+    );
   // Folded away while setting up, laid open while switching.
   const [showOtherSheets, setShowOtherSheets] = useState(isSwitchSheet);
   const freshnessLabel = formatRelativeFreshness(
@@ -327,6 +338,8 @@ export function ChooseSheetPanel({
         <ConnectedSheetCard
           currentSheetInfo={currentSheetInfo}
           candidate={currentCandidate}
+          isBestMatch={isCurrentBestMatch}
+          otherSheetCount={otherCandidates.length}
           isEnriching={isEnriching}
           isWorking={isWorking}
           isDisconnectingCurrent={isDisconnectingCurrent}
@@ -463,6 +476,11 @@ export function ChooseSheetPanel({
                     <p className="text-muted-foreground text-sm">
                       {formatCandidateMeta(candidate, isEnriching)}
                     </p>
+                    {candidate.id === bestMatchId && (
+                      <p className="bg-primary/10 text-primary mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-medium">
+                        Most complete history we found
+                      </p>
+                    )}
                   </div>
                   <Button
                     variant="outline"
@@ -492,6 +510,8 @@ export function ChooseSheetPanel({
 function ConnectedSheetCard({
   currentSheetInfo,
   candidate,
+  isBestMatch,
+  otherSheetCount,
   isEnriching,
   isWorking,
   isDisconnectingCurrent,
@@ -528,6 +548,13 @@ function ConnectedSheetCard({
           {meta ? (
             <p className="text-muted-foreground text-sm">{meta}</p>
           ) : null}
+          {isBestMatch && (
+            <p className="text-foreground text-sm font-medium">
+              {otherSheetCount > 0
+                ? `We checked ${otherSheetCount + 1} lifting logs in your Google Drive. This one has the most complete history, so you are on the right sheet.`
+                : "This is the lifting log we found in your Google Drive, so you are on the right sheet."}
+            </p>
+          )}
         </div>
         <Button
           variant="ghost"

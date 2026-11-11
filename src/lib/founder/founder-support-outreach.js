@@ -206,8 +206,8 @@ function isNonNameCodePoint(codePoint) {
 
 /**
  * Guards what can be interpolated into "Hi <name>,". This is a plausibility
- * check, not sanitisation — the value is HTML-escaped before it reaches the
- * email either way. The aim is simply to fall back to "Hi there," when a
+ * check, not sanitisation. The note is plain text, so nothing is rendered
+ * from the name. The aim is simply to fall back to "Hi there," when a
  * provider display name is clearly not a first name.
  */
 function isPlausibleFirstName(candidate) {
@@ -243,148 +243,22 @@ function getFounderName(user) {
   return user?.name || user?.email || "Unknown user";
 }
 
-function escapeEmailHtml(value) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-const LINK_STYLE = "color:#1155cc";
-const URL_SCHEME = "https://";
-// Trailing characters that belong to the sentence rather than to the link, so
-// "see https://example.com/x." does not pull the full stop into the href.
-const URL_TRAILING_PUNCTUATION = ".,;:!?)]}\"'";
-
-/**
- * Splits a line into plain-text and URL runs by scanning for the scheme and
- * walking to the next whitespace. Deliberately no regex: the boundary rules
- * here are "stop at whitespace, then give back trailing punctuation", which is
- * clearer and easier to verify written out than encoded in a pattern.
- */
-function splitLineOnUrls(line) {
-  const segments = [];
-  let emittedTo = 0; // end of the text already pushed into `segments`
-  let searchFrom = 0;
-
-  while (searchFrom < line.length) {
-    const start = line.indexOf(URL_SCHEME, searchFrom);
-    if (start === -1) break;
-
-    let end = start;
-    while (end < line.length && !isWhitespace(line[end])) end += 1;
-    while (end > start && URL_TRAILING_PUNCTUATION.includes(line[end - 1])) {
-      end -= 1;
-    }
-
-    if (end <= start + URL_SCHEME.length) {
-      // A bare scheme with no host after it. Keep it as ordinary text and
-      // carry on scanning the rest of the line.
-      searchFrom = start + URL_SCHEME.length;
-      continue;
-    }
-
-    if (start > emittedTo) {
-      segments.push({ type: "text", value: line.slice(emittedTo, start) });
-    }
-    segments.push({ type: "url", value: line.slice(start, end) });
-    emittedTo = end;
-    searchFrom = end;
-  }
-
-  if (emittedTo < line.length) {
-    segments.push({ type: "text", value: line.slice(emittedTo) });
-  }
-  return segments;
-}
-
-function linkBrandMentions(escapedText) {
-  return escapedText.replaceAll(
-    "Strength Journeys",
-    `<a href="https://www.strengthjourneys.xyz/" style="${LINK_STYLE}">Strength Journeys</a>`,
-  );
-}
-
-function formatEmailLine(line) {
-  // URLs are located in the raw line and each segment is escaped on its own.
-  // Escaping first would fold characters like & into entities (&amp;) and blur
-  // the boundary between a link and the punctuation that follows it. It also
-  // keeps the brand-linking pass off the inside of an href.
-  return splitLineOnUrls(line)
-    .map((segment) => {
-      const escaped = escapeEmailHtml(segment.value);
-      return segment.type === "url"
-        ? `<a href="${escaped}" style="${LINK_STYLE}">${escaped}</a>`
-        : linkBrandMentions(escaped);
-    })
-    .join("");
-}
-
-/**
- * Groups lines into paragraphs, treating any run of blank lines as the break.
- * The message bodies are arrays joined on "\n" with "" entries as spacers, so
- * grouping non-blank runs is exactly the intent — and unlike a split on two or
- * more newlines it cannot emit an empty paragraph.
- */
-function splitParagraphs(text) {
-  const paragraphs = [];
-  let current = [];
-
-  for (const line of text.split("\n")) {
-    if (line.trim().length === 0) {
-      if (current.length > 0) paragraphs.push(current);
-      current = [];
-      continue;
-    }
-    current.push(line);
-  }
-  if (current.length > 0) paragraphs.push(current);
-
-  return paragraphs;
-}
-
-function buildUserEmailHtml(text) {
-  const paragraphs = splitParagraphs(text).map((lines) => {
-    const body = lines.map(formatEmailLine).join("<br>");
-    return `<p style="margin:0 0 16px">${body}</p>`;
-  });
-
-  return `<div style="font-family:Arial,sans-serif;font-size:16px;line-height:1.5;color:#111">${paragraphs.join("")}</div>`;
-}
-
 /**
  * The one note a new lifter receives, the morning after signing in.
  *
- * Everyone who receives it is new: outreach eligibility requires an empty KV
- * record at first sign-in. It does not branch on how setup went, because the
- * reader knows how their own setup went and does not need it recounted. What
- * they may not know is what the app is for, which is what the middle says.
+ * Its only job is to earn a reply. The longer version (about 250 words, an
+ * import and logging tour, HTML with links) drew 0 replies from about 75 sends
+ * between Aug and Nov 2026, and Gmail filed roughly 40% of the copies Wayne
+ * received under Promotions. Wayne's manual notes, short and personal, had
+ * drawn 5 to 8%. Onboarding belongs in the app, not here.
  *
- * The two doors, with import first on purpose. Measured 6 Sep 2026 over the 91
- * lifters whose first sheet read was at least a fortnight old: those who
- * arrived with a history already in Drive came back at 79%, while those who
- * started from an empty sheet came back at 31% and never exceeded three active
- * days. Having data in the app is the strongest thing we can observe about who
- * stays, and importing is the one action that puts it there, so it leads and it
- * carries a reason rather than being offered as an equal alternative.
+ * Plain text, no HTML part, so it reads as a person writing. The only links
+ * are the signature: the site, and Wayne's Instagram as a point of connection.
  *
- * Logging follows as the next step rather than a competing option, and it names
- * the payoff a lifter gets on a single set with no history at all: an estimated
- * one rep max and a strength ranking. That is the only immediate value we can
- * offer someone starting empty, which is exactly the group that leaves.
+ * The question offers help rather than asking the lifter to judge the app,
+ * and "one thing" caps the effort so a reply feels finishable.
  *
- * Both doors work signed out, so the note reads correctly for someone who never
- * granted the Drive permission, and the sheet sentence between them is the
- * reason to grant it.
- *
- * The closing question fishes for product feedback rather than for rapport. It
- * is the only touch a lifter gets, and the open question is why people leave,
- * so it spends the ask on something we can act on. "One thing" is load bearing:
- * it caps the effort and makes a reply feel finishable.
- *
- * Keep it short. The note is meant to earn a reply, not to be a tour.
+ * Keep it short. If it grows past a few lines it is a tour again.
  */
 function buildUserEmail(user) {
   return {
@@ -392,24 +266,15 @@ function buildUserEmail(user) {
     text: [
       getGreeting(user),
       "",
-      "Thanks for signing into Strength Journeys yesterday.",
+      "Wayne here. I build Strength Journeys on my own, from my garage gym.",
       "",
-      "I'm Wayne, the person building it. I'm a garage gym lifter who started in CrossFit, and these days I mainly train the big four, hopefully for the rest of my life.",
+      "Thanks for signing in yesterday. What's one thing I could improve for you?",
       "",
-      "One thing worth knowing early. If you already have training history in Hevy, Strong, StrongLifts, Wodify, BTWB, TurnKey or a spreadsheet, you can bring that file in and see the whole thing charted in about ten seconds: https://www.strengthjourneys.xyz/import",
+      "Even a one line reply helps. I read every one.",
       "",
-      "Bring in as many files as you like. Training scattered across a few apps and an old spreadsheet merges into one clean history, duplicates skipped, so every chart and PR comes from all of it rather than one app's slice.",
-      "",
-      "It all lands in a Google Sheet you own and keep. Strength Journeys only ever touches that one sheet, and nothing else in your Drive.",
-      "",
-      "And if you want to do more than look at the analytics, you can log your lifts here too. Recent sessions, or that bench PR from high school you still bring up. Enter a single set and you get your estimated one rep max and where it ranks for your age and bodyweight: https://www.strengthjourneys.xyz/log",
-      "",
-      "What is one thing you would change about Strength Journeys?",
-      "",
-      "Even a few words is great. I read every reply.",
-      "",
-      "Thanks again for checking it out,",
+      "Thanks,",
       "Wayne",
+      "https://www.strengthjourneys.xyz/",
       "https://www.instagram.com/wayneschuller/",
     ].join("\n"),
   };
@@ -678,7 +543,6 @@ async function scheduleUserNote({ context, user, scheduledAt }) {
       to: context.userEmail,
       replyTo: context.founderEmail,
       subject: message.subject,
-      html: buildUserEmailHtml(message.text),
       text: message.text,
       scheduledAt,
     },

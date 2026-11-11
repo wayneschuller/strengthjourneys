@@ -36,10 +36,12 @@ const FROM_EMAIL = "Strength Journeys <feedback@updates.strengthjourneys.xyz>";
 // to `replyTo`, so this mailbox never needs to exist.
 const USER_NOTE_FROM_EMAIL =
   "Wayne Schuller <wayne@updates.strengthjourneys.xyz>";
-// The note lands the morning after the day the lifter signed in, US time, so
-// "yesterday" in the note is true. The old rule was "24 to 72 hours later" at
-// whatever minute that fell on, which put over a third of notes in an inbox
-// overnight, under the morning pile. Most lifters are in the US, so a Central
+// The note lands the morning after the day the lifter signed in, US time. The
+// note does not say when they signed in: Central days only match the lifter's
+// own day in the Americas, so "yesterday" was wrong for late Pacific sign-ins
+// and much of the rest of the world, and for anyone who reads it late. The old
+// rule was "24 to 72 hours later" at whatever minute that fell on, which put
+// over a third of notes in an inbox overnight, under the morning pile. Most lifters are in the US, so a Central
 // morning is a sensible morning for nearly all of them. Even a sign-in just
 // before midnight has a night in between, so it never reads like a receipt.
 const SEND_TIME_ZONE = "America/Chicago";
@@ -268,7 +270,7 @@ function buildUserEmail(user) {
       "",
       "Wayne here. I build Strength Journeys on my own, from my garage gym.",
       "",
-      "Thanks for signing in yesterday. What's one thing I could improve for you?",
+      "Thanks for signing in. What's one thing I could improve for you?",
       "",
       "Even a one line reply helps. I read every one.",
       "",

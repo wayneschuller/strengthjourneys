@@ -2678,7 +2678,9 @@ function BigFourCriteriaTable({
               </motion.div>
             </RowLink>
 
-            {showUpNext ? (
+            {showUpNext && lastTonnage === 0 ? (
+              <IdleLiftCell lastDate={upNextBestSets?.[liftType]?.lastDate} />
+            ) : showUpNext ? (
               <UpNextCell
                 best={upNextBestSets?.[liftType]}
                 prevMonthName={boundaries.prevMonthName}
@@ -2897,11 +2899,28 @@ function UpNextCell({ best, prevMonthName }) {
       <p className="text-foreground text-xs font-semibold">Up next</p>
       {display && (
         <p className="text-muted-foreground text-[11px] leading-snug">
-          {best.fromLastMonth ? `${prevMonthName}'s best` : "Recent best"}{" "}
+          {prevMonthName}&apos;s best{" "}
           <span className="text-foreground font-medium tabular-nums">
             {bestSet.reps}@{display.value}
             {display.unit}
           </span>
+        </p>
+      )}
+    </div>
+  );
+}
+
+// The right-hand side of a lineup row with nothing in either month. It states
+// when the lift was last trained and stops there: saying what to do next is
+// The Week in Iron's job, and this card only keeps the month's score.
+function IdleLiftCell({ lastDate }) {
+  const date = parseIsoDate(lastDate);
+  return (
+    <div className="bg-muted/20 row-span-2 flex flex-col justify-center rounded-sm px-1.5 py-1 text-left">
+      <p className="text-muted-foreground text-xs font-medium">Last trained</p>
+      {date && (
+        <p className="text-foreground text-xs font-semibold tabular-nums">
+          {format(date, "MMM d")}
         </p>
       )}
     </div>
@@ -2927,6 +2946,7 @@ function getUpNextBestSets(parsedData, boundaries, lineup = []) {
   const lineupSet = new Set(lineup);
   const bestLastMonth = {};
   const bestRecent = {};
+  const lastDates = {};
   const keepBest = (best, entry, e1rmKg) => {
     if (!best[entry.liftType] || e1rmKg > best[entry.liftType].e1rmKg) {
       best[entry.liftType] = { e1rmKg, set: entry };
@@ -2943,6 +2963,9 @@ function getUpNextBestSets(parsedData, boundaries, lineup = []) {
       entry.unitType,
     );
     keepBest(bestRecent, entry, e1rmKg);
+    if (!(lastDates[entry.liftType] >= entry.date)) {
+      lastDates[entry.liftType] = entry.date;
+    }
     if (entry.date >= boundaries.prevMonthStart) {
       keepBest(bestLastMonth, entry, e1rmKg);
     }
@@ -2954,7 +2977,11 @@ function getUpNextBestSets(parsedData, boundaries, lineup = []) {
         liftType,
         bestLastMonth[liftType]
           ? { set: bestLastMonth[liftType].set, fromLastMonth: true }
-          : { set: bestRecent[liftType].set, fromLastMonth: false },
+          : {
+              set: bestRecent[liftType].set,
+              fromLastMonth: false,
+              lastDate: lastDates[liftType],
+            },
       ]),
   );
 }

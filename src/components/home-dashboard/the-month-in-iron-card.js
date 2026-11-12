@@ -1,6 +1,7 @@
 /**
  * Month-in-progress dashboard card that compares the current calendar month
- * against the previous month for sessions, Big Four tonnage, and strength tiers.
+ * against the previous month for sessions and, for the lifter's main lifts
+ * (the Big Four first), tonnage and strength tiers.
  */
 import { useMemo, useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -40,7 +41,7 @@ import {
 } from "@/hooks/use-athlete-biodata";
 import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
 import { toKg, unitTypeFor } from "@/lib/weight-units";
-import { LiftArtwork } from "@/components/lift-artwork";
+import { LiftArtwork, getLiftArtwork } from "@/components/lift-artwork";
 import {
   getBigFourBodyBenefit,
   getBigFourParentLift,
@@ -58,7 +59,8 @@ import {
 
 /**
  * Card that challenges the user to beat their previous calendar month across
- * sessions, Big Four tonnage, and Big Four strength level consistency.
+ * sessions, and tonnage and strength level consistency on the lifter's main
+ * lifts.
  * Reads data from UserLiftingDataProvider; takes no props.
  */
 export function TheMonthInIronCard({
@@ -123,20 +125,24 @@ export function TheMonthInIronCard({
     [monthPhraseKey],
   );
 
+  const lineup = useMemo(
+    () => getMonthLineup(parsedData, boundaries),
+    [parsedData, boundaries],
+  );
   const stats = useMemo(() => {
     if (!Array.isArray(parsedData) || parsedData.length === 0) return null;
-    return computeMonthlyBattleStats(parsedData, boundaries);
-  }, [parsedData, boundaries]);
-  const lastMonthBestSets = useMemo(
-    () => getLastMonthBestSets(parsedData, boundaries),
-    [parsedData, boundaries],
+    return computeMonthlyBattleStats(parsedData, boundaries, lineup);
+  }, [parsedData, boundaries, lineup]);
+  const upNextBestSets = useMemo(
+    () => getUpNextBestSets(parsedData, boundaries, lineup),
+    [parsedData, boundaries, lineup],
   );
 
   const strengthLevelStats = useMemo(() => {
     if (!Array.isArray(parsedData) || parsedData.length === 0 || !bio)
       return null;
-    return computeStrengthLevelStats(parsedData, boundaries, bio);
-  }, [parsedData, bio, boundaries]);
+    return computeStrengthLevelStats(parsedData, boundaries, bio, lineup);
+  }, [parsedData, bio, boundaries, lineup]);
 
   const strengthLevelPassed = useMemo(
     () => getStrengthLevelPassed(strengthLevelStats),
@@ -154,7 +160,7 @@ export function TheMonthInIronCard({
     ? getHeadlinePaceStatus(stats.sessions, stats, boundaries)
     : null;
   const bigFourPaceStatus = stats
-    ? getHeadlinePaceStatus(stats.bigFourTonnage, stats, boundaries)
+    ? getHeadlinePaceStatus(stats.lineupTonnage, stats, boundaries)
     : null;
 
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
@@ -170,8 +176,8 @@ export function TheMonthInIronCard({
   const [revealedRows, setRevealedRows] = useState(0);
   const isCardInView = useInView(cardRef, { once: true, amount: 0.35 });
   const totalRevealRows = useMemo(
-    () => getMonthlyRevealRowCount(stats, strengthLevelStats),
-    [stats, strengthLevelStats],
+    () => getMonthlyRevealRowCount(stats),
+    [stats],
   );
   const highlightsComplete =
     totalRevealRows > 0 && revealedRows >= totalRevealRows;
@@ -302,9 +308,7 @@ export function TheMonthInIronCard({
       typeof boundaries.daysRemainingInCurrentMonth === "number" &&
       boundaries.daysRemainingInCurrentMonth <= 7;
     const shouldCelebrate =
-      checksSummary?.checksTotal === 9 &&
-      checksSummary.checksMet >= 7 &&
-      (isPastMonthView || isLastWeekCurrentMonth);
+      isChecksWin(checksSummary) && (isPastMonthView || isLastWeekCurrentMonth);
 
     if (!shouldCelebrate) {
       confettiFiredRef.current = false;
@@ -459,8 +463,8 @@ export function TheMonthInIronCard({
           <>
             <BigFourCriteriaTable
               sessions={stats.sessions}
-              lastMonthBestSets={lastMonthBestSets}
-              bigFourByLift={stats.bigFourByLift}
+              upNextBestSets={upNextBestSets}
+              tonnageByLift={stats.tonnageByLift}
               strengthLevelStats={strengthLevelStats}
               strengthSetupRequired={strengthSetupRequired}
               boundaries={boundaries}
@@ -1395,13 +1399,76 @@ function getMaxMonthOffsetFromData(parsedData) {
 
 // ─── Monthly stats calculation ─────────────────────────────────────────────
 
-function computeMonthlyBattleStats(parsedData, boundaries) {
+/*
+ * The lineup: which lifts get a row. The card works because a lifter repeats
+ * the same core of lifts month after month, so the rows are that core, read
+ * from the month being viewed and the two before it. The Big Four trained in
+ * that stretch come first, in their usual order. Any slots left are filled by
+ * the lifts the lifter trained on the most days, so someone who never touches
+ * a barbell still gets a month to win. The window only picks the rows; every
+ * number on the card is still this month against last month.
+ */
+const LINEUP_SIZE = 4;
+// A top-up lift has to be part of the routine, not a one-off.
+const LINEUP_MIN_SESSIONS = 3;
+
+function getLineupWindowStart(boundaries) {
+  const monthStart = parseIsoDate(boundaries?.currentMonthStart);
+  if (!monthStart) return null;
+  return format(
+    new Date(monthStart.getFullYear(), monthStart.getMonth() - 2, 1),
+    "yyyy-MM-dd",
+  );
+}
+
+function getMonthLineup(parsedData, boundaries) {
+  const windowStart = getLineupWindowStart(boundaries);
+  if (!Array.isArray(parsedData) || parsedData.length === 0 || !windowStart) {
+    return [];
+  }
   const nativeUnit = parsedData[0]?.unitType ?? "lb";
+  const bigFourTrained = new Set();
+  const datesByLift = new Map();
+
+  for (const entry of parsedData) {
+    if (!entry?.date || (entry.reps ?? 0) < 1) continue;
+    if (entry.unitType !== nativeUnit) continue;
+    if (entry.date < windowStart || entry.date > boundaries.todayStr) continue;
+    const share = getBigFourShare(entry.liftType);
+    if (share) {
+      bigFourTrained.add(share.liftType);
+      continue;
+    }
+    // Tonnage is the score, so a lift with no load on the bar cannot be one.
+    if (!(entry.weight > 0)) continue;
+    if (!datesByLift.has(entry.liftType)) {
+      datesByLift.set(entry.liftType, new Set());
+    }
+    datesByLift.get(entry.liftType).add(entry.date);
+  }
+
+  const lineup = BIG_FOUR_LIFT_TYPES.filter((liftType) =>
+    bigFourTrained.has(liftType),
+  );
+  const topUps = [...datesByLift.entries()]
+    .filter(([, dates]) => dates.size >= LINEUP_MIN_SESSIONS)
+    .sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]))
+    .map(([liftType]) => liftType);
+  for (const liftType of topUps) {
+    if (lineup.length >= LINEUP_SIZE) break;
+    lineup.push(liftType);
+  }
+  return lineup;
+}
+
+function computeMonthlyBattleStats(parsedData, boundaries, lineup = []) {
+  const nativeUnit = parsedData[0]?.unitType ?? "lb";
+  const lineupSet = new Set(lineup);
   // Each row also tallies the variations that fed it, so the card can say
   // what is inside a number that no longer matches the lift's own page.
-  const initBigFourByLift = () =>
+  const initRows = () =>
     Object.fromEntries(
-      BIG_FOUR_LIFT_TYPES.map((liftType) => [
+      lineup.map((liftType) => [
         liftType,
         { current: 0, last: 0, lastSameDay: 0, sinceReturn: 0, variations: {} },
       ]),
@@ -1413,14 +1480,14 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   const currentDates = new Set();
   const lastDates = new Set();
   const lastDatesSameDay = new Set();
-  let currentBigFour = 0;
-  let lastBigFour = 0;
-  let lastBigFourSameDay = 0;
-  const bigFourByLift = initBigFourByLift();
+  let currentLineup = 0;
+  let lastLineup = 0;
+  let lastLineupSameDay = 0;
+  const tonnageByLift = initRows();
   // Comeback mode measures pace on the work done since the return day.
   const returnDate = boundaries.comeback?.returnDate ?? null;
   const sinceReturnDates = new Set();
-  let sinceReturnBigFour = 0;
+  let sinceReturnLineup = 0;
 
   for (const entry of parsedData) {
     if ((entry.reps ?? 0) < 1) continue;
@@ -1432,37 +1499,37 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       date >= boundaries.currentMonthStart && date <= boundaries.todayStr;
     const inLast =
       date >= boundaries.prevMonthStart && date <= boundaries.prevMonthEnd;
-    const share = getBigFourShare(liftType);
-    const bigFourTonnage = share ? tonnage * share.tonnageRatio : 0;
-    const row = share ? bigFourByLift[share.liftType] : null;
+    const share = getRowShare(liftType, lineupSet);
+    const rowTonnage = share ? tonnage * share.tonnageRatio : 0;
+    const row = share ? tonnageByLift[share.liftType] : null;
 
     if (inCurrent) {
       currentTonnage += tonnage;
       currentDates.add(date);
       if (row) {
-        currentBigFour += bigFourTonnage;
-        addRowTonnage(row, share, liftType, "current", bigFourTonnage);
+        currentLineup += rowTonnage;
+        addRowTonnage(row, share, liftType, "current", rowTonnage);
       }
       if (returnDate && date >= returnDate) {
         sinceReturnDates.add(date);
         if (row) {
-          sinceReturnBigFour += bigFourTonnage;
-          row.sinceReturn += bigFourTonnage;
+          sinceReturnLineup += rowTonnage;
+          row.sinceReturn += rowTonnage;
         }
       }
     } else if (inLast) {
       lastTonnage += tonnage;
       lastDates.add(date);
       if (row) {
-        lastBigFour += bigFourTonnage;
-        addRowTonnage(row, share, liftType, "last", bigFourTonnage);
+        lastLineup += rowTonnage;
+        addRowTonnage(row, share, liftType, "last", rowTonnage);
       }
       if (date <= boundaries.prevMonthSameDayStr) {
         lastTonnageSameDay += tonnage;
         lastDatesSameDay.add(date);
         if (row) {
-          lastBigFourSameDay += bigFourTonnage;
-          row.lastSameDay += bigFourTonnage;
+          lastLineupSameDay += rowTonnage;
+          row.lastSameDay += rowTonnage;
         }
       }
     }
@@ -1480,13 +1547,13 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       lastSameDay: lastDatesSameDay.size,
       sinceReturn: sinceReturnDates.size,
     },
-    bigFourTonnage: {
-      current: currentBigFour,
-      last: lastBigFour,
-      lastSameDay: lastBigFourSameDay,
-      sinceReturn: sinceReturnBigFour,
+    lineupTonnage: {
+      current: currentLineup,
+      last: lastLineup,
+      lastSameDay: lastLineupSameDay,
+      sinceReturn: sinceReturnLineup,
     },
-    bigFourByLift,
+    tonnageByLift,
     progressRatio: boundaries.dayOfMonth / boundaries.daysInPrevMonth,
     nativeUnit,
   };
@@ -1495,6 +1562,15 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
 // A set counts toward a Big Four row when it is the lift itself or a
 // variation linked to it in the registry. A variation adds only its share of
 // the tonnage, so a rack pull adds half: more weight, less distance.
+// The lineup row a set counts toward, or null when it counts toward none.
+function getRowShare(liftType, lineupSet) {
+  const share = getBigFourShare(liftType);
+  if (share) return lineupSet.has(share.liftType) ? share : null;
+  return lineupSet.has(liftType)
+    ? { liftType, tonnageRatio: 1, isVariation: false }
+    : null;
+}
+
 function getBigFourShare(liftType) {
   if (BIG_FOUR_LIFT_TYPES.includes(liftType)) {
     return { liftType, tonnageRatio: 1, isVariation: false };
@@ -1516,20 +1592,33 @@ function addRowTonnage(row, share, liftType, monthKey, amount) {
 
 // ─── Strength level stats (per Big Four lift, best category hit) ───────────
 
-function computeStrengthLevelStats(parsedData, boundaries, bio) {
+function computeStrengthLevelStats(parsedData, boundaries, bio, lineup = []) {
   if (bio.bioDataIsDefault) return null;
 
+  // Standards only exist for some lifts. A row without them is scored on
+  // tonnage alone.
   const result = Object.fromEntries(
-    BIG_FOUR_LIFT_TYPES.map((liftType) => [
+    lineup.map((liftType) => [
       liftType,
-      { current: null, last: null },
+      {
+        current: null,
+        last: null,
+        hasStandard: !!getStandardForLiftDate(
+          bio.age,
+          boundaries.todayStr,
+          bio.bodyWeight,
+          bio.sex,
+          liftType,
+          bio.isMetric,
+        ),
+      },
     ]),
   );
 
   for (const entry of parsedData) {
     const reps = entry.reps ?? 0;
     if (reps < 1) continue;
-    if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
+    if (!result[entry.liftType]?.hasStandard) continue;
 
     const { date, liftType } = entry;
     const inCurrent =
@@ -1549,6 +1638,7 @@ function computeStrengthLevelStats(parsedData, boundaries, bio) {
       liftType,
       bio.isMetric,
     );
+    if (!standard) continue;
     const rating = getStrengthRatingForE1RM(e1rm, standard);
     const score = LEVEL_SCORES[rating] ?? 0;
     const monthKey = inCurrent ? "current" : "last";
@@ -1563,8 +1653,7 @@ function computeStrengthLevelStats(parsedData, boundaries, bio) {
 
 function getStrengthLevelPassed(strengthLevelStats) {
   if (!strengthLevelStats) return { passed: true, skipped: true };
-  for (const liftType of BIG_FOUR_LIFT_TYPES) {
-    const { current, last } = strengthLevelStats[liftType];
+  for (const { current, last } of Object.values(strengthLevelStats)) {
     if (last === null) continue; // not trained last month — no regression possible
     if (isStrengthLevelRegressed(current, last)) {
       return { passed: false, skipped: false };
@@ -1594,26 +1683,45 @@ function getPaceStatus(current, last, progressRatio) {
 
 // ─── Verdict ───────────────────────────────────────────────────────────────
 
-function getVerdict(stats, strengthLevelPassed, boundaries) {
-  const { sessions, bigFourTonnage, tonnage, bigFourByLift } = stats;
+// One row's tonnage check: true or false when there is a comparison to make,
+// null when the row has nothing in either month and so nothing to score. A
+// lift with no baseline counts as met the moment it is trained.
+function getTonnageCheckPassed(lift, boundaries) {
+  const current = lift?.current ?? 0;
+  const last = lift?.last ?? 0;
+  if (last === 0) return current > 0 ? true : null;
+  if (boundaries?.isCurrentMonthView && boundaries.dayOfMonth > 0) {
+    const ps = getMetricPaceStatus(lift, boundaries);
+    return ps === "ahead" || ps === "on-pace";
+  }
+  return passesTonnageThreshold(current, last);
+}
 
-  if (sessions.last === 0 && bigFourTonnage.last === 0 && tonnage.last === 0) {
+// The month is won with at most two checks missed, once the strength checks
+// are in play. With the full nine that is the long-standing 7 of 9; shorter
+// lineups keep the same allowance without letting a tiny scorecard win free.
+function isChecksWin(checksSummary) {
+  if (!checksSummary?.fullChecks) return false;
+  const { checksMet, checksTotal } = checksSummary;
+  // Sessions alone is not a scorecard.
+  if (checksTotal < 2) return false;
+  return (
+    checksMet >= Math.max(checksTotal - 2, Math.ceil(checksTotal * 0.7), 1)
+  );
+}
+
+function getVerdict(stats, strengthLevelPassed, boundaries) {
+  const { sessions, lineupTonnage, tonnage, tonnageByLift } = stats;
+
+  if (sessions.last === 0 && lineupTonnage.last === 0 && tonnage.last === 0) {
     return { label: "Writing History", emoji: "📖", won: false };
   }
 
-  const isCurrentMonth = boundaries?.isCurrentMonthView;
   const primaryMet =
     getSessionsCheckPassed(sessions, boundaries) &&
-    BIG_FOUR_LIFT_TYPES.every((liftType) => {
-      const lift = bigFourByLift?.[liftType];
-      const current = lift?.current ?? 0;
-      const last = lift?.last ?? 0;
-      if (isCurrentMonth && boundaries.dayOfMonth > 0) {
-        const ps = getMetricPaceStatus(lift, boundaries);
-        return ps === "ahead" || ps === "on-pace";
-      }
-      return passesTonnageThreshold(current, last);
-    });
+    Object.values(tonnageByLift ?? {}).every(
+      (lift) => getTonnageCheckPassed(lift, boundaries) !== false,
+    );
   const strengthOK = strengthLevelPassed.skipped || strengthLevelPassed.passed;
 
   if (primaryMet && strengthOK) {
@@ -1643,9 +1751,9 @@ function getVerdictHeadline({
   const isPastMonthView = !boundaries?.isCurrentMonthView;
   const monthPhase = getCurrentMonthPhase(boundaries);
   const phaseLabel = getMonthPhaseLabel(monthPhase, boundaries);
-  const hasFullChecks = checksSummary?.checksTotal === 9;
+  const hasFullChecks = !!checksSummary?.fullChecks;
   const monthWon = hasFullChecks
-    ? checksSummary.checksMet >= 7
+    ? isChecksWin(checksSummary)
     : Boolean(verdict?.won);
 
   if (isPastMonthView) {
@@ -1673,7 +1781,7 @@ function getVerdictHeadline({
   if (
     monthPhase === "last-week" &&
     hasFullChecks &&
-    checksSummary.checksMet >= 7
+    isChecksWin(checksSummary)
   ) {
     return {
       tone: "win",
@@ -1898,35 +2006,24 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
     checksMet += 1;
   }
 
-  const isCurrentMonth = boundaries?.isCurrentMonthView;
-  for (const liftType of BIG_FOUR_LIFT_TYPES) {
-    checksTotal += 1; // tonnage
-    const lift = stats.bigFourByLift?.[liftType];
-    const current = lift?.current ?? 0;
-    const last = lift?.last ?? 0;
-    let passed;
-    if (isCurrentMonth && boundaries?.dayOfMonth > 0) {
-      const ps = getMetricPaceStatus(lift, boundaries);
-      passed = ps === "ahead" || ps === "on-pace";
-    } else {
-      passed = passesTonnageThreshold(current, last);
-    }
+  // A row with nothing to compare adds no check, so the score is out of
+  // however many comparisons the month really holds.
+  for (const lift of Object.values(stats.tonnageByLift ?? {})) {
+    const passed = getTonnageCheckPassed(lift, boundaries);
+    if (passed === null) continue;
+    checksTotal += 1;
     if (passed) checksMet += 1;
   }
 
-  if (strengthLevelStats) {
-    for (const liftType of BIG_FOUR_LIFT_TYPES) {
-      checksTotal += 1; // strength
-      const { current, last } = strengthLevelStats[liftType] ?? {
-        current: null,
-        last: null,
-      };
-      const passed = last === null || !isStrengthLevelRegressed(current, last);
-      if (passed) checksMet += 1;
+  for (const { current, last } of Object.values(strengthLevelStats ?? {})) {
+    if (current === null && last === null) continue;
+    checksTotal += 1;
+    if (last === null || !isStrengthLevelRegressed(current, last)) {
+      checksMet += 1;
     }
   }
 
-  return { checksMet, checksTotal };
+  return { checksMet, checksTotal, fullChecks: !!strengthLevelStats };
 }
 
 function buildMonthCardPromptSummary({
@@ -1968,15 +2065,11 @@ function buildMonthCardPromptSummary({
     `total_tonnage=current ${formatTonnage(stats.tonnage.current, unit)}, previous ${formatTonnage(stats.tonnage.last, unit)}, previous_same_day ${formatTonnage(stats.tonnage.lastSameDay, unit)}`,
   );
   lines.push(
-    `big_four_tonnage=current ${formatTonnage(stats.bigFourTonnage.current, unit)}, previous ${formatTonnage(stats.bigFourTonnage.last, unit)}, previous_same_day ${formatTonnage(stats.bigFourTonnage.lastSameDay, unit)}`,
+    `main_lifts_tonnage=current ${formatTonnage(stats.lineupTonnage.current, unit)}, previous ${formatTonnage(stats.lineupTonnage.last, unit)}, previous_same_day ${formatTonnage(stats.lineupTonnage.lastSameDay, unit)}`,
   );
 
-  const liftRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
-    const tonnage = stats.bigFourByLift?.[liftType] ?? {
-      current: 0,
-      last: 0,
-      lastSameDay: 0,
-    };
+  const liftRows = Object.keys(stats.tonnageByLift ?? {}).map((liftType) => {
+    const tonnage = stats.tonnageByLift[liftType];
     const currentTonnage = tonnage.current ?? 0;
     const lastTonnage = tonnage.last ?? 0;
     const liftPaceStatus =
@@ -2016,10 +2109,10 @@ function buildMonthCardPromptSummary({
           ? "regressed"
           : "matched_or_better";
 
-    return `${liftType}: tonnage current ${formatTonnage(currentTonnage, unit)}, previous ${formatTonnage(lastTonnage, unit)}${variationsText}, status ${tonnagePassed ? "green" : "behind"}${liftPaceStatus !== "no-data" ? `/${liftPaceStatus}` : ""}; strength current ${currentStrength}, previous ${lastStrength}, status ${strengthStatus}`;
+    return `${liftType}: tonnage current ${formatTonnage(currentTonnage, unit)}, previous ${formatTonnage(lastTonnage, unit)}${variationsText}, status ${tonnageBaseline && !tonnageNewWin ? "not_trained_either_month" : tonnagePassed ? "green" : "behind"}${liftPaceStatus !== "no-data" ? `/${liftPaceStatus}` : ""}; strength current ${currentStrength}, previous ${lastStrength}, status ${strengthStatus}`;
   });
 
-  lines.push("big_four_rows:");
+  lines.push("main_lift_rows:");
   lines.push(...liftRows);
 
   return lines;
@@ -2030,25 +2123,9 @@ function formatPromptStrengthLevel(score) {
   return formatted?.label || "none";
 }
 
-function getMonthlyRevealRowCount(stats, strengthLevelStats) {
+function getMonthlyRevealRowCount(stats) {
   if (!stats) return 0;
-
-  const liftRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
-    const tonnage = stats.bigFourByLift?.[liftType] ?? {
-      current: 0,
-      last: 0,
-    };
-    const strength = strengthLevelStats?.[liftType] ?? {
-      current: null,
-      last: null,
-    };
-    const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
-    const hasStrength = strength.current !== null || strength.last !== null;
-    return hasTonnage || hasStrength;
-  }).filter(Boolean).length;
-
-  const hasSessionsRow = !!stats.sessions;
-  return liftRows + (hasSessionsRow ? 1 : 0);
+  return Object.keys(stats.tonnageByLift ?? {}).length + 1; // + sessions row
 }
 
 function getStrengthStatusTooltip({
@@ -2059,9 +2136,13 @@ function getStrengthStatusTooltip({
   strengthRegressed,
   strengthCurrent,
   strengthLast,
+  strengthUnavailable = false,
 }) {
   const liftLabel = formatLiftTypeLabel(liftType);
 
+  if (strengthUnavailable) {
+    return `${liftLabel} has no strength standards, so this row is scored on tonnage.`;
+  }
   if (strengthLocked) {
     return `${liftLabel} strength-level comparisons require age, sex, and bodyweight.`;
   }
@@ -2127,8 +2208,8 @@ function getTonnageLastColumnTooltip(liftType) {
 
 function BigFourCriteriaTable({
   sessions,
-  lastMonthBestSets,
-  bigFourByLift,
+  upNextBestSets,
+  tonnageByLift,
   strengthLevelStats,
   strengthSetupRequired = false,
   boundaries,
@@ -2145,33 +2226,26 @@ function BigFourCriteriaTable({
    * stays neutral, and red waits until there is a real gap to report.
    */
   const earlyDays = getCurrentMonthPhase(boundaries) === "first-week";
-  const allRows = BIG_FOUR_LIFT_TYPES.map((liftType) => {
-    const tonnage = bigFourByLift?.[liftType] ?? {
-      current: 0,
-      last: 0,
-      lastSameDay: 0,
-    };
-    const strength = strengthLevelStats?.[liftType] ?? {
-      current: null,
-      last: null,
-    };
-    const hasTonnage = (tonnage.current ?? 0) > 0 || (tonnage.last ?? 0) > 0;
-    const hasStrength = strength.current !== null || strength.last !== null;
-    return { liftType, tonnage, strength, hasData: hasTonnage || hasStrength };
-  });
-
-  const rows = allRows.filter((row) => row.hasData);
+  // Every lift in the lineup gets a row. One with nothing in either month is
+  // still part of the lifter's routine, so it shows as "Up next" rather than
+  // dropping out and leaving the card a row short.
+  const rows = Object.keys(tonnageByLift ?? {}).map((liftType) => ({
+    liftType,
+    tonnage: tonnageByLift[liftType],
+    strength: strengthLevelStats?.[liftType] ?? { current: null, last: null },
+  }));
 
   /*
-   * A lift with nothing in either month has no comparison to draw, so in a
-   * normal month it stays out of the table. In a month with no baseline it
-   * earns an invitation row instead: that month is a fresh start, and the
-   * lifter working through it should see the whole set rather than watch the
-   * other three lifts disappear the moment they log the first one.
+   * In a month with no baseline, the Big Four lifts outside the lineup earn an
+   * invitation row: that month is a fresh start, and the lifter working
+   * through it should see the whole set rather than watch the other lifts
+   * disappear the moment they log the first one.
    */
   const invitationRows = hasComparisonMonth
     ? []
-    : allRows.filter((row) => !row.hasData);
+    : BIG_FOUR_LIFT_TYPES.filter((liftType) => !tonnageByLift?.[liftType]).map(
+        (liftType) => ({ liftType }),
+      );
 
   if (rows.length === 0) {
     return (
@@ -2459,6 +2533,7 @@ function BigFourCriteriaTable({
           strengthRegressed,
           strengthCurrent: strength.current,
           strengthLast: strength.last,
+          strengthUnavailable: strength.hasStandard === false,
         });
         const lastStrengthTooltip = getStrengthLastColumnTooltip(
           boundaries,
@@ -2496,7 +2571,9 @@ function BigFourCriteriaTable({
         // Week one, lift not trained yet: one quiet "Up next" cell with last
         // month's best set stands in for "Still to come", "0 kg lifted" and
         // "Early days", which read as three ways of saying nothing.
-        const showUpNext = earlyDays && currentTonnage === 0 && lastTonnage > 0;
+        const showUpNext =
+          currentTonnage === 0 && (lastTonnage === 0 || earlyDays);
+        const RowLink = liftInsightHref ? Link : "div";
 
         return (
           <motion.div
@@ -2558,8 +2635,8 @@ function BigFourCriteriaTable({
               </TooltipProvider>
             </div>
 
-            <Link
-              href={liftInsightHref}
+            <RowLink
+              {...(liftInsightHref ? { href: liftInsightHref } : {})}
               className="focus-visible:ring-ring row-span-2 rounded-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
             >
               <motion.div
@@ -2580,12 +2657,18 @@ function BigFourCriteriaTable({
                           : "bg-red-500/10 ring-red-500/40"
                   }`}
                 >
-                  <LiftArtwork
-                    liftType={liftType}
-                    size="sm"
-                    animate={false}
-                    className="h-16 w-16"
-                  />
+                  {getLiftArtwork(liftType) ? (
+                    <LiftArtwork
+                      liftType={liftType}
+                      size="sm"
+                      animate={false}
+                      className="h-16 w-16"
+                    />
+                  ) : (
+                    <div className="text-muted-foreground flex h-16 w-16 items-center justify-center text-lg font-semibold">
+                      {getLiftInitials(liftType)}
+                    </div>
+                  )}
                 </div>
                 <span
                   className={`text-[10px] transition-colors duration-500 ${rowHighlighted ? "text-muted-foreground/80" : "text-foreground/80"}`}
@@ -2593,11 +2676,11 @@ function BigFourCriteriaTable({
                   {formatLiftTypeLabel(liftType)}
                 </span>
               </motion.div>
-            </Link>
+            </RowLink>
 
             {showUpNext ? (
               <UpNextCell
-                bestSet={lastMonthBestSets?.[liftType]}
+                best={upNextBestSets?.[liftType]}
                 prevMonthName={boundaries.prevMonthName}
               />
             ) : (
@@ -2805,15 +2888,16 @@ function BigFourCriteriaTable({
 // The right-hand side of a Big Four row in week one before the lift has been
 // trained: what's next, and last month's best set as something to aim at.
 // Spans both rows so the comparison grid keeps its shape.
-function UpNextCell({ bestSet, prevMonthName }) {
+function UpNextCell({ best, prevMonthName }) {
   const { isMetric } = useAthleteBio();
+  const bestSet = best?.set ?? null;
   const display = bestSet ? getDisplayWeight(bestSet, isMetric) : null;
   return (
     <div className="bg-muted/20 row-span-2 flex flex-col justify-center rounded-sm px-1.5 py-1 text-left">
       <p className="text-foreground text-xs font-semibold">Up next</p>
       {display && (
         <p className="text-muted-foreground text-[11px] leading-snug">
-          {prevMonthName}&apos;s best{" "}
+          {best.fromLastMonth ? `${prevMonthName}'s best` : "Recent best"}{" "}
           <span className="text-foreground font-medium tabular-nums">
             {bestSet.reps}@{display.value}
             {display.unit}
@@ -2824,31 +2908,54 @@ function UpNextCell({ bestSet, prevMonthName }) {
   );
 }
 
-// Last month's best set for each Big Four lift, by estimated one-rep max in
-// real load, so a heavy triple can beat a lighter single.
-function getLastMonthBestSets(parsedData, boundaries) {
+// Initials for a lift we have no drawing of, so its row still has a face.
+function getLiftInitials(liftType) {
+  return String(liftType ?? "")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word.charAt(0).toUpperCase())
+    .join("");
+}
+
+// The set to aim at for each lineup lift: last month's best by estimated
+// one-rep max in real load (so a heavy triple can beat a lighter single), or
+// the best of the two months before when last month has none.
+function getUpNextBestSets(parsedData, boundaries, lineup = []) {
+  const windowStart = getLineupWindowStart(boundaries);
   if (!Array.isArray(parsedData) || !boundaries?.prevMonthStart) return {};
-  const best = {};
+  const lineupSet = new Set(lineup);
+  const bestLastMonth = {};
+  const bestRecent = {};
+  const keepBest = (best, entry, e1rmKg) => {
+    if (!best[entry.liftType] || e1rmKg > best[entry.liftType].e1rmKg) {
+      best[entry.liftType] = { e1rmKg, set: entry };
+    }
+  };
   for (const entry of parsedData) {
-    if (!entry.date) continue;
-    if (
-      entry.date < boundaries.prevMonthStart ||
-      entry.date > boundaries.prevMonthEnd
-    ) {
+    if (!entry.date || !lineupSet.has(entry.liftType)) continue;
+    if (entry.date < windowStart || entry.date > boundaries.prevMonthEnd) {
       continue;
     }
-    if (!BIG_FOUR_LIFT_TYPES.includes(entry.liftType)) continue;
     if (!(entry.reps >= 1) || !(entry.weight > 0)) continue;
     const e1rmKg = toKg(
       estimateE1RM(entry.reps, entry.weight, "Brzycki"),
       entry.unitType,
     );
-    if (!best[entry.liftType] || e1rmKg > best[entry.liftType].e1rmKg) {
-      best[entry.liftType] = { e1rmKg, set: entry };
+    keepBest(bestRecent, entry, e1rmKg);
+    if (entry.date >= boundaries.prevMonthStart) {
+      keepBest(bestLastMonth, entry, e1rmKg);
     }
   }
   return Object.fromEntries(
-    Object.entries(best).map(([liftType, { set }]) => [liftType, set]),
+    lineup
+      .filter((liftType) => bestRecent[liftType])
+      .map((liftType) => [
+        liftType,
+        bestLastMonth[liftType]
+          ? { set: bestLastMonth[liftType].set, fromLastMonth: true }
+          : { set: bestRecent[liftType].set, fromLastMonth: false },
+      ]),
   );
 }
 

@@ -93,10 +93,10 @@ export function TheMonthInIronCard({
     [parsedData],
   );
   const safeMonthOffset = Math.min(monthOffset, maxMonthOffset);
-  const boundaries = useMemo(
-    () => getMonthBoundaries(safeMonthOffset),
-    [safeMonthOffset],
-  );
+  const boundaries = useMemo(() => {
+    const base = getMonthBoundaries(safeMonthOffset);
+    return { ...base, comeback: getComebackWindow(parsedData, base) };
+  }, [safeMonthOffset, parsedData]);
   const monthCardTitle = useMemo(
     () => getMonthlyCardTitle(boundaries),
     [boundaries],
@@ -151,18 +151,10 @@ export function TheMonthInIronCard({
   const unit = stats?.nativeUnit ?? (isMetric ? "kg" : "lb");
 
   const sessionsPaceStatus = stats
-    ? getPaceStatus(
-        stats.sessions.current,
-        stats.sessions.last,
-        stats.progressRatio,
-      )
+    ? getHeadlinePaceStatus(stats.sessions, stats, boundaries)
     : null;
   const bigFourPaceStatus = stats
-    ? getPaceStatus(
-        stats.bigFourTonnage.current,
-        stats.bigFourTonnage.last,
-        stats.progressRatio,
-      )
+    ? getHeadlinePaceStatus(stats.bigFourTonnage, stats, boundaries)
     : null;
 
   const strengthSetupRequired = !!bio?.bioDataIsDefault;
@@ -1016,6 +1008,22 @@ const EARLY_MONTH_CATCH_UP_HEADLINES = [
   "Get the next session in.",
 ];
 
+// The first week back after a layoff. The month restarts from the return day,
+// so these greet the return instead of measuring a gap that illness made.
+const COMEBACK_ON_TRACK_HEADLINES = [
+  "Back under the bar.",
+  "The comeback is on.",
+  "Right back into it.",
+  "Picking up where you left off.",
+];
+
+const COMEBACK_CATCH_UP_HEADLINES = [
+  "Back under the bar.",
+  "First one back is done.",
+  "The comeback starts here.",
+  "Get the next session in.",
+];
+
 const MID_MONTH_ON_TRACK_HEADLINES = [
   "On track.",
   "Keep going.",
@@ -1120,6 +1128,110 @@ function getLiftPaceStatus(
   if (ratio >= 1.0) return "ahead";
   if (ratio >= TONNAGE_CLOSE_ENOUGH_RATIO) return "on-pace";
   return "behind";
+}
+
+/*
+ * Comeback mode. A lifter who returns after a layoff (sickness, travel) is
+ * behind a straight line drawn from the 1st on every row, and stays behind
+ * however well they train, because the line assumes days they never had. So
+ * when the latest gap of COMEBACK_GAP_DAYS or more ends inside the month being
+ * viewed, the race restarts on the return day: the goal becomes last month's
+ * rate over the days from the return to month end, and pace is measured on
+ * the work done since. The colours and the pressure stay exactly as they are;
+ * only the finish line moves to somewhere the lifter can still reach.
+ */
+const COMEBACK_GAP_DAYS = 10;
+
+function getComebackWindow(parsedData, boundaries) {
+  if (!boundaries?.isCurrentMonthView || !Array.isArray(parsedData)) {
+    return null;
+  }
+  const { currentMonthStart, todayStr, dayOfMonth, daysInCurrentMonth } =
+    boundaries;
+  const dateSet = new Set();
+  for (const entry of parsedData) {
+    if (!entry?.date || (entry.reps ?? 0) < 1) continue;
+    if (entry.date <= todayStr) dateSet.add(entry.date);
+  }
+  const dates = [...dateSet].sort();
+
+  // Walk back through this month's sessions to the most recent return.
+  for (let i = dates.length - 1; i > 0; i--) {
+    if (dates[i] < currentMonthStart) break;
+    const previous = parseIsoDate(dates[i - 1]);
+    const returned = parseIsoDate(dates[i]);
+    if (!previous || !returned) continue;
+    const gapDays = Math.round((returned - previous) / 86400000);
+    if (gapDays < COMEBACK_GAP_DAYS) continue;
+
+    const returnDay = returned.getDate();
+    // Back on the 1st is just a normal month.
+    if (returnDay <= 1) return null;
+    const daysInWindow = daysInCurrentMonth - returnDay + 1;
+    return {
+      returnDate: dates[i],
+      returnLabel: format(returned, "MMM d"),
+      gapDays,
+      daysInWindow,
+      daysElapsed: Math.max(1, dayOfMonth - returnDay + 1),
+      share: daysInWindow / daysInCurrentMonth,
+    };
+  }
+  return null;
+}
+
+// The four numbers a pace check needs for one metric (sessions or a lift's
+// tonnage), rebased to the comeback window when there is one.
+function getPaceArgs(metric, boundaries) {
+  const comeback = boundaries?.comeback;
+  if (comeback) {
+    return [
+      metric?.sinceReturn ?? 0,
+      (metric?.last ?? 0) * comeback.share,
+      comeback.daysElapsed,
+      comeback.daysInWindow,
+    ];
+  }
+  return [
+    metric?.current ?? 0,
+    metric?.last ?? 0,
+    boundaries?.dayOfMonth,
+    boundaries?.daysInCurrentMonth,
+  ];
+}
+
+function getMetricPaceStatus(metric, boundaries) {
+  return getLiftPaceStatus(...getPaceArgs(metric, boundaries));
+}
+
+// The month-end figure a row is chasing, in the same terms as the number the
+// row displays: anything logged before the layoff plus last month's rate over
+// the days since the return. Null outside comeback mode.
+function getComebackGoal(metric, boundaries) {
+  const comeback = boundaries?.comeback;
+  if (!comeback || !(metric?.last > 0)) return null;
+  const beforeLayoff = (metric.current ?? 0) - (metric.sinceReturn ?? 0);
+  return beforeLayoff + metric.last * comeback.share;
+}
+
+function getSessionsCheckPassed(sessions, boundaries) {
+  if (boundaries?.comeback) {
+    const ps = getMetricPaceStatus(sessions, boundaries);
+    return ps === "ahead" || ps === "on-pace" || ps === "no-data";
+  }
+  return passesTonnageThreshold(sessions.current, sessions.lastSameDay);
+}
+
+function getHeadlinePaceStatus(metric, stats, boundaries) {
+  const comeback = boundaries?.comeback;
+  if (comeback) {
+    return getPaceStatus(
+      metric.sinceReturn ?? 0,
+      metric.last * comeback.share,
+      comeback.daysElapsed / comeback.daysInWindow,
+    );
+  }
+  return getPaceStatus(metric.current, metric.last, stats.progressRatio);
 }
 
 function formatStrengthLevel(score) {
@@ -1291,7 +1403,7 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
     Object.fromEntries(
       BIG_FOUR_LIFT_TYPES.map((liftType) => [
         liftType,
-        { current: 0, last: 0, lastSameDay: 0, variations: {} },
+        { current: 0, last: 0, lastSameDay: 0, sinceReturn: 0, variations: {} },
       ]),
     );
 
@@ -1305,6 +1417,10 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
   let lastBigFour = 0;
   let lastBigFourSameDay = 0;
   const bigFourByLift = initBigFourByLift();
+  // Comeback mode measures pace on the work done since the return day.
+  const returnDate = boundaries.comeback?.returnDate ?? null;
+  const sinceReturnDates = new Set();
+  let sinceReturnBigFour = 0;
 
   for (const entry of parsedData) {
     if ((entry.reps ?? 0) < 1) continue;
@@ -1326,6 +1442,13 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       if (row) {
         currentBigFour += bigFourTonnage;
         addRowTonnage(row, share, liftType, "current", bigFourTonnage);
+      }
+      if (returnDate && date >= returnDate) {
+        sinceReturnDates.add(date);
+        if (row) {
+          sinceReturnBigFour += bigFourTonnage;
+          row.sinceReturn += bigFourTonnage;
+        }
       }
     } else if (inLast) {
       lastTonnage += tonnage;
@@ -1355,11 +1478,13 @@ function computeMonthlyBattleStats(parsedData, boundaries) {
       current: currentDates.size,
       last: lastDates.size,
       lastSameDay: lastDatesSameDay.size,
+      sinceReturn: sinceReturnDates.size,
     },
     bigFourTonnage: {
       current: currentBigFour,
       last: lastBigFour,
       lastSameDay: lastBigFourSameDay,
+      sinceReturn: sinceReturnBigFour,
     },
     bigFourByLift,
     progressRatio: boundaries.dayOfMonth / boundaries.daysInPrevMonth,
@@ -1478,18 +1603,13 @@ function getVerdict(stats, strengthLevelPassed, boundaries) {
 
   const isCurrentMonth = boundaries?.isCurrentMonthView;
   const primaryMet =
-    passesTonnageThreshold(sessions.current, sessions.lastSameDay) &&
+    getSessionsCheckPassed(sessions, boundaries) &&
     BIG_FOUR_LIFT_TYPES.every((liftType) => {
       const lift = bigFourByLift?.[liftType];
       const current = lift?.current ?? 0;
       const last = lift?.last ?? 0;
       if (isCurrentMonth && boundaries.dayOfMonth > 0) {
-        const ps = getLiftPaceStatus(
-          current,
-          last,
-          boundaries.dayOfMonth,
-          boundaries.daysInCurrentMonth,
-        );
+        const ps = getMetricPaceStatus(lift, boundaries);
         return ps === "ahead" || ps === "on-pace";
       }
       return passesTonnageThreshold(current, last);
@@ -1585,6 +1705,7 @@ function getVerdictHeadline({
       phase: monthPhase,
       onTrack: true,
       phraseSeed,
+      comeback: !!boundaries?.comeback,
     });
 
     return {
@@ -1599,6 +1720,7 @@ function getVerdictHeadline({
     phase: monthPhase,
     onTrack: false,
     phraseSeed,
+    comeback: !!boundaries?.comeback,
   });
 
   return {
@@ -1612,6 +1734,11 @@ function getVerdictHeadline({
 function getCurrentMonthPhase(boundaries) {
   if (!boundaries?.isCurrentMonthView) return "past";
   if (boundaries.dayOfMonth <= 7) return "first-week";
+  // The first week back gets the same grace as week one, and for the same
+  // reason: a few days in, the pace maths is noise.
+  if (boundaries.comeback && boundaries.comeback.daysElapsed <= 7) {
+    return "first-week";
+  }
   if (boundaries.daysRemainingInCurrentMonth <= 7) return "last-week";
   return "middle";
 }
@@ -1622,6 +1749,10 @@ function getMonthPhaseLabel(monthPhase, boundaries) {
   if (monthPhase === "past") {
     return boundaries?.currentMonthShortYear || "Past month";
   }
+  const comeback = boundaries?.comeback;
+  if (comeback && monthPhase !== "last-week") {
+    return `Back since ${comeback.returnLabel}`;
+  }
   if (monthPhase === "first-week") return "Week one";
   if (monthPhase === "last-week") {
     const days = boundaries?.daysRemainingInCurrentMonth ?? 0;
@@ -1630,7 +1761,18 @@ function getMonthPhaseLabel(monthPhase, boundaries) {
   return "Mid-month";
 }
 
-function getCurrentMonthEncouragement({ phase, onTrack, phraseSeed }) {
+function getCurrentMonthEncouragement({
+  phase,
+  onTrack,
+  phraseSeed,
+  comeback = false,
+}) {
+  if (comeback && phase === "first-week") {
+    return pickPhraseForMonth(
+      onTrack ? COMEBACK_ON_TRACK_HEADLINES : COMEBACK_CATCH_UP_HEADLINES,
+      phraseSeed,
+    );
+  }
   const phraseMap = {
     "first-week": onTrack
       ? EARLY_MONTH_ON_TRACK_HEADLINES
@@ -1752,9 +1894,7 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
   let checksMet = 0;
   let checksTotal = 1; // sessions
 
-  if (
-    passesTonnageThreshold(stats.sessions.current, stats.sessions.lastSameDay)
-  ) {
+  if (getSessionsCheckPassed(stats.sessions, boundaries)) {
     checksMet += 1;
   }
 
@@ -1766,12 +1906,7 @@ function getMonthlyChecksSummary(stats, strengthLevelStats, boundaries) {
     const last = lift?.last ?? 0;
     let passed;
     if (isCurrentMonth && boundaries?.dayOfMonth > 0) {
-      const ps = getLiftPaceStatus(
-        current,
-        last,
-        boundaries.dayOfMonth,
-        boundaries.daysInCurrentMonth,
-      );
+      const ps = getMetricPaceStatus(lift, boundaries);
       passed = ps === "ahead" || ps === "on-pace";
     } else {
       passed = passesTonnageThreshold(current, last);
@@ -1810,6 +1945,13 @@ function buildMonthCardPromptSummary({
 
   if (!stats) return lines;
 
+  if (boundaries.comeback) {
+    const { returnDate, gapDays, daysInWindow } = boundaries.comeback;
+    lines.push(
+      `comeback=returned ${returnDate} after ${gapDays} days off; pace and score are measured from that day against the previous month's rate over the ${daysInWindow} days from the return to month end`,
+    );
+  }
+
   if (checksSummary) {
     lines.push(
       `score=${checksSummary.checksMet}/${checksSummary.checksTotal} green`,
@@ -1839,12 +1981,7 @@ function buildMonthCardPromptSummary({
     const lastTonnage = tonnage.last ?? 0;
     const liftPaceStatus =
       boundaries.isCurrentMonthView && boundaries.dayOfMonth > 0
-        ? getLiftPaceStatus(
-            currentTonnage,
-            lastTonnage,
-            boundaries.dayOfMonth,
-            boundaries.daysInCurrentMonth,
-          )
+        ? getMetricPaceStatus(tonnage, boundaries)
         : "no-data";
     const tonnageBaseline = lastTonnage === 0;
     const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
@@ -2076,13 +2213,15 @@ function BigFourCriteriaTable({
           const previousSessionsCompared = sessions.last ?? 0;
           const baseline = previousSessionsCompared === 0;
           const sessionPace = isCurrentMonthView
-            ? getLiftPaceStatus(
-                sessions.current ?? 0,
-                previousSessionsCompared,
-                boundaries.dayOfMonth,
-                boundaries.daysInCurrentMonth,
-              )
+            ? getMetricPaceStatus(sessions, boundaries)
             : "no-data";
+          const comebackGoal = getComebackGoal(sessions, boundaries);
+          const sessionsGoal =
+            comebackGoal === null
+              ? previousSessionsCompared
+              : Math.max(1, Math.round(comebackGoal));
+          const goalSuffix =
+            comebackGoal === null ? "" : ` · goal ${sessionsGoal}`;
           const passed =
             baseline ||
             (isCurrentMonthView
@@ -2198,6 +2337,7 @@ function BigFourCriteriaTable({
                               : pending
                                 ? "Early days"
                                 : "▼ Behind pace"}
+                          {goalSuffix}
                         </div>
                       )}
                       {rowHighlighted && !baseline && (
@@ -2206,7 +2346,7 @@ function BigFourCriteriaTable({
                             className={`h-full rounded-full ${passed ? "bg-emerald-500" : pending ? "bg-muted-foreground/40" : "bg-red-500"}`}
                             initial={{ width: 0 }}
                             animate={{
-                              width: `${Math.min(100, ((sessions.current ?? 0) / previousSessionsCompared) * 100)}%`,
+                              width: `${Math.min(100, ((sessions.current ?? 0) / sessionsGoal) * 100)}%`,
                             }}
                             transition={{
                               duration: 0.6,
@@ -2219,9 +2359,9 @@ function BigFourCriteriaTable({
                   </TooltipTrigger>
                   <TooltipContent side="top" sideOffset={4}>
                     <p className="max-w-56 text-center text-xs">
-                      Compared with {boundaries.prevMonthName}&apos;s total of{" "}
-                      {previousSessionsCompared}; being within 10% of pace
-                      counts as on track.
+                      {comebackGoal === null
+                        ? `Compared with ${boundaries.prevMonthName}'s total of ${previousSessionsCompared}; being within 10% of pace counts as on track.`
+                        : `You came back on ${boundaries.comeback.returnLabel}, so the goal is ${boundaries.prevMonthName}'s rate from that day to month end: ${sessionsGoal} sessions. Being within 10% of pace counts as on track.`}
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -2237,13 +2377,18 @@ function BigFourCriteriaTable({
         const lastTonnage = tonnage.last ?? 0;
         const liftPaceStatus =
           isCurrentMonthView && boundaries.dayOfMonth > 0
-            ? getLiftPaceStatus(
-                currentTonnage,
-                lastTonnage,
-                boundaries.dayOfMonth,
-                boundaries.daysInCurrentMonth,
-              )
+            ? getMetricPaceStatus(tonnage, boundaries)
             : "no-data";
+        const comebackGoal = getComebackGoal(tonnage, boundaries);
+        const tonnageGoal = comebackGoal ?? lastTonnage;
+        const goalSuffix =
+          comebackGoal === null
+            ? ""
+            : ` · goal ${formatTonnageFigure(comebackGoal)}`;
+        const comebackTooltip =
+          comebackGoal === null
+            ? ""
+            : ` You came back on ${boundaries.comeback.returnLabel}, so the goal is ${boundaries.prevMonthName}'s rate from that day to month end: ${formatTonnage(comebackGoal, unit)}.`;
         const tonnageBaseline = lastTonnage === 0;
         const tonnageNewWin = tonnageBaseline && currentTonnage > 0;
         const tonnagePassed = tonnageBaseline
@@ -2590,6 +2735,7 @@ function BigFourCriteriaTable({
                                 : tonnagePending
                                   ? "Early days"
                                   : "▼ Behind pace"}
+                            {goalSuffix}
                           </div>
                         )}
                       {rowHighlighted && currentVariationNames && (
@@ -2609,7 +2755,7 @@ function BigFourCriteriaTable({
                             }`}
                             initial={{ width: 0 }}
                             animate={{
-                              width: `${Math.min(100, (currentTonnage / lastTonnage) * 100)}%`,
+                              width: `${Math.min(100, (currentTonnage / tonnageGoal) * 100)}%`,
                             }}
                             transition={{
                               duration: 0.6,
@@ -2623,6 +2769,7 @@ function BigFourCriteriaTable({
                   <TooltipContent side="top" sideOffset={4}>
                     <p className="max-w-56 text-center text-xs">
                       {tonnageStatusTooltip}
+                      {comebackTooltip}
                       {currentVariations && ` Includes ${currentVariations}.`}
                     </p>
                   </TooltipContent>

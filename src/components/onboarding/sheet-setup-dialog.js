@@ -313,6 +313,7 @@ export function SheetSetupDialog() {
     importedFileName,
     importedFormatId,
     importedFormatName,
+    importedBodyweightEntries,
     mutate,
   } = useUserLiftingData();
   const { toast } = useToast();
@@ -952,6 +953,7 @@ export function SheetSetupDialog() {
         const payload = await importWriter.writeWholeImport({
           ssid: linkPayload.ssid,
           entries: importedEntries,
+          bodyweights: importedBodyweightEntries ?? [],
           formatId: importedFormatId,
           formatName: importedFormatName,
           source: "sheet_setup_write",
@@ -995,6 +997,7 @@ export function SheetSetupDialog() {
       clearImportedData,
       handleActionFailure,
       hadLocalSheetBefore,
+      importedBodyweightEntries,
       importedFileName,
       importedFormatId,
       importedFormatName,

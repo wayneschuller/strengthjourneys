@@ -22,6 +22,7 @@ import {
   describeOverlappingSets,
 } from "@/lib/import/dedupe";
 import { getLatestImportedWorkoutDate } from "@/lib/import/import-sources";
+import { WEIGH_IN_LIFT_TYPE } from "@/lib/bodyweight";
 
 /** A set as the import route takes it. */
 export function toSheetEntries(entries) {
@@ -33,6 +34,29 @@ export function toSheetEntries(entries) {
     unitType: entry.unitType || "kg",
     ...(entry.notes ? { notes: entry.notes } : {}),
   }));
+}
+
+/**
+ * The weigh-ins a file kept, as the import route takes them, leaving out any
+ * date the sheet already has a weigh-in for: the lifter's own sheet outranks
+ * an app's copy of the same morning.
+ */
+export function toSheetWeighIns(bodyweights, sheetBodyweights) {
+  if (!Array.isArray(bodyweights) || !bodyweights.length) return [];
+  const known = new Set(
+    (Array.isArray(sheetBodyweights) ? sheetBodyweights : []).map(
+      (entry) => entry.date,
+    ),
+  );
+  return bodyweights
+    .filter((weighIn) => weighIn?.date && !known.has(weighIn.date))
+    .map((weighIn) => ({
+      date: weighIn.date,
+      liftType: WEIGH_IN_LIFT_TYPE,
+      reps: null,
+      weight: weighIn.weight,
+      unitType: weighIn.unitType || "kg",
+    }));
 }
 
 // The duplicate check walks every set in the import and the sheet, and each
@@ -104,8 +128,12 @@ function askNotice(question) {
   };
 }
 
-function mergedNotice({ data, comparison, formatName }) {
+function mergedNotice({ data, comparison, formatName, weighInCount = 0 }) {
   const { duplicateCount, nearbyCount, conflictCount } = comparison;
+  const weighInNote =
+    weighInCount > 0
+      ? ` That includes ${weighInCount} ${plural(weighInCount, "weigh-in", "weigh-ins")}.`
+      : "";
   const skippedNote =
     duplicateCount > 0
       ? ` Skipped ${duplicateCount} ${plural(duplicateCount, "duplicate", "duplicates")}.`
@@ -116,7 +144,7 @@ function mergedNotice({ data, comparison, formatName }) {
       : "";
   return {
     title: "Merged into your sheet",
-    description: `Added ${data.insertedRows} rows across ${data.dateCount} ${plural(data.dateCount, "date", "dates")}.${skippedNote}${describeNearbyDuplicates(nearbyCount, formatName)}${conflictNote}`,
+    description: `Added ${data.insertedRows} rows across ${data.dateCount} ${plural(data.dateCount, "date", "dates")}.${weighInNote}${skippedNote}${describeNearbyDuplicates(nearbyCount, formatName)}${conflictNote}`,
   };
 }
 
@@ -201,6 +229,8 @@ export function createImportWriter(io) {
      * @param {string} input.ssid The linked sheet.
      * @param {object[]} input.importedEntries The preview's sets.
      * @param {object[]|null} input.sheetEntries The sheet's parsed rows.
+     * @param {object[]} [input.importedBodyweights] Weigh-ins the file kept.
+     * @param {object[]} [input.sheetBodyweights] The sheet's own weigh-ins.
      * @param {boolean} input.comparisonPending The sheet has not loaded yet.
      * @param {string} [input.formatId]
      * @param {string} [input.formatName]
@@ -236,6 +266,10 @@ export function createImportWriter(io) {
         formatId,
       );
       const { newEntries, overlapCount, conflictCount } = comparison;
+      const weighIns = toSheetWeighIns(
+        input.importedBodyweights,
+        input.sheetBodyweights,
+      );
 
       const question = describeOverlappingSets(
         overlapCount,
@@ -250,7 +284,7 @@ export function createImportWriter(io) {
         }
       }
 
-      if (newEntries.length === 0) {
+      if (newEntries.length === 0 && weighIns.length === 0) {
         onWriteStart?.();
         await recordNothingToAdd(input, comparison);
         return conflictCount > 0
@@ -268,7 +302,7 @@ export function createImportWriter(io) {
       try {
         const data = await io.write({
           ssid,
-          entries: toSheetEntries(newEntries),
+          entries: [...toSheetEntries(newEntries), ...weighIns],
           source: input.source,
           formatId,
           formatName,
@@ -276,7 +310,12 @@ export function createImportWriter(io) {
         });
         return {
           status: "merged",
-          notice: mergedNotice({ data, comparison, formatName }),
+          notice: mergedNotice({
+            data,
+            comparison,
+            formatName,
+            weighInCount: weighIns.length,
+          }),
           previewDone: conflictCount === 0,
           comparison,
           data,
@@ -312,10 +351,20 @@ export function createImportWriter(io) {
      * @returns {Promise<object>} What the route answered. Rejects when it
      *   refused; the error carries the route's `errorCode` when it sent one.
      */
-    writeWholeImport({ ssid, entries, formatId, formatName, source }) {
+    writeWholeImport({
+      ssid,
+      entries,
+      bodyweights = [],
+      formatId,
+      formatName,
+      source,
+    }) {
       return io.write({
         ssid,
-        entries: toSheetEntries(entries),
+        entries: [
+          ...toSheetEntries(entries),
+          ...toSheetWeighIns(bodyweights, []),
+        ],
         source,
         formatId,
         formatName,

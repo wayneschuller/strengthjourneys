@@ -364,4 +364,35 @@ Upper,"25 Aug 2025, 09:38","25 Aug 2025, 10:54",,Bench Press (Barbell),,,1,norma
   assert.equal(writes[1].importSummary, undefined);
 }
 
+// Weigh-ins the file kept ride in with the merge, after the sets, except on a
+// date the sheet already has one for. They are new even when every set is a
+// duplicate, so a re-import still brings in the weigh-ins.
+{
+  const { writer, writes } = makeWriter();
+  const result = await writer.merge({
+    ssid: "sheet-1",
+    importedEntries: squats,
+    sheetEntries: squats,
+    importedBodyweights: [
+      { date: "2026-03-02", weight: 84, unitType: "kg" },
+      { date: "2026-03-04", weight: 83.5, unitType: "kg" },
+    ],
+    sheetBodyweights: [{ date: "2026-03-02", weight: 84.2, unitType: "kg" }],
+    formatId: "stronglifts",
+    formatName: "StrongLifts",
+    source: "check",
+  });
+  assert.equal(result.status, "merged");
+  assert.deepEqual(writes[0].entries, [
+    {
+      date: "2026-03-04",
+      liftType: "Bodyweight",
+      reps: null,
+      weight: 83.5,
+      unitType: "kg",
+    },
+  ]);
+  assert.match(result.notice.description, /1 weigh-in\./);
+}
+
 console.log("Import merge checks passed.");

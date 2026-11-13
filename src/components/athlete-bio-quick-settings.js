@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AnimatePresence, motion } from "motion/react";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { RecordedBodyweightButton } from "@/components/recorded-bodyweight-button";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { cn } from "@/lib/utils";
 import { Activity, X } from "lucide-react";
@@ -181,6 +182,10 @@ export function AthleteBioQuickSettings() {
                 aria-label="Bodyweight"
               />
             </div>
+            <RecordedBodyweightButton
+              bodyWeight={bodyWeight}
+              setBodyWeight={setBodyWeight}
+            />
           </div>
           <p className="text-muted-foreground pt-1 text-[10px] leading-snug">
             Stays on this device — stored only in your browser, never sent to
@@ -317,6 +322,10 @@ export function AthleteBioSliderSettings({ onUnitChange, className }) {
               {unit}
             </span>
           </div>
+          <RecordedBodyweightButton
+            bodyWeight={bodyWeight}
+            setBodyWeight={setBodyWeight}
+          />
         </div>
       </div>
     </div>

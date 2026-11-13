@@ -10,6 +10,7 @@
 
 import { requireImportSource } from "@/lib/import/import-sources";
 import {
+  convertWeightAndUnitType,
   countSkip,
   findColumn,
   getSetSkipReason,
@@ -337,5 +338,52 @@ function parseStrongliftsData(data) {
     ? parseCurrentStrongliftsData(data, headers, skippedByReason)
     : parseLegacyStrongliftsData(data, headers, skippedByReason);
 
-  return { entries: parsedData, skippedByReason };
+  return {
+    entries: parsedData,
+    skippedByReason,
+    bodyweights: readBodyweights(data, headers),
+  };
+}
+
+// StrongLifts asks for bodyweight at the start of each workout and keeps it
+// in a "Body Weight" column ("95.5KG"), or a pair split by unit. Each workout
+// date with one filled in becomes a weigh-in. A workout where the lifter
+// skipped it reads 0, which is no weigh-in at all.
+function readBodyweights(data, headers) {
+  const dateColumnIndex = headers.findIndex((header) => {
+    const normalized = normalizeHeaderCell(header);
+    return normalized === "date" || normalized.startsWith("date (");
+  });
+  const columns = headers
+    .map((header, index) => ({ header: normalizeHeaderCell(header), index }))
+    .filter(({ header }) => /^body ?weight\b/.test(header))
+    .map(({ header, index }) => ({
+      index,
+      unitType: /\bkgs?\b/.test(header)
+        ? "kg"
+        : /\blbs?\b/.test(header)
+          ? "lb"
+          : null,
+    }));
+  if (dateColumnIndex < 0 || !columns.length) return [];
+
+  const dayFirst = detectDayFirstDates(data, dateColumnIndex);
+  const byDate = new Map();
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row?.length) continue;
+    const date = normalizeStrongliftsDate(row[dateColumnIndex], dayFirst);
+    if (!date || byDate.has(date)) continue;
+    for (const column of columns) {
+      const { value, unitType, _explicitUnit } = convertWeightAndUnitType(
+        String(row[column.index] ?? "").trim(),
+      );
+      if (!(value > 0)) continue;
+      const unit = _explicitUnit ? unitType : column.unitType;
+      if (!unit) continue;
+      byDate.set(date, { date, weight: value, unitType: unit });
+      break;
+    }
+  }
+  return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date));
 }

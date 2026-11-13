@@ -23,6 +23,7 @@ import {
 } from "@/lib/import/parsers/strength-journeys-parser";
 import { placeRowValues, resolveWriteColumns } from "@/lib/sheet/sheet-row-ops";
 import { normalizeDateInput } from "@/lib/date-utils";
+import { isWeighInLiftType } from "@/lib/bodyweight";
 import {
   buildVisibleImportProvenance,
   hasVisibleImportProvenance,
@@ -433,7 +434,8 @@ export default async function handler(req, res) {
     for (const date of sortedDates) {
       const dateEntries = byDate[date];
 
-      // Group by lift type within the date
+      // Group by lift type within the date. A weigh-in goes after the day's
+      // lifts, where the log writes one, so it never sits between sets.
       const liftOrder = [];
       const liftGroups = {};
       for (const entry of dateEntries) {
@@ -443,6 +445,9 @@ export default async function handler(req, res) {
         }
         liftGroups[entry.liftType].push(entry);
       }
+      liftOrder.sort(
+        (a, b) => Number(isWeighInLiftType(a)) - Number(isWeighInLiftType(b)),
+      );
 
       // Build sheet rows (sparse encoding)
       const sourceName =
@@ -466,7 +471,8 @@ export default async function handler(req, res) {
           rows.push([
             isSessionAnchor ? date : "",
             isSessionAnchor || isLiftAnchor ? liftType : "",
-            String(s.reps || 1),
+            // A weigh-in has no reps (see src/lib/bodyweight.js).
+            isWeighInLiftType(liftType) ? "" : String(s.reps || 1),
             `${s.weight}${s.unitType || "kg"}`,
             notes,
             "", // url

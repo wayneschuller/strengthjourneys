@@ -98,6 +98,24 @@ assert.ok(lifts.has("Back Squat"));
 assert.ok(lifts.has("Bench Press"));
 assert.ok(lifts.has("Strict Press"));
 
+// The body weight StrongLifts asks for at each workout comes through as one
+// weigh-in per date, never as a set, from either column shape.
+assert.deepEqual(
+  parseImportedRows(decodeCSV(LEGACY_DAY_FIRST_CSV)).bodyweightEntries,
+  [
+    { date: "2015-03-16", weight: 84, unitType: "kg" },
+    { date: "2015-03-18", weight: 84, unitType: "kg" },
+    { date: "2015-03-23", weight: 83.5, unitType: "kg" },
+  ],
+);
+assert.deepEqual(
+  parseImportedRows(decodeCSV(LEGACY_MONTH_FIRST_CSV)).bodyweightEntries,
+  [
+    { date: "2015-03-16", weight: 84, unitType: "kg" },
+    { date: "2015-03-18", weight: 84, unitType: "kg" },
+  ],
+);
+
 // A file that is not a StrongLifts export must not be claimed by it.
 assert.notEqual(detectFormat(["foo", "bar"])?.id, "stronglifts");
 

@@ -306,6 +306,8 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  * @context sheetBodyweightEntries {Array|null} - The linked sheet's weigh-in rows as the parser
  *   read them (liftType "Bodyweight", no reps, with rowIndex and raw cell text), for the log's
  *   sync. See getSheetBodyweightEntries.
+ * @context importedBodyweightEntries {Array|null} - Weigh-ins the imported file kept
+ *   ([{date, weight, unitType}]), for the merge to write. Null when it kept none.
  * @context bodyweightSeries {Array} - One weigh-in per date, oldest first, for the data on screen.
  *   Ask bodyweightAt() in @/lib/bodyweight for any date in between. Empty without weigh-ins.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.
@@ -336,6 +338,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   const [importedFormatId, setImportedFormatId] = useState(null);
   const [importedFileName, setImportedFileName] = useState(null);
   const [importedDiagnostics, setImportedDiagnostics] = useState(null);
+  // The weigh-ins the file kept, if its app records them. Merged with it.
+  const [importedBodyweightEntries, setImportedBodyweightEntries] =
+    useState(null);
 
   useIsomorphicLayoutEffect(() => {
     try {
@@ -357,6 +362,12 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         setImportedDiagnostics(
           storedDiagnostics ? JSON.parse(storedDiagnostics) : null,
         );
+        const storedBodyweights = sessionStorage.getItem(
+          "sj_importedBodyweights",
+        );
+        setImportedBodyweightEntries(
+          storedBodyweights ? JSON.parse(storedBodyweights) : null,
+        );
       }
     } catch {
       // sessionStorage unavailable or corrupt — stay with null
@@ -369,6 +380,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       formatId,
       formatName,
       diagnostics,
+      bodyweightEntries,
     } = await parseImportedFile(file, {
       preferredUnit: readChosenUnitPreference(),
     });
@@ -378,7 +390,18 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     setImportedFormatId(formatId);
     setImportedFileName(file?.name || null);
     setImportedDiagnostics(diagnostics);
+    setImportedBodyweightEntries(
+      bodyweightEntries?.length ? bodyweightEntries : null,
+    );
     try {
+      if (bodyweightEntries?.length) {
+        sessionStorage.setItem(
+          "sj_importedBodyweights",
+          JSON.stringify(bodyweightEntries),
+        );
+      } else {
+        sessionStorage.removeItem("sj_importedBodyweights");
+      }
       sessionStorage.setItem("sj_importedData", JSON.stringify(processed));
       sessionStorage.setItem("sj_importedFormat", formatName);
       sessionStorage.setItem("sj_importedFormatId", formatId);
@@ -401,6 +424,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       fileName: file?.name || null,
       entries: processed,
       diagnostics,
+      bodyweightEntries: bodyweightEntries ?? [],
     };
   }, []);
 
@@ -410,7 +434,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     setImportedFormatId(null);
     setImportedFileName(null);
     setImportedDiagnostics(null);
+    setImportedBodyweightEntries(null);
     try {
+      sessionStorage.removeItem("sj_importedBodyweights");
       sessionStorage.removeItem("sj_importedData");
       sessionStorage.removeItem("sj_importedFormat");
       sessionStorage.removeItem("sj_importedFormatId");
@@ -1037,6 +1063,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         importedFormatId,
         importedFileName,
         importedDiagnostics,
+        importedBodyweightEntries,
         importProfile,
         rememberImportProfile,
         parseError,

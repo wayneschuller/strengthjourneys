@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
+import { RecordedBodyweightButton } from "@/components/recorded-bodyweight-button";
 
 /**
  * Card that collects the user's basic biometric details (age, bodyweight, height, sex) and a toggle to share them with the AI assistant.
@@ -134,6 +135,11 @@ export function BioDetailsCard({
               onValueChange={(values) => setBodyWeight(values[0])}
               className="mt-2 min-w-40 flex-1"
               aria-label={`Bodyweight in ${isMetric ? "kilograms" : "pounds"}`}
+            />
+            <RecordedBodyweightButton
+              bodyWeight={bodyWeight}
+              setBodyWeight={setBodyWeight}
+              className="mt-1 self-start"
             />
           </div>
           <div className="flex w-full flex-col justify-between">

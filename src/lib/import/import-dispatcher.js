@@ -19,7 +19,7 @@
 //     True only for this app's header row. Keep it exact: an export's headings
 //     are fixed, and a loose match here takes another app's file.
 //
-//   parse(rows, { importedAt, preferredUnit }) → { entries, skippedByReason?, workoutCount?, unitType? }
+//   parse(rows, { importedAt, preferredUnit }) → { entries, skippedByReason?, workoutCount?, unitType?, bodyweights? }
 //     entries          One LiftEntry per set, in any order. Each needs an ISO
 //                      date, a liftType from normalizeExportLiftType (or
 //                      normalizeLiftTypeNames), whole reps above zero, a
@@ -35,6 +35,10 @@
 //                      countSkippedLift, so the preview can name them.
 //     workoutCount     When the export marks where one workout ends.
 //     unitType         When one unit holds for the whole file.
+//     bodyweights      Optional. The lifter's weigh-ins, when the export keeps
+//                      them, as [{ date, weight, unitType }], one per date.
+//                      Never among the entries: a weigh-in is not a set. A
+//                      merge writes them as weigh-in rows (see bodyweight.js).
 //
 //   preferredUnit is the lifter's own unit setting, "kg" or "lb", or absent
 //   when they have never set one. Only for a file that does not say its unit:
@@ -238,7 +242,8 @@ export async function parseImportedFile(file, context = {}) {
  *   note some formats write into the first set of each workout.
  *   `preferredUnit` is the lifter's unit setting, for a file that does not
  *   say its unit.
- * @returns {{ data: ParsedData, formatId: string, formatName: string, diagnostics: ImportDiagnostics | null }}
+ * @returns {{ data: ParsedData, formatId: string, formatName: string, diagnostics: ImportDiagnostics | null, bodyweightEntries: {date: string, weight: number, unitType: string}[] }}
+ *   `bodyweightEntries` is empty for a format that keeps no weigh-ins.
  * @throws {Error} If the format is unrecognized or holds no valid entries
  */
 export function parseImportedRows(
@@ -292,6 +297,7 @@ export function parseImportedRows(
     formatId: format.id,
     formatName: format.name,
     diagnostics: parsed.diagnostics,
+    bodyweightEntries: parsed.bodyweights ?? [],
   };
 }
 
@@ -332,7 +338,12 @@ function parseAppExport(format, rows, context) {
 
   // Counts are shown only for a parser that counts every skip. For the rest,
   // "imported X of Y" would be a guess at Y.
-  if (!result.skippedByReason) return { data, diagnostics: null };
+  const bodyweights = (result.bodyweights ?? []).filter(
+    (weighIn) => weighIn?.date && weighIn.weight > 0 && weighIn.unitType,
+  );
+  if (!result.skippedByReason) {
+    return { data, diagnostics: null, bodyweights };
+  }
 
   const skippedRows = Object.values(skippedByReason).reduce(
     (sum, count) => sum + count,
@@ -340,6 +351,7 @@ function parseAppExport(format, rows, context) {
   );
   return {
     data,
+    bodyweights,
     diagnostics: {
       sourceRows: data.length + skippedRows,
       parsedRows: data.length,

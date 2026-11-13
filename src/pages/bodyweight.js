@@ -11,7 +11,7 @@
  * the chart only becomes a story once there are a few points on it. Past
  * that, the chart leads and the form sits below it.
  */
-import { useLayoutEffect, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
@@ -29,12 +29,9 @@ import {
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
-import { useToast } from "@/hooks/use-toast";
-import { formatDateToYmdLocal } from "@/lib/date-utils";
-import { getSheetWriteColumns } from "@/lib/import/parsers/strength-journeys-parser";
 import { convertWeight, unitTypeFor } from "@/lib/weight-units";
-import { useLogSheetSync } from "@/components/log/use-log-sheet-sync";
 import { WeighInPasteDialog } from "@/components/log/weigh-in-strip";
+import { useWeighInWriter } from "@/components/log/use-weigh-in-writer";
 import { BodyweightTrendCard } from "@/components/visualizer/bodyweight-trend-card";
 import { StartLiftingLogCard } from "@/components/onboarding/instructions-cards";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
@@ -53,9 +50,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
-const useIsomorphicLayoutEffect =
-  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 // Below this many weigh-ins, adding them is the page's first job.
 const FEW_WEIGH_INS = 10;
@@ -85,51 +79,12 @@ export default function BodyweightPage() {
 
 function BodyweightMain() {
   const { status: authStatus } = useSession();
-  const {
-    dataSource,
-    hasLinkedSheet,
-    sheetInfo,
-    parsedData,
-    parsedDataReadAt,
-    sheetLayout,
-    bodyweightSeries,
-    mutate,
-  } = useUserLiftingData();
-  const { isMetric, sex } = useAthleteBio();
-  const { toast } = useToast();
+  const { dataSource, hasLinkedSheet, parsedData, bodyweightSeries } =
+    useUserLiftingData();
+  const { isMetric } = useAthleteBio();
   const unit = unitTypeFor(isMetric);
-
-  const [todayIso, setTodayIso] = useState(null);
-  useIsomorphicLayoutEffect(() => {
-    setTodayIso(formatDateToYmdLocal(new Date()));
-  }, []);
-
-  const sheetColumns = useMemo(
-    () => getSheetWriteColumns(sheetLayout),
-    [sheetLayout],
-  );
-  // The same rule the log uses for which sheet the queue belongs to.
-  const syncSsid =
-    authStatus === "loading" ||
-    dataSource === "loading" ||
-    dataSource === "restoring"
-      ? undefined
-      : authStatus === "authenticated"
-        ? (sheetInfo?.ssid ?? null)
-        : null;
-  const { saveWeighIn, deleteWeighIn, weighInSeries } = useLogSheetSync({
-    ssid: syncSsid,
-    canWrite: hasLinkedSheet,
-    parsedData,
-    parsedDataReadAt,
-    sheetColumns,
-    sessionDate: todayIso ?? "",
-    isMetric,
-    sex,
-    mutate,
-    toast,
-  });
-  const canWrite = hasLinkedSheet && sheetColumns !== null && !!todayIso;
+  const { canWrite, todayIso, saveWeighIn, deleteWeighIn, weighInSeries } =
+    useWeighInWriter();
 
   // The queue's view, not the last read: a weigh-in added here shows at once
   // in the list and the chart, marked as saving until the sheet has it.

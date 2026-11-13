@@ -66,6 +66,9 @@ export const LOCAL_STORAGE_KEYS = {
   // from ("2026-11-14|84.20"), so a new weigh-in updates it once and a
   // what-if on a calculator slider is left alone until the next one.
   ATHLETE_BODY_WEIGHT_SYNCED_WEIGH_IN: "SJ_bodyWeightSyncedWeighIn",
+  // The Monday ("2026-11-09") of the week the dashboard's weigh-in nudge was
+  // put away, so it stays away for the rest of that week only.
+  WEIGH_IN_NUDGE_DISMISSED_WEEK: "SJ_weighInNudgeDismissedWeek",
   // Set to "1" when the user (or a shared URL) explicitly provides a unit preference.
   // Prevents the data-driven auto-init from overriding an intentional choice.
   UNIT_PREFERENCE_SET: "SJ_unitPreferenceSet",

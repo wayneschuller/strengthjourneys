@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { GoogleSignInButton } from "@/components/onboarding/google-sign-in";
 import { getConsecutiveWorkoutGroups } from "@/components/home-dashboard/session-exercise-block";
 import { DemoModeBadge } from "@/components/demo-mode-badge";
+import { WeighInNudge } from "@/components/home-dashboard/weigh-in-nudge";
 import {
   AiReviewActions,
   buildCardCopyText,
@@ -781,6 +782,9 @@ export function TheWeekInIronCard({
                       trainedLiftTypes={stats.liftTypes}
                     />
                   </WeekSection>
+                  {/* Shows only when the last weigh-in is over four weeks
+                      old, or there has never been one. */}
+                  <WeighInNudge mondayStr={boundaries.mondayStr} />
                 </>
               )}
 

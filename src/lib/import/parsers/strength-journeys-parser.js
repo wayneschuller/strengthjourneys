@@ -78,6 +78,32 @@ export function getSheetBodyweightEntries(parsedData) {
   return (parsedData && sheetBodyweights.get(parsedData)) ?? [];
 }
 
+const rowsWithWeighIns = new WeakMap();
+
+/**
+ * Every row the log's sync works from: the sets plus the weigh-ins, ordered
+ * by date and then by sheet row, as the parse would have read them. The sync
+ * engine places a write by the rows it knows, so it has to know a weigh-in is
+ * there before it can keep a set from landing under it. Without weigh-ins
+ * this is the parse itself, the same array, so nothing downstream sees a
+ * change of identity.
+ *
+ * @param {import("./index").ParsedData} parsedData As returned by
+ *   parseStrengthJourneysData.
+ */
+export function getRowsWithWeighIns(parsedData) {
+  const weighIns = getSheetBodyweightEntries(parsedData);
+  if (!weighIns.length) return parsedData;
+  const cached = rowsWithWeighIns.get(parsedData);
+  if (cached) return cached;
+  const merged = [...parsedData, ...weighIns].sort(
+    (a, b) =>
+      a.date.localeCompare(b.date) || (a.rowIndex ?? 0) - (b.rowIndex ?? 0),
+  );
+  rowsWithWeighIns.set(parsedData, merged);
+  return merged;
+}
+
 const KNOWN_HEADERS = [
   "Date",
   "Lift Type",

@@ -29,6 +29,9 @@ import {
 } from "@/hooks/use-userlift-data";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { parseData } from "@/lib/import/import-dispatcher";
+import { getRowsWithWeighIns } from "@/lib/import/parsers/strength-journeys-parser";
+import { WEIGH_IN_LIFT_TYPE } from "@/lib/bodyweight";
+import { convertWeight } from "@/lib/weight-units";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDisplayWeight } from "@/lib/processing-utils";
 import { buzz, HAPTIC } from "@/lib/haptics";
@@ -96,7 +99,10 @@ const store = createLogSyncStore({
     const data = await Promise.resolve(bridge.mutate?.()).catch(() => null);
     const readAt = getLatestSheetReadAt();
     if (!data?.values || readAt === null) return null;
-    return { readAt, rows: needRows ? parseData(data.values) : null };
+    return {
+      readAt,
+      rows: needRows ? getRowsWithWeighIns(parseData(data.values)) : null,
+    };
   },
 
   onFailure(event) {
@@ -186,6 +192,12 @@ export function useLogSheetSync({
     getServerState,
   );
   const isLive = Boolean(canWrite && ssid && Array.isArray(parsedData));
+  // The engine places every write by the rows it knows, weigh-ins included,
+  // so a set can never land under a weigh-in or a weigh-in between sets.
+  const syncRows = useMemo(
+    () => (Array.isArray(parsedData) ? getRowsWithWeighIns(parsedData) : null),
+    [parsedData],
+  );
 
   // Hand each snapshot to the store before paint, so the queue and the rows
   // it is drawn over never spend a frame out of step.
@@ -197,13 +209,13 @@ export function useLogSheetSync({
     store.configure(ssid);
     if (!isLive) return;
     store.snapshot(
-      { rows: parsedData, readAt: parsedDataReadAt, columns: sheetColumns },
+      { rows: syncRows, readAt: parsedDataReadAt, columns: sheetColumns },
       sessionDate,
     );
   }, [
     ssid,
     isLive,
-    parsedData,
+    syncRows,
     parsedDataReadAt,
     sheetColumns,
     sessionDate,
@@ -218,7 +230,7 @@ export function useLogSheetSync({
   // render of the demo log needs no store at all.
   const viewState = useMemo(() => {
     const snapshot = {
-      rows: parsedData ?? null,
+      rows: syncRows,
       readAt: parsedDataReadAt,
       columns: sheetColumns,
     };
@@ -234,16 +246,21 @@ export function useLogSheetSync({
     isLive,
     storeState,
     ssid,
-    parsedData,
+    syncRows,
     parsedDataReadAt,
     sheetColumns,
     sessionDate,
   ]);
 
-  const sessionLifts = useMemo(
-    () => projectSession(viewState, sessionDate),
-    [viewState, sessionDate],
-  );
+  // The session's weigh-in is drawn apart from its lifts: a row of the sheet
+  // like a set, but never a lift block.
+  const { sessionLifts, weighIn } = useMemo(() => {
+    const { [WEIGH_IN_LIFT_TYPE]: weighIns, ...lifts } = projectSession(
+      viewState,
+      sessionDate,
+    );
+    return { sessionLifts: lifts, weighIn: weighIns?.[0] ?? null };
+  }, [viewState, sessionDate]);
 
   const summary = useMemo(() => getSyncSummary(storeState), [storeState]);
   const isDeletingSession = summary.deletingSessionDates.includes(sessionDate);
@@ -440,16 +457,92 @@ export function useLogSheetSync({
   // The log stays on the date it was showing: the emptied day goes back to
   // its lift suggestions, ready to be logged again.
   // Resolves once the sheet has answered, whichever way.
+  // A weigh-in outlives the session it sat in: the lifter weighed what they
+  // weighed whether or not the workout stays. It goes back in as that day's
+  // only row once the delete has gone through, from the same queue.
   const deleteSession = useCallback(async () => {
     if (!isLive) return false;
-    return store.deleteSession({ date: sessionDate });
-  }, [isLive, sessionDate]);
+    const keptWeighIn = weighIn;
+    const deleted = store.deleteSession({ date: sessionDate });
+    if (keptWeighIn) {
+      store.addSet({
+        date: sessionDate,
+        liftType: WEIGH_IN_LIFT_TYPE,
+        fields: {
+          reps: "",
+          weight: keptWeighIn.weight,
+          unitType: keptWeighIn.unitType,
+          notes: hasNotesColumn ? (keptWeighIn.notes ?? "") : "",
+          url: "",
+        },
+      });
+    }
+    return deleted;
+  }, [isLive, sessionDate, weighIn, hasNotesColumn]);
+
+  // --- Weigh-ins ---
+
+  /**
+   * Record the weigh-in for a date, or change it. `weight` is in `unitType`;
+   * an existing weigh-in keeps the unit it was written in.
+   */
+  const saveWeighIn = useCallback(
+    ({ date = sessionDate, weight, unitType, notes = "" }) => {
+      if (!isLive || !(weight > 0)) return;
+      const existing =
+        date === sessionDate
+          ? weighIn
+          : (projectSession(viewState, date)[WEIGH_IN_LIFT_TYPE]?.[0] ?? null);
+      if (existing) {
+        const inItsUnit =
+          Math.round(
+            convertWeight(weight, unitType, existing.unitType ?? unitType) * 10,
+          ) / 10;
+        const patch = {};
+        if (inItsUnit !== existing.weight) patch.weight = inItsUnit;
+        if (hasNotesColumn && (notes ?? "") !== (existing.notes ?? "")) {
+          patch.notes = notes ?? "";
+        }
+        if (Object.keys(patch).length) {
+          store.editSet({ date, key: existing._key, patch });
+        }
+        return;
+      }
+      store.addSet({
+        date,
+        liftType: WEIGH_IN_LIFT_TYPE,
+        fields: {
+          reps: "",
+          weight,
+          unitType,
+          notes: hasNotesColumn ? (notes ?? "") : "",
+          url: "",
+        },
+      });
+    },
+    [isLive, sessionDate, weighIn, viewState, hasNotesColumn],
+  );
+
+  const deleteWeighIn = useCallback(
+    (date = sessionDate) => {
+      if (!isLive) return;
+      const existing =
+        date === sessionDate
+          ? weighIn
+          : (projectSession(viewState, date)[WEIGH_IN_LIFT_TYPE]?.[0] ?? null);
+      if (existing) store.deleteSet({ date, key: existing._key });
+    },
+    [isLive, sessionDate, weighIn, viewState],
+  );
 
   return {
     syncState,
     isDeletingSession,
     isDeleteCooldownActive,
     sessionLifts,
+    weighIn,
+    saveWeighIn,
+    deleteWeighIn,
     updateSet,
     deleteSet,
     addSet,

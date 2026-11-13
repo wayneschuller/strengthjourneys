@@ -399,6 +399,9 @@ function buildInsertedCell(value, isReps) {
   // A column the app does not write, sitting between two it does. The row is
   // new, so there is nothing in the cell to preserve.
   if (value === null) return {};
+  // A weigh-in has no reps. An empty cell stays empty rather than becoming a
+  // zero or an empty string Sheets would keep as content.
+  if (value === "") return {};
   if (isReps) {
     const numericValue = Number(value);
     if (Number.isFinite(numericValue)) {

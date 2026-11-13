@@ -37,8 +37,13 @@ const {
   toLogicalRows,
   toRawRow,
 } = await import("../src/lib/sheet/sheet-row-ops.js");
-const { parseStrengthJourneysData, getSheetLayout, getSheetWriteColumns } =
-  await import("../src/lib/import/parsers/strength-journeys-parser.js");
+const {
+  parseStrengthJourneysData,
+  getSheetLayout,
+  getSheetWriteColumns,
+  getRowsWithWeighIns,
+  getSheetBodyweightEntries,
+} = await import("../src/lib/import/parsers/strength-journeys-parser.js");
 
 // The parser reports its repairs on the console; keep the run quiet.
 console.info = () => {};
@@ -378,14 +383,16 @@ function createWorld({
     // An identical read keeps the object SWR already holds, and so the rows
     // parsed from it; only the stamp moves on.
     const fingerprint = JSON.stringify(values);
-    const rows =
+    const parsed =
       swr.cache && swr.fingerprint === fingerprint
-        ? swr.cache.rows
+        ? swr.cache.parsed
         : parseStrengthJourneysData(values);
     swr.fingerprint = fingerprint;
+    // The engine works from the sets and the weigh-ins, as the log does.
+    const rows = getRowsWithWeighIns(parsed);
     // The page works the write columns out from the parse, as log.js does.
-    const columns = getSheetWriteColumns(getSheetLayout(rows));
-    const data = { rows, readAt, columns };
+    const columns = getSheetWriteColumns(getSheetLayout(parsed));
+    const data = { rows, readAt, columns, parsed };
     swr.cache = data;
     trace(clock.now(), "read delivered, started", readAt);
     // The page hands the snapshot on a moment later, as an effect would.
@@ -454,8 +461,12 @@ function createWorld({
     }
   };
   world.sheetSession = (date) =>
-    parseStrengthJourneysData(sheet.snapshot()).filter(
+    getRowsWithWeighIns(parseStrengthJourneysData(sheet.snapshot())).filter(
       (row) => row.date === date,
+    );
+  world.sheetWeighIns = () =>
+    getSheetBodyweightEntries(parseStrengthJourneysData(sheet.snapshot())).map(
+      (entry) => `${entry.date} ${entry.weight}${entry.unitType}`,
     );
   world.start = async (
     viewDate,
@@ -718,7 +729,91 @@ const keyAt = (world, date, liftType, position) =>
 
 // --- Scenarios: the failures this page has actually had ---------------------------
 
+const WEIGH_IN = { reps: "", weight: 84.2, unitType: "kg", notes: "", url: "" };
+
 const scenarios = {
+  async "a weigh-in sits with its session and sets added after stay in their blocks"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    const weighIn = lifter.add(TODAY, "Bodyweight", WEIGH_IN);
+    await settle(world, lifter, "weigh-in added");
+    lifter.add(TODAY, "Back Squat", { reps: 3, weight: 110 });
+    lifter.add(TODAY, "Deadlift", { reps: 1, weight: 200 });
+    lifter.add(TODAY, "Bench Press", { reps: 5, weight: 82.5 });
+    lifter.edit(TODAY, weighIn, { weight: 84.6, notes: "after breakfast" });
+    await settle(world, lifter, "sets around a weigh-in");
+    lifter.checkSheet("sets around a weigh-in");
+    assert.deepEqual(world.sheetWeighIns(), [`${TODAY} 84.6kg`]);
+    // Nothing of today's leaked into yesterday's session.
+    assert.equal(
+      world.sheetSession(YESTERDAY).length,
+      parseStrengthJourneysData(new FakeSheet(baseRows()).snapshot()).filter(
+        (row) => row.date === YESTERDAY,
+      ).length,
+    );
+    assert.equal(world.failures.length, 0);
+  },
+
+  async "a weigh-in on a day without a session goes in date order"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed("2026-03-09");
+    lifter.add("2026-03-09", "Bodyweight", WEIGH_IN);
+    lifter.add("2026-03-12", "Bodyweight", { ...WEIGH_IN, weight: 84 });
+    await settle(world, lifter, "weigh-in only days");
+    lifter.checkSheet("weigh-in only days");
+    assert.deepEqual(world.sheetWeighIns(), [
+      "2026-03-09 84.2kg",
+      "2026-03-12 84kg",
+    ]);
+    assert.equal(world.sheetSession(TODAY).length, 6);
+    assert.equal(world.failures.length, 0);
+  },
+
+  async "deleting the only set above a weigh-in hands it the date"() {
+    const rows = [
+      [TODAY, "Back Squat", "5", "100kg", "", ""],
+      ["", "Bodyweight", "", "84kg", "", ""],
+      [YESTERDAY, "Deadlift", "1", "180kg", "", ""],
+    ];
+    const world = createWorld({ rows });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    lifter.remove(TODAY, keyAt(world, TODAY, "Back Squat", 0));
+    await settle(world, lifter, "delete above weigh-in");
+    lifter.checkSheet("delete above weigh-in");
+    assert.deepEqual(world.sheetWeighIns(), [`${TODAY} 84kg`]);
+    assert.equal(world.failures.length, 0);
+  },
+
+  async "deleting a session keeps its weigh-in"() {
+    const world = createWorld({ rows: baseRows() });
+    await world.start(TODAY);
+    const lifter = createLifter(world);
+    lifter.seed(TODAY);
+    lifter.add(TODAY, "Bodyweight", WEIGH_IN);
+    await settle(world, lifter, "weigh-in before delete");
+    // As the log's deleteSession does: the delete, then the weigh-in again.
+    world.store.deleteSession({ date: TODAY });
+    world.store.addSet({
+      date: TODAY,
+      liftType: "Bodyweight",
+      fields: WEIGH_IN,
+    });
+    await settle(world, null, "delete session with weigh-in");
+    assert.deepEqual(
+      world.sheetSession(TODAY).map((row) => row.liftType),
+      ["Bodyweight"],
+    );
+    assert.deepEqual(world.sheetWeighIns(), [`${TODAY} 84.2kg`]);
+    assert.equal(world.sheetSession(YESTERDAY).length, 3);
+    assert.equal(world.failures.length, 0);
+  },
+
   async "an edit made straight after adding a set is kept"() {
     const world = createWorld({ rows: baseRows() });
     await world.start(TODAY);

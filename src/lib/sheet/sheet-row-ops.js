@@ -23,6 +23,7 @@
  * much less likely while the client sync model is being hardened.
  */
 
+import { isWeighInLiftType } from "@/lib/bodyweight";
 import { normalizeColumnName } from "@/lib/import/parsers/parser-utilities";
 
 // --- Where a sheet keeps its columns -----------------------------------------
@@ -266,7 +267,8 @@ export function readRowsBelow({ ssid, rowIndex, headers }) {
  * which of the two it needs.
  *
  * The heir is the next set row, the first row below with both reps and
- * weight, because that is the next row the parser reads anchors from. It
+ * weight (or a weigh-in, which has no reps), because that is the next row the
+ * parser reads anchors from. It
  * needs a cell only if it leaves that cell blank and is still in the deleted
  * row's session. A cell it fills itself is reported as null so the write
  * skips it; an empty string there would clear it.
@@ -285,7 +287,11 @@ export function planAnchorPromotion(
 ) {
   for (let offset = 0; offset < following.length; offset += 1) {
     const row = toRawRow(following[offset], columns, null);
-    const isSetRow = row.reps !== "" && row.weight !== "";
+    // A weigh-in row has no reps, but it is read like a set: it takes its
+    // date from the nearest one above, so it can inherit one too.
+    const isSetRow =
+      row.weight !== "" &&
+      (row.reps !== "" || isWeighInLiftType(row.rawLiftType));
     if (!isSetRow) continue;
 
     const { rawDate, rawLiftType } = row;

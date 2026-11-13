@@ -22,6 +22,7 @@ import {
   Mountain,
   Upload,
   Disc,
+  Scale,
 } from "lucide-react";
 
 import { GorillaIcon } from "@/components/gorilla-icon";
@@ -115,6 +116,14 @@ export const featurePages = [
     description:
       "Chart lifts beyond the Big Four with full-range E1RM history over time.",
     IconComponent: LineChart,
+  },
+  {
+    href: "/bodyweight",
+    title: "Bodyweight Tracker",
+    description:
+      "Chart your weigh-ins over time and your strength for your bodyweight, in your own sheet.",
+    IconComponent: Scale,
+    pill: { kind: "new", date: "2026-11-14" },
   },
   {
     href: "/strength-year-in-review",

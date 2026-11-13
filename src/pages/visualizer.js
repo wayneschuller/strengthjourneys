@@ -4,7 +4,6 @@ import { StartLiftingLogCard } from "@/components/onboarding/instructions-cards"
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { VisualizerShadcn } from "@/components/visualizer/visualizer-shadcn";
 import { TheLatestSessionCard } from "@/components/home-dashboard/the-latest-session-card";
-import { BodyweightTrendCard } from "@/components/visualizer/bodyweight-trend-card";
 import {
   PageContainer,
   PageHeader,
@@ -116,10 +115,6 @@ function VisualizerMain({ relatedArticles }) {
           </div>
         </section>
       )}
-      {/* Renders only for a lifter with two or more weigh-ins. */}
-      <div className="mt-5">
-        <BodyweightTrendCard />
-      </div>
       <RelatedArticles articles={relatedArticles} />
     </PageContainer>
   );

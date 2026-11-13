@@ -59,6 +59,7 @@ import {
   Sparkles,
   CircleDashed,
   Mountain,
+  Scale,
 } from "lucide-react";
 import { LiftIcon } from "@/components/lift-icon";
 import {
@@ -543,6 +544,12 @@ function StrengthInsightsMenu() {
       title: "Strength Visualizer",
       href: "/visualizer",
       icon: <LineChart className="h-5 w-5" />,
+    },
+    {
+      title: "Bodyweight",
+      href: "/bodyweight",
+      icon: <Scale className="h-5 w-5" />,
+      pill: { kind: "new", date: "2026-11-14" },
     },
     {
       title: "AI Lifting Assistant",

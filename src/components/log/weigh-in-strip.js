@@ -13,8 +13,10 @@
  * series itself lives in src/lib/bodyweight.js.
  */
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ClipboardPaste,
+  LineChart,
   MoreHorizontal,
   Pencil,
   Scale,
@@ -259,6 +261,12 @@ export function WeighInStrip({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href="/bodyweight">
+                  <LineChart className="h-4 w-4" />
+                  Your bodyweight chart
+                </Link>
+              </DropdownMenuItem>
               <DropdownMenuItem onSelect={() => setIsPasteOpen(true)}>
                 <ClipboardPaste className="h-4 w-4" />
                 Paste weigh-ins
@@ -288,7 +296,7 @@ export function WeighInStrip({
  * export. Each line is shown before anything is saved, with what it adds or
  * changes.
  */
-function WeighInPasteDialog({
+export function WeighInPasteDialog({
   open,
   onOpenChange,
   bodyweightSeries,

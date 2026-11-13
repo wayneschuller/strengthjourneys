@@ -48,7 +48,7 @@ export function isWeighInLiftType(liftType) {
  *
  * @param {object[]|null} entries Weigh-in entries from the parser.
  * @returns {{date: string, value: number, unitType: string, kg: number,
- *   notes: string, rowIndex: number|undefined}[]}
+ *   notes: string, rowIndex: number|undefined, pending: boolean}[]}
  */
 export function getBodyweightSeries(entries) {
   if (!Array.isArray(entries) || entries.length === 0) return EMPTY_SERIES;
@@ -73,6 +73,8 @@ export function getBodyweightSeries(entries) {
       kg: toKg(entry.weight, entry.unitType),
       notes: entry.notes ?? "",
       rowIndex: entry.rowIndex,
+      // Drawn from the log's sync queue and not in the sheet yet.
+      pending: Boolean(entry._pending || entry._saving),
     }));
 }
 

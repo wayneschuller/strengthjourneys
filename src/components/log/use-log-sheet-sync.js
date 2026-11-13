@@ -30,7 +30,7 @@ import {
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
 import { parseData } from "@/lib/import/import-dispatcher";
 import { getRowsWithWeighIns } from "@/lib/import/parsers/strength-journeys-parser";
-import { WEIGH_IN_LIFT_TYPE } from "@/lib/bodyweight";
+import { getBodyweightSeries, WEIGH_IN_LIFT_TYPE } from "@/lib/bodyweight";
 import { convertWeight } from "@/lib/weight-units";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
 import { getDisplayWeight } from "@/lib/processing-utils";
@@ -261,6 +261,25 @@ export function useLogSheetSync({
     );
     return { sessionLifts: lifts, weighIn: weighIns?.[0] ?? null };
   }, [viewState, sessionDate]);
+
+  // Every weigh-in as the lifter should see it, on any date: the sheet's
+  // with each queued add, edit and delete drawn over, so a page listing them
+  // shows a new one the moment it is added, marked pending until it lands.
+  const weighInSeries = useMemo(() => {
+    const dates = new Set();
+    for (const row of syncRows ?? []) {
+      if (row.liftType === WEIGH_IN_LIFT_TYPE) dates.add(row.date);
+    }
+    for (const op of viewState.ops) {
+      if (op.date) dates.add(op.date);
+    }
+    const entries = [];
+    for (const date of dates) {
+      const row = projectSession(viewState, date)[WEIGH_IN_LIFT_TYPE]?.[0];
+      if (row) entries.push({ ...row, date });
+    }
+    return getBodyweightSeries(entries);
+  }, [syncRows, viewState]);
 
   const summary = useMemo(() => getSyncSummary(storeState), [storeState]);
   const isDeletingSession = summary.deletingSessionDates.includes(sessionDate);
@@ -541,6 +560,7 @@ export function useLogSheetSync({
     isDeleteCooldownActive,
     sessionLifts,
     weighIn,
+    weighInSeries,
     saveWeighIn,
     deleteWeighIn,
     updateSet,

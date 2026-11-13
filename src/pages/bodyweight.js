@@ -15,7 +15,15 @@ import { useLayoutEffect, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { useSession } from "next-auth/react";
-import { ClipboardPaste, Plus, Scale, Trash2 } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  Check,
+  ClipboardPaste,
+  Loader2,
+  Plus,
+  Scale,
+  Trash2,
+} from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
@@ -107,7 +115,7 @@ function BodyweightMain() {
       : authStatus === "authenticated"
         ? (sheetInfo?.ssid ?? null)
         : null;
-  const { saveWeighIn, deleteWeighIn } = useLogSheetSync({
+  const { saveWeighIn, deleteWeighIn, weighInSeries } = useLogSheetSync({
     ssid: syncSsid,
     canWrite: hasLinkedSheet,
     parsedData,
@@ -121,12 +129,25 @@ function BodyweightMain() {
   });
   const canWrite = hasLinkedSheet && sheetColumns !== null && !!todayIso;
 
-  const count = bodyweightSeries?.length ?? 0;
-  const isEarly = count < FEW_WEIGH_INS;
+  // The queue's view, not the last read: a weigh-in added here shows at once
+  // in the list and the chart, marked as saving until the sheet has it.
+  const series = hasLinkedSheet ? weighInSeries : bodyweightSeries;
+  const count = series?.length ?? 0;
+
+  // Form first or chart first is settled once, from what the lifter had when
+  // the page opened, so adding the tenth weigh-in never moves the form out
+  // from under them.
+  const [leadWithForm, setLeadWithForm] = useState(null);
+  const isReady = hasLinkedSheet && Array.isArray(parsedData);
+  // Set while rendering, React's pattern for state taken from props once.
+  if (leadWithForm === null && isReady) {
+    setLeadWithForm(count < FEW_WEIGH_INS);
+  }
+  const isEarly = leadWithForm ?? count < FEW_WEIGH_INS;
 
   const entry = canWrite ? (
     <WeighInEntryCard
-      bodyweightSeries={bodyweightSeries}
+      bodyweightSeries={series}
       todayIso={todayIso}
       unit={unit}
       compact={!isEarly}
@@ -154,7 +175,7 @@ function BodyweightMain() {
         <div className="space-y-5">
           {isEarly && entry}
           {count >= 2 ? (
-            <BodyweightTrendCard />
+            <BodyweightTrendCard series={series} />
           ) : (
             <p className="text-muted-foreground px-1 text-sm">
               {count === 1
@@ -196,6 +217,15 @@ function WeighInEntryCard({
   );
   const [notes, setNotes] = useState("");
   const [isPasteOpen, setIsPasteOpen] = useState(false);
+  // A beat of "Added" on the button, so the tap is answered at once; the row
+  // itself appears in the list straight away and settles once it is saved.
+  const [justAdded, setJustAdded] = useState(0);
+  useEffect(() => {
+    if (!justAdded) return;
+    const timer = setTimeout(() => setJustAdded(0), 1400);
+    return () => clearTimeout(timer);
+  }, [justAdded]);
+  const prefersReducedMotion = useReducedMotion();
   const recent = (bodyweightSeries ?? []).slice(-6).reverse();
 
   const value = Number(String(weight).replace(",", "."));
@@ -206,6 +236,7 @@ function WeighInEntryCard({
     if (!isValid) return;
     onSave({ date, weight: round(value), unitType: unit, notes: notes.trim() });
     setNotes("");
+    setJustAdded((previous) => previous + 1);
   };
 
   return (
@@ -254,10 +285,28 @@ function WeighInEntryCard({
               className="h-9"
             />
           </label>
-          <Button type="submit" size="sm" className="h-9" disabled={!isValid}>
-            <Plus className="h-4 w-4" aria-hidden />
-            Add
-          </Button>
+          <motion.div
+            key={justAdded}
+            initial={
+              justAdded && !prefersReducedMotion ? { scale: 0.92 } : false
+            }
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 500, damping: 18 }}
+          >
+            <Button
+              type="submit"
+              size="sm"
+              className="h-9 min-w-[5.5rem]"
+              disabled={!isValid}
+            >
+              {justAdded ? (
+                <Check className="h-4 w-4" aria-hidden />
+              ) : (
+                <Plus className="h-4 w-4" aria-hidden />
+              )}
+              {justAdded ? "Added" : "Add"}
+            </Button>
+          </motion.div>
           <Button
             type="button"
             size="sm"
@@ -271,31 +320,57 @@ function WeighInEntryCard({
         </form>
 
         {!compact && recent.length > 0 && (
-          <ul className="divide-y rounded-md border text-sm">
-            {recent.map((weighIn) => (
-              <li
-                key={weighIn.date}
-                className="flex items-center gap-3 px-3 py-1.5"
-              >
-                <span className="tabular-nums">{weighIn.date}</span>
-                <span className="font-semibold tabular-nums">
-                  {round(convertWeight(weighIn.kg, "kg", unit))} {unit}
-                </span>
-                <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                  {weighIn.notes}
-                </span>
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  aria-label={`Delete the weigh-in on ${weighIn.date}`}
-                  onClick={() => onDelete(weighIn.date)}
+          <ul className="divide-y overflow-hidden rounded-md border text-sm">
+            <AnimatePresence initial={false}>
+              {recent.map((weighIn) => (
+                <motion.li
+                  key={weighIn.date}
+                  layout={!prefersReducedMotion}
+                  initial={
+                    prefersReducedMotion ? false : { opacity: 0, height: 0 }
+                  }
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={
+                    prefersReducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, height: 0 }
+                  }
+                  transition={{ duration: 0.22, ease: "easeOut" }}
+                  className="flex items-center gap-3 px-3 py-1.5"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </li>
-            ))}
+                  <span className="tabular-nums">{weighIn.date}</span>
+                  <span
+                    className={
+                      weighIn.pending
+                        ? "font-semibold tabular-nums opacity-70"
+                        : "font-semibold tabular-nums"
+                    }
+                  >
+                    {round(convertWeight(weighIn.kg, "kg", unit))} {unit}
+                  </span>
+                  <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+                    {weighIn.pending ? (
+                      <span className="inline-flex items-center gap-1">
+                        <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                        Saving to your sheet
+                      </span>
+                    ) : (
+                      weighIn.notes
+                    )}
+                  </span>
+                  <Button
+                    type="button"
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7"
+                    aria-label={`Delete the weigh-in on ${weighIn.date}`}
+                    onClick={() => onDelete(weighIn.date)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </motion.li>
+              ))}
+            </AnimatePresence>
           </ul>
         )}
       </CardContent>

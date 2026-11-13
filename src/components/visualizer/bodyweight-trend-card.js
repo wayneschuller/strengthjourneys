@@ -57,8 +57,19 @@ const BODYWEIGHT_COLOR = "var(--chart-1)";
 // decade of lifting is never divided by one weigh-in from last month.
 const RATIO_LEAD_DAYS = 30;
 
-export function BodyweightTrendCard() {
-  const { bodyweightSeries, parsedData, dataSource } = useUserLiftingData();
+/**
+ * @param {Object} [props]
+ * @param {Array} [props.series] The weigh-ins to chart, when the page holds
+ *   its own view of them (the bodyweight page passes the sync queue's, so a
+ *   new weigh-in shows at once). Defaults to the sheet's.
+ */
+export function BodyweightTrendCard({ series } = {}) {
+  const {
+    bodyweightSeries: sheetSeries,
+    parsedData,
+    dataSource,
+  } = useUserLiftingData();
+  const bodyweightSeries = series ?? sheetSeries;
   const { isMetric } = useAthleteBio();
   const { getColor } = useLiftColors();
   const unit = unitTypeFor(isMetric);

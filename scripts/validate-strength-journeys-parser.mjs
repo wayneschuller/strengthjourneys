@@ -926,6 +926,33 @@ assert.equal(normalizeDateInput("2026-10-17x"), null);
   ]) {
     assert.equal(isWeighInLiftType(name), true, name);
   }
+  // A pasted table of weigh-ins: tabs, commas or spaces, a header row, a
+  // decimal comma, a date in the future and a line of nothing usable.
+  const { parseWeighInTable } = await import("../src/lib/bodyweight.js");
+  const pasted = parseWeighInTable(
+    [
+      "Date\tWeight",
+      "2026-11-01\t186 lb",
+      "11/12/2026, 84.5, after the long weekend",
+      "2026-11-10 83,9kg",
+      "2099-01-01 180",
+      "",
+    ].join("\n"),
+    { unit: "lb", todayIso: "2026-11-14", bodyweightSeries: series },
+  );
+  assert.deepEqual(
+    pasted.rows.map((row) => [
+      row.date,
+      `${row.weight}${row.unitType}`,
+      row.status,
+    ]),
+    [
+      ["2026-11-01", "186lb", "same"],
+      ["2026-11-10", "83.9kg", "new"],
+      ["2026-11-12", "84.5lb", "update"],
+    ],
+  );
+  assert.equal(pasted.skipped, 1);
   for (const name of ["Bodyweight Squat", "Back Squat", "Weighted Pull Up"]) {
     assert.equal(isWeighInLiftType(name), false, name);
   }

@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/app-banner";
 import { getSheetWriteColumns } from "@/lib/import/parsers/strength-journeys-parser";
 import { LogDateNav } from "@/components/log/log-date-nav";
+import { WeighInStrip } from "@/components/log/weigh-in-strip";
 import { MeetDayBanner } from "@/components/log/meet-day-banner";
 import { PreviewLogCta } from "@/components/log/preview-log-cta";
 
@@ -188,7 +189,7 @@ export default function LogSessionPage({
     parsedDataReadAt,
     sheetLayout,
   } = useUserLiftingData();
-  const { isMetric, sex, toggleIsMetric } = useAthleteBio();
+  const { isMetric, sex, toggleIsMetric, bodyweightSeries } = useAthleteBio();
   const { toast } = useToast();
   const persistedSheetInfo = useMemo(() => {
     if (!isClient) return null;
@@ -271,6 +272,9 @@ export default function LogSessionPage({
     isDeletingSession,
     isDeleteCooldownActive,
     sessionLifts: sessionLiftsWithPending,
+    weighIn,
+    saveWeighIn,
+    deleteWeighIn,
     updateSet,
     deleteSet,
     addSet,
@@ -808,6 +812,22 @@ export default function LogSessionPage({
                     <div data-returning-visit="">
                       <LogSessionSkeleton />
                     </div>
+                  )}
+
+                  {/* The day's weigh-in sits above its lifts, apart from
+                      them (see WeighInStrip). */}
+                  {!showSessionBootstrap && !isLoading && (
+                    <WeighInStrip
+                      weighIn={weighIn}
+                      bodyweightSeries={bodyweightSeries}
+                      sessionDate={sessionDate}
+                      todayIso={todayIso}
+                      isMetric={isMetric}
+                      canWrite={!previewMode && !isWriteBlocked}
+                      isMeetDay={meetDays?.has(sessionDate) ?? false}
+                      onSave={saveWeighIn}
+                      onDelete={deleteWeighIn}
+                    />
                   )}
 
                   {!showSessionBootstrap && !isLoading && !hasSession && (

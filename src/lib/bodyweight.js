@@ -19,6 +19,8 @@
  * never disagree about the same day.
  */
 
+import { normalizeDateInput } from "@/lib/date-utils";
+import { convertWeightAndUnitType } from "@/lib/import/parsers/parser-utilities";
 import { convertWeight, toKg } from "@/lib/weight-units";
 
 /** The lift type the app writes on a weigh-in row. */
@@ -152,6 +154,68 @@ export function bodyweightOnDates(series, dates, unitType = "kg") {
     date,
     bodyweight: bodyweightAt(series, date, unitType),
   }));
+}
+
+const LINE =
+  /^\s*([^\s,;\t]+)[\s,;\t]+(\d[\d.,]*\s*(?:kgs?|lbs?|kilos?|pounds?)?)(?:[\s,;\t]+(.*))?$/i;
+
+/**
+ * Read a pasted table of weigh-ins. Later lines for the same date win. Dates
+ * after today are left out, along with any line that has no date or weight.
+ */
+export function parseWeighInTable(text, { unit, todayIso, bodyweightSeries }) {
+  const localeHint =
+    typeof navigator !== "undefined" ? navigator.language : undefined;
+  const byDate = new Map();
+  let skipped = 0;
+  for (const line of String(text ?? "").split(/\r?\n/)) {
+    // Blank lines and a header row ("Date, Weight") say nothing to skip.
+    if (!/\d/.test(line)) continue;
+    const match = LINE.exec(line);
+    const date = match ? normalizeDateInput(match[1], localeHint) : null;
+    if (!match || !date || date > todayIso) {
+      skipped += 1;
+      continue;
+    }
+    const { value, unitType, _explicitUnit } = convertWeightAndUnitType(
+      match[2].replace(/\s+/g, ""),
+    );
+    if (!(value > 0)) {
+      skipped += 1;
+      continue;
+    }
+    byDate.set(date, {
+      date,
+      weight: roundTenth(value),
+      unitType: _explicitUnit ? unitType : unit,
+      notes: (match[3] ?? "").trim(),
+    });
+  }
+
+  const existing = new Map(
+    (bodyweightSeries ?? []).map((weighIn) => [weighIn.date, weighIn]),
+  );
+  const rows = [...byDate.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map((row) => {
+      const before = existing.get(row.date);
+      if (!before) return { ...row, status: "new" };
+      const sameWeight =
+        Math.abs(convertWeight(row.weight, row.unitType, "kg") - before.kg) <
+        0.05;
+      const sameNotes = !row.notes || row.notes === (before.notes ?? "");
+      if (sameWeight && sameNotes) return { ...row, status: "same" };
+      return {
+        ...row,
+        status: "update",
+        previous: `${before.value} ${before.unitType}`,
+      };
+    });
+  return { rows, skipped };
+}
+
+function roundTenth(value) {
+  return Math.round(Number(value) * 10) / 10;
 }
 
 function dayNumber(date) {

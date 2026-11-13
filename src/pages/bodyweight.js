@@ -20,9 +20,11 @@ import {
   Check,
   ClipboardPaste,
   Loader2,
+  Pencil,
   Plus,
   Scale,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { useUserLiftingData } from "@/hooks/use-userlift-data";
@@ -227,6 +229,10 @@ function WeighInEntryCard({
   }, [justAdded]);
   const prefersReducedMotion = useReducedMotion();
   const recent = (bodyweightSeries ?? []).slice(-6).reverse();
+  const takenDates = useMemo(
+    () => new Set((bodyweightSeries ?? []).map((weighIn) => weighIn.date)),
+    [bodyweightSeries],
+  );
 
   const value = Number(String(weight).replace(",", "."));
   const isValid = value > 0 && date && date <= todayIso;
@@ -336,38 +342,15 @@ function WeighInEntryCard({
                       : { opacity: 0, height: 0 }
                   }
                   transition={{ duration: 0.22, ease: "easeOut" }}
-                  className="flex items-center gap-3 px-3 py-1.5"
                 >
-                  <span className="tabular-nums">{weighIn.date}</span>
-                  <span
-                    className={
-                      weighIn.pending
-                        ? "font-semibold tabular-nums opacity-70"
-                        : "font-semibold tabular-nums"
-                    }
-                  >
-                    {round(convertWeight(weighIn.kg, "kg", unit))} {unit}
-                  </span>
-                  <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
-                    {weighIn.pending ? (
-                      <span className="inline-flex items-center gap-1">
-                        <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-                        Saving to your sheet
-                      </span>
-                    ) : (
-                      weighIn.notes
-                    )}
-                  </span>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="h-7 w-7"
-                    aria-label={`Delete the weigh-in on ${weighIn.date}`}
-                    onClick={() => onDelete(weighIn.date)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
+                  <WeighInRow
+                    weighIn={weighIn}
+                    unit={unit}
+                    todayIso={todayIso}
+                    takenDates={takenDates}
+                    onSave={onSave}
+                    onDelete={onDelete}
+                  />
                 </motion.li>
               ))}
             </AnimatePresence>
@@ -383,6 +366,171 @@ function WeighInEntryCard({
         onSave={onSave}
       />
     </Card>
+  );
+}
+
+/**
+ * One weigh-in in the list, editable in place: tap it or its pencil for its
+ * date, weight and note, Enter to save and Escape to leave it. A new date
+ * moves the weigh-in there, as long as that day has none of its own.
+ */
+function WeighInRow({ weighIn, unit, todayIso, takenDates, onSave, onDelete }) {
+  const shown = round(convertWeight(weighIn.kg, "kg", unit));
+  const [isEditing, setIsEditing] = useState(false);
+  const [date, setDate] = useState(weighIn.date);
+  const [weight, setWeight] = useState(String(shown));
+  const [notes, setNotes] = useState(weighIn.notes ?? "");
+
+  const startEditing = () => {
+    setDate(weighIn.date);
+    setWeight(String(shown));
+    setNotes(weighIn.notes ?? "");
+    setIsEditing(true);
+  };
+
+  const value = Number(String(weight).replace(",", "."));
+  const isMove = date !== weighIn.date;
+  const isTaken = isMove && takenDates.has(date);
+  const isValid = value > 0 && date && date <= todayIso && !isTaken;
+
+  const save = (event) => {
+    event.preventDefault();
+    if (!isValid) return;
+    const next = {
+      date,
+      weight: round(value),
+      unitType: unit,
+      notes: notes.trim(),
+    };
+    if (isMove) {
+      onDelete(weighIn.date);
+      onSave(next);
+    } else if (
+      round(value) !== shown ||
+      notes.trim() !== (weighIn.notes ?? "")
+    ) {
+      onSave(next);
+    }
+    setIsEditing(false);
+  };
+
+  if (isEditing) {
+    return (
+      <form
+        onSubmit={save}
+        onKeyDown={(event) => {
+          if (event.key === "Escape") setIsEditing(false);
+        }}
+        className="bg-muted/40 flex flex-wrap items-center gap-2 px-2 py-1.5"
+      >
+        <Input
+          type="date"
+          aria-label="Date"
+          value={date}
+          max={todayIso}
+          onChange={(event) => setDate(event.target.value)}
+          className="h-8 w-36"
+        />
+        <div className="flex items-center gap-1">
+          <Input
+            type="number"
+            inputMode="decimal"
+            step="0.1"
+            min="0"
+            aria-label={`Bodyweight in ${unit}`}
+            autoFocus
+            value={weight}
+            onChange={(event) => setWeight(event.target.value)}
+            className="h-8 w-24"
+          />
+          <span className="text-muted-foreground text-xs">{unit}</span>
+        </div>
+        <Input
+          aria-label="Note"
+          placeholder="Note (optional)"
+          value={notes}
+          onChange={(event) => setNotes(event.target.value)}
+          className="h-8 min-w-[8rem] flex-1"
+        />
+        <Button
+          type="submit"
+          size="icon"
+          className="h-8 w-8"
+          aria-label="Save this weigh-in"
+          disabled={!isValid}
+        >
+          <Check className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="h-8 w-8"
+          aria-label="Cancel"
+          onClick={() => setIsEditing(false)}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+        {isTaken && (
+          <p className="text-muted-foreground w-full text-xs">
+            {date} already has a weigh-in. Edit that one instead, or pick
+            another day.
+          </p>
+        )}
+      </form>
+    );
+  }
+
+  return (
+    <div className="group flex items-center gap-3 px-3 py-1.5">
+      <button
+        type="button"
+        onClick={startEditing}
+        className="hover:bg-muted/50 -mx-1 flex min-w-0 flex-1 items-center gap-3 rounded px-1 py-0.5 text-left"
+        aria-label={`Edit the weigh-in on ${weighIn.date}`}
+      >
+        <span className="tabular-nums">{weighIn.date}</span>
+        <span
+          className={
+            weighIn.pending
+              ? "font-semibold tabular-nums opacity-70"
+              : "font-semibold tabular-nums"
+          }
+        >
+          {shown} {unit}
+        </span>
+        <span className="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+          {weighIn.pending ? (
+            <span className="inline-flex items-center gap-1">
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+              Saving to your sheet
+            </span>
+          ) : (
+            weighIn.notes
+          )}
+        </span>
+      </button>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7"
+        aria-label={`Edit the weigh-in on ${weighIn.date}`}
+        onClick={startEditing}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+      </Button>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        className="h-7 w-7"
+        aria-label={`Delete the weigh-in on ${weighIn.date}`}
+        onClick={() => onDelete(weighIn.date)}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </Button>
+    </div>
   );
 }
 

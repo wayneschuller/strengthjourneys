@@ -60,7 +60,7 @@ export function StandardsSlider({
     topLiftsByTypeAndReps,
     topLiftsByTypeAndRepsLast12Months,
   } = useUserLiftingData();
-  const { age, bodyWeight, sex } = useAthleteBio();
+  const { age, bodyWeight, sex, bodyweightSeries } = useAthleteBio();
   const { width } = useWindowSize({ initializeWithValue: false });
   const { width: containerWidth = 0 } = useResizeObserver({
     ref: containerRef,
@@ -268,7 +268,7 @@ export function StandardsSlider({
       : topLiftsByTypeAndReps?.[liftType];
     const bioForDateRating =
       age && bodyWeight != null && sex != null
-        ? { age, bodyWeight, sex, isMetric }
+        ? { age, bodyWeight, sex, isMetric, bodyweightSeries }
         : null;
     const stats = getTopLiftStats(
       topLifts,

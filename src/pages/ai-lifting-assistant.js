@@ -212,6 +212,7 @@ function AILiftingAssistantMain({ relatedArticles, openingScores }) {
     sex,
     setSex,
     bodyWeight,
+    bodyweightSeries,
     setBodyWeight,
     standards,
     toggleIsMetric,
@@ -306,7 +307,9 @@ function AILiftingAssistantMain({ relatedArticles, openingScores }) {
       sessionTonnageLookup,
       meetDays,
       options: userLiftingMetadata,
-      bio: shareBioDetails ? { age, sex, bodyWeight, heightCm: height } : null,
+      bio: shareBioDetails
+        ? { age, sex, bodyWeight, heightCm: height, bodyweightSeries }
+        : null,
       isMetric,
       standards,
       e1rmFormula,
@@ -315,6 +318,7 @@ function AILiftingAssistantMain({ relatedArticles, openingScores }) {
   }, [
     age,
     bodyWeight,
+    bodyweightSeries,
     e1rmFormula,
     height,
     dataSource,

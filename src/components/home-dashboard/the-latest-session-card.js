@@ -89,7 +89,8 @@ export function TheLatestSessionCard({
     isValidating,
     meetDays,
   } = useUserLiftingData();
-  const { age, bodyWeight, sex, standards, isMetric } = useAthleteBio();
+  const { age, bodyWeight, sex, standards, isMetric, bodyweightSeries } =
+    useAthleteBio();
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
@@ -223,6 +224,7 @@ export function TheLatestSessionCard({
               bodyWeight,
               sex,
               isMetric,
+              bodyweightSeries,
             }
           : null;
       sessionRatingRef.current = getCreativeSessionRating(
@@ -566,6 +568,7 @@ function getCreativeSessionRating(workouts, strengthContext, lastUsedAdlibRef) {
               strengthContext.sex,
               liftType,
               strengthContext.isMetric ?? false,
+              strengthContext.bodyweightSeries,
             )
           : strengthContext.standards?.[liftType];
       if (!standard) continue;

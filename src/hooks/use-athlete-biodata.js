@@ -21,7 +21,13 @@ import {
 import { estimateE1RM, estimateEntryE1RM } from "@/lib/estimate-e1rm";
 
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
-import { LB_PER_KG, toKg, unitTypeFor } from "@/lib/weight-units";
+import {
+  convertWeight,
+  LB_PER_KG,
+  toKg,
+  unitTypeFor,
+} from "@/lib/weight-units";
+import { bodyweightAt, getLatestWeighIn } from "@/lib/bodyweight";
 import { useStateFromQueryOrLocalStorage } from "@/hooks/use-state-from-query-or-localStorage";
 import { isOwnData, useUserLiftingData } from "@/hooks/use-userlift-data";
 
@@ -49,6 +55,9 @@ export { getStrengthRatingForE1RM };
  * @param {string} sex - "male" or "female"
  * @param {string} liftType - e.g. "Back Squat"
  * @param {boolean} isMetric - Whether bodyWeight is in kg
+ * @param {Array} [bodyweightSeries] - The lifter's weigh-ins (bodyweightSeries from
+ *   useAthleteBio). When there are any, the lift is rated at what they weighed that day,
+ *   interpolated between weigh-ins, and `bodyWeight` is only the fallback.
  * @returns {Object|null} Standard { beginner, intermediate, advanced, elite } or null
  */
 export function getStandardForLiftDate(
@@ -58,6 +67,7 @@ export function getStandardForLiftDate(
   sex,
   liftType,
   isMetric,
+  bodyweightSeries = null,
 ) {
   if (!currentAge || !liftDate || !bodyWeight || !sex || !liftType) return null;
   const today = new Date();
@@ -65,9 +75,11 @@ export function getStandardForLiftDate(
   if (isNaN(date.getTime())) return null;
   const yearsAgo = differenceInCalendarYears(today, date);
   const ageAtLift = Math.max(0, currentAge - yearsAgo);
-  const bodyWeightKG = isMetric
-    ? bodyWeight
-    : Math.round(bodyWeight / LB_PER_KG);
+  const recordedKG = bodyweightSeries?.length
+    ? bodyweightAt(bodyweightSeries, String(liftDate).slice(0, 10), "kg")
+    : null;
+  const bodyWeightKG =
+    recordedKG ?? (isMetric ? bodyWeight : Math.round(bodyWeight / LB_PER_KG));
   const gender = sex === "female" ? "female" : "male";
   const standard = interpolateStandardKG(
     ageAtLift,
@@ -150,6 +162,7 @@ export function getTopLiftStats(
       bioForDateRating.sex,
       liftType,
       bioForDateRating.isMetric ?? false,
+      bioForDateRating.bodyweightSeries,
     );
   }
   const strengthRating =
@@ -210,8 +223,12 @@ export const AthleteBioProvider = ({ children }) => {
   // URL syncing for specific pages (like calculators) can be handled separately.
   // Import parsedData here so we can auto-initialize isMetric from the user's data.
   // AthleteBioProvider is nested inside UserLiftingDataProvider so this hook call is valid.
-  const { parsedData, dataSource } = useUserLiftingData();
-  const value = useAthleteBioData(false, { parsedData, dataSource });
+  const { parsedData, dataSource, bodyweightSeries } = useUserLiftingData();
+  const value = useAthleteBioData(false, {
+    parsedData,
+    dataSource,
+    bodyweightSeries,
+  });
   return (
     <AthleteBioContext.Provider value={value}>
       {children}
@@ -347,6 +364,7 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     isAdvancedAnalysis = true,
     parsedData = null,
     dataSource = null,
+    bodyweightSeries = null,
   } = options;
   const syncAdvancedParams = modifyURLQuery && isAdvancedAnalysis;
   // Gate URL sync: only after user changes a value, never on initial load (avoids polluting shared links)
@@ -584,6 +602,55 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     bodyWeightIsInitialized,
   ]);
 
+  // The newest weigh-in in the lifter's sheet, in the unit the app shows.
+  //
+  // Bodyweight follows it: each time a new weigh-in appears, bodyWeight is
+  // set from it once, so every calculator, current rating and the AI coach
+  // start from what they last weighed. Between weigh-ins the lifter can drag
+  // a slider to try a what-if weight, and nothing here snaps it back; the
+  // bodyweight controls offer a way back to the recorded weight instead (see
+  // RecordedBodyweightButton). Past ratings never use bodyWeight at all when
+  // there are weigh-ins: they read the series for the lift's own date.
+  const latestWeighIn = getLatestWeighIn(bodyweightSeries);
+  const recordedBodyWeight = latestWeighIn
+    ? Math.round(
+        convertWeight(latestWeighIn.kg, "kg", unitTypeFor(isMetric)) * 10,
+      ) / 10
+    : null;
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!latestWeighIn || dataSource !== "sheet") return;
+    if (!isMetricIsInitialized || !bodyWeightIsInitialized) return;
+    const marker = `${latestWeighIn.date}|${latestWeighIn.kg.toFixed(2)}`;
+    let synced = null;
+    try {
+      synced = localStorage.getItem(
+        LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT_SYNCED_WEIGH_IN,
+      );
+    } catch {
+      return;
+    }
+    if (synced === marker) return;
+    setBodyWeightBase(
+      Math.round(convertWeight(latestWeighIn.kg, "kg", unitTypeFor(isMetric))),
+    );
+    try {
+      localStorage.setItem(
+        LOCAL_STORAGE_KEYS.ATHLETE_BODY_WEIGHT_SYNCED_WEIGH_IN,
+        marker,
+      );
+    } catch {
+      // Without storage it is set again on the next load, which is harmless.
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isMetric is read when a new weigh-in lands, not tracked
+  }, [
+    latestWeighIn,
+    dataSource,
+    isMetricIsInitialized,
+    bodyWeightIsInitialized,
+    setBodyWeightBase,
+  ]);
+
   // Helper function - if user toggles unit type, update isMetric and bodyweight state
   const toggleIsMetric = (isMetric) => {
     // Mark that the user has consciously chosen their unit preference
@@ -638,6 +705,9 @@ export const useAthleteBioData = (modifyURLQuery = false, options = {}) => {
     bodyWeight,
     bodyWeightIsDefault,
     setBodyWeight,
+    bodyweightSeries,
+    recordedBodyWeight,
+    latestWeighIn,
     bioDataIsDefault,
     bioDataIsInitialized,
     standards,

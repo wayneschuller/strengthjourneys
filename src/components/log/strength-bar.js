@@ -9,6 +9,7 @@
 
 import Link from "next/link";
 import {
+  useAthleteBio,
   getStrengthRatingForE1RM,
   STRENGTH_LEVEL_EMOJI,
   getStandardForLiftDate,
@@ -39,6 +40,7 @@ export function getStrengthStandard({
   bodyWeight,
   sex,
   isMetric,
+  bodyweightSeries = null,
 }) {
   return sessionDate && age && bodyWeight != null && sex != null
     ? getStandardForLiftDate(
@@ -48,6 +50,7 @@ export function getStrengthStandard({
         sex,
         liftType,
         isMetric ?? false,
+        bodyweightSeries,
       )
     : standards?.[liftType];
 }
@@ -137,6 +140,7 @@ export function StrengthBar({
   sex,
   isMetric,
 }) {
+  const { bodyweightSeries } = useAthleteBio();
   const standard = getStrengthStandard({
     liftType,
     standards,
@@ -145,6 +149,7 @@ export function StrengthBar({
     bodyWeight,
     sex,
     isMetric,
+    bodyweightSeries,
   });
 
   if (!standard?.elite || !e1rmValue) return null;

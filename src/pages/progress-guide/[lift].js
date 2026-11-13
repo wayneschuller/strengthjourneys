@@ -891,7 +891,8 @@ function ResourcesCard({ resources, className }) {
  * @param {string} props.strengthLevelsPath - The lift's /strength-levels/ page.
  */
 function StrengthLevelsCard({ liftType, strengthLevelsPath }) {
-  const { standards, isMetric, age, bodyWeight, sex } = useAthleteBio();
+  const { standards, isMetric, age, bodyWeight, sex, bodyweightSeries } =
+    useAthleteBio();
   const { topLiftsByTypeAndReps, dataSource } = useUserLiftingData();
 
   let strengthRating = null;
@@ -900,7 +901,7 @@ function StrengthLevelsCard({ liftType, strengthLevelsPath }) {
     const topLifts = topLiftsByTypeAndReps?.[liftType];
     const bioForDateRating =
       age && bodyWeight != null && sex != null
-        ? { age, bodyWeight, sex, isMetric }
+        ? { age, bodyWeight, sex, isMetric, bodyweightSeries }
         : null;
     const stats = getTopLiftStats(
       topLifts,

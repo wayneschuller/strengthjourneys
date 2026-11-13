@@ -1610,6 +1610,7 @@ function computeStrengthLevelStats(parsedData, boundaries, bio, lineup = []) {
           bio.sex,
           liftType,
           bio.isMetric,
+          bio.bodyweightSeries,
         ),
       },
     ]),
@@ -1637,6 +1638,7 @@ function computeStrengthLevelStats(parsedData, boundaries, bio, lineup = []) {
       bio.sex,
       liftType,
       bio.isMetric,
+      bio.bodyweightSeries,
     );
     if (!standard) continue;
     const rating = getStrengthRatingForE1RM(e1rm, standard);

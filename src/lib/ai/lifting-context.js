@@ -23,7 +23,12 @@ import { getStrengthRatingForE1RM } from "@/lib/lifting-standards-kg";
 import { processConsistency } from "@/lib/consistency";
 import { MAX_CHAT_METADATA_CHARS } from "@/lib/ai/chat-metadata-limit";
 import { logTimingGroup } from "@/lib/processing-utils";
-import { LB_PER_KG, toKg } from "@/lib/weight-units";
+import {
+  LB_PER_KG,
+  convertWeight as convertWeightExact,
+  toKg,
+} from "@/lib/weight-units";
+import { bodyweightAt } from "@/lib/bodyweight";
 
 // The last 20 sessions, counted rather than dated, so the summary stays the
 // same size whether someone trains daily or weekly: three sessions a week
@@ -73,7 +78,7 @@ const MONTHS = [
  * @param {Object} [args.sessionTonnageLookup] Pipeline per-session tonnage lookup.
  * @param {Map<string, {name: string|null, topSets: Object}>} [args.meetDays] From processMeetDays, keyed by date.
  * @param {{ records?: boolean, trainingLoad?: boolean, frequency?: boolean, consistency?: boolean, sessionData?: boolean }} args.options
- * @param {{ age: number, sex: string, bodyWeight: number, heightCm: number } | null} args.bio Null when the profile is not shared.
+ * @param {{ age: number, sex: string, bodyWeight: number, heightCm: number, bodyweightSeries?: Array } | null} args.bio Null when the profile is not shared. `bodyweightSeries` is the lifter's weigh-ins (see @/lib/bodyweight), sent only with the profile.
  * @param {boolean} args.isMetric The lifter's preferred unit; every weight is shown in it.
  * @param {Object} [args.standards] Per-lift standards in the preferred unit, for the lifter's age, sex and bodyweight.
  * @param {string} [args.e1rmFormula]
@@ -142,6 +147,15 @@ export function buildLiftingContext({
   const sections = [
     buildAboutSection({ ctx, options, bio, latestDate, hasTraining, meetDays }),
     bio && buildProfileSection(bio, unit),
+    bio?.bodyweightSeries?.length > 0 &&
+      step("Bodyweight", () =>
+        buildBodyweightSection({
+          series: bio.bodyweightSeries,
+          mainLifts,
+          lifts,
+          ctx,
+        }),
+      ),
     bio &&
       hasTraining &&
       options.records &&
@@ -249,6 +263,50 @@ function buildProfileSection(bio, unit) {
   return section("profile", [
     `Age ${bio.age}, ${bio.sex}, bodyweight ${bio.bodyWeight}${unit}, height ${bio.heightCm}cm.`,
   ]);
+}
+
+// The weigh-in trend and strength against it: a lifter cutting while holding
+// their lifts, or building up, is the story this section tells. Changes are
+// only given over a window the weigh-ins actually reach back across, so a
+// first weigh-in last week never reads as twelve weeks of being steady.
+function buildBodyweightSection({ series, mainLifts, lifts, ctx }) {
+  const latest = series.at(-1);
+  const inUnit = (kg) => formatNumber(convertWeightExact(kg, "kg", ctx.unit));
+  const lines = [
+    `Latest weigh-in: ${inUnit(latest.kg)}${ctx.unit} on ${formatDate(latest.date, ctx.today)}. ${series.length} weigh-in${series.length === 1 ? "" : "s"} logged since ${series[0].date}; between weigh-ins bodyweight is taken as a straight line.`,
+  ];
+  for (const weeks of [4, 12, 52]) {
+    const from = shiftDate(latest.date, -weeks * 7);
+    if (series[0].date > from) continue;
+    const change = latest.kg - bodyweightAt(series, from, "kg");
+    const sign = change > 0 ? "+" : "";
+    lines.push(
+      `Change over the ${weeks} weeks to the latest weigh-in: ${sign}${inUnit(change)}${ctx.unit}.`,
+    );
+  }
+  for (const liftType of mainLifts) {
+    const best = lifts[liftType]?.bestE1RM12m;
+    if (!(best?.e1rm > 0) || !best.set?.date) continue;
+    const bodyweight = convertWeightExact(
+      bodyweightAt(series, best.set.date, "kg"),
+      "kg",
+      ctx.unit,
+    );
+    if (!(bodyweight > 0)) continue;
+    lines.push(
+      `${liftType}: best e1RM in the last 12 months is ${(best.e1rm / bodyweight).toFixed(2)}x bodyweight (${best.e1rm}${ctx.unit} at about ${formatNumber(bodyweight)}${ctx.unit}, ${formatDate(best.set.date, ctx.today)}).`,
+    );
+  }
+  const recent = series.slice(-6).reverse();
+  lines.push(
+    `Recent weigh-ins: ${recent
+      .map(
+        (weighIn) =>
+          `${weighIn.date} ${inUnit(weighIn.kg)}${ctx.unit}${weighIn.notes ? ` ("${String(weighIn.notes).slice(0, 80)}")` : ""}`,
+      )
+      .join("; ")}.`,
+  );
+  return section("bodyweight", lines);
 }
 
 function buildStandingSection({ mainLifts, lifts, standards, ctx }) {

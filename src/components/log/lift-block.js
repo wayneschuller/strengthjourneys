@@ -79,7 +79,7 @@ export function LiftBlock({
   onSessionUrlReleased,
 }) {
   const { dataSource } = useUserLiftingData();
-  const { age, bodyWeight, sex, standards } = useAthleteBio();
+  const { age, bodyWeight, sex, standards, bodyweightSeries } = useAthleteBio();
   const { getColor } = useLiftColors();
   const prefersReducedMotion = useReducedMotion();
   const e1rmFormula =
@@ -689,6 +689,7 @@ export function LiftBlock({
                       bodyWeight,
                       sex,
                       isMetric,
+                      bodyweightSeries,
                     })}
                     isMetric={isMetric}
                     reps={set.reps}

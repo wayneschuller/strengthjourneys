@@ -23,6 +23,7 @@ import {
 } from "@/components/lift-type-indicator";
 import { getLiftArtwork, LiftArtworkImage } from "@/components/lift-artwork";
 import {
+  useAthleteBio,
   getStrengthLevelForWorkouts,
   getStandardForLiftDate,
   STRENGTH_LEVEL_EMOJI,
@@ -698,6 +699,7 @@ export function LiftStrengthLevel({
   badgeClassName = "",
   withTooltip = false,
 }) {
+  const { bodyweightSeries } = useAthleteBio();
   const formula = e1rmFormula || "Brzycki";
   const standard =
     sessionDate && age && bodyWeight != null && sex != null
@@ -708,6 +710,7 @@ export function LiftStrengthLevel({
           sex,
           liftType,
           isMetric ?? false,
+          bodyweightSeries,
         )
       : standards?.[liftType];
   const standardsForLift = standard ? { [liftType]: standard } : {};

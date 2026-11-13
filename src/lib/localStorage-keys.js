@@ -62,6 +62,10 @@ export const LOCAL_STORAGE_KEYS = {
   ATHLETE_BODY_WEIGHT: "AthleteBodyWeight",
   ATHLETE_LIFT_TYPE: "AthleteLiftType",
   ATHLETE_HEIGHT: "AthleteHeight",
+  // The newest weigh-in from the lifter's sheet that bodyweight was last set
+  // from ("2026-11-14|84.20"), so a new weigh-in updates it once and a
+  // what-if on a calculator slider is left alone until the next one.
+  ATHLETE_BODY_WEIGHT_SYNCED_WEIGH_IN: "SJ_bodyWeightSyncedWeighIn",
   // Set to "1" when the user (or a shared URL) explicitly provides a unit preference.
   // Prevents the data-driven auto-init from overriding an intentional choice.
   UNIT_PREFERENCE_SET: "SJ_unitPreferenceSet",

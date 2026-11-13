@@ -868,6 +868,69 @@ assert.equal(normalizeDateInput("2026-10-17 07:30"), "2026-10-17");
 assert.equal(normalizeDateInput("2026-10-17T07:30:00Z"), "2026-10-17");
 assert.equal(normalizeDateInput("2026-10-17x"), null);
 
+// Weigh-ins are rows of the log ("Bodyweight | | 84.2kg") that the parser
+// lifts out of the sets. One can carry the date the sets after it inherit,
+// and one written without a unit takes the sheet's own.
+{
+  const { getSheetBodyweightEntries } =
+    await import("../src/lib/import/parsers/strength-journeys-parser.js");
+  const { getBodyweightSeries, bodyweightAt, isWeighInLiftType } =
+    await import("../src/lib/bodyweight.js");
+  const rows = [
+    ["Date", "Lift Type", "Reps", "Weight", "Notes", "URL"],
+    ["2026-11-14", "Back Squat", "5", "140kg", "", ""],
+    ["", "", "5", "140kg", "", ""],
+    ["", "Bodyweight", "", "84.2kg", "morning", ""],
+    ["2026-11-12", "Weigh-in", "", "85", "", ""],
+    ["", "Bench Press", "5", "100kg", "", ""],
+    ["2026-11-01", "BW", "", "186lb", "", ""],
+    ["2026-10-30", "Deadlift", "3", "200kg", "", ""],
+  ];
+  const parsedRows = quietly(() => parseStrengthJourneysData(rows));
+  assert.deepEqual(
+    parsedRows.map((entry) => [entry.date, entry.liftType]),
+    [
+      ["2026-10-30", "Deadlift"],
+      ["2026-11-12", "Bench Press"],
+      ["2026-11-14", "Back Squat"],
+      ["2026-11-14", "Back Squat"],
+    ],
+  );
+  const weighIns = getSheetBodyweightEntries(parsedRows);
+  assert.deepEqual(
+    weighIns.map((entry) => [
+      entry.date,
+      `${entry.weight}${entry.unitType}`,
+      entry.notes ?? "",
+      entry.rowIndex,
+    ]),
+    [
+      ["2026-11-01", "186lb", "", 7],
+      ["2026-11-12", "85kg", "", 5],
+      ["2026-11-14", "84.2kg", "morning", 4],
+    ],
+  );
+  const series = getBodyweightSeries(weighIns);
+  const kgOn = (date) => Number(bodyweightAt(series, date, "kg").toFixed(2));
+  // Held flat before the first and after the last; a line between.
+  assert.equal(kgOn("2026-10-01"), kgOn("2026-11-01"));
+  assert.equal(kgOn("2026-12-25"), 84.2);
+  assert.equal(kgOn("2026-11-13"), 84.6);
+  assert.equal(kgOn("2026-11-12"), 85);
+  for (const name of [
+    "Bodyweight",
+    "Body Weight",
+    "BW",
+    "Weigh-in",
+    "weigh in",
+  ]) {
+    assert.equal(isWeighInLiftType(name), true, name);
+  }
+  for (const name of ["Bodyweight Squat", "Back Squat", "Weighted Pull Up"]) {
+    assert.equal(isWeighInLiftType(name), false, name);
+  }
+}
+
 console.log("Strength Journeys parser checks passed.");
 
 function permutations(values) {

@@ -18,6 +18,7 @@
 
 import { recordTiming } from "@/lib/processing-utils";
 import { normalizeDateInput, resolveDateColumnLocale } from "@/lib/date-utils";
+import { isWeighInLiftType, WEIGH_IN_LIFT_TYPE } from "@/lib/bodyweight";
 import { getCuratedLift } from "@/lib/lifts/lift-registry";
 import {
   normalizeLiftTypeNames,
@@ -59,6 +60,22 @@ const sheetLayouts = new WeakMap();
  */
 export function getSheetLayout(parsedData) {
   return (parsedData && sheetLayouts.get(parsedData)) ?? null;
+}
+
+// The weigh-in rows each parse found, kept beside the lifts it returned.
+const sheetBodyweights = new WeakMap();
+
+/**
+ * The weigh-in rows behind a parse: entries shaped like lifts (date, weight,
+ * unitType, notes, rowIndex and the raw cell text) with liftType "Bodyweight"
+ * and no reps, oldest first. See src/lib/bodyweight.js.
+ *
+ * @param {import("./index").ParsedData} parsedData As returned by
+ *   parseStrengthJourneysData (the same array, not a copy).
+ * @returns {object[]}
+ */
+export function getSheetBodyweightEntries(parsedData) {
+  return (parsedData && sheetBodyweights.get(parsedData)) ?? [];
 }
 
 const KNOWN_HEADERS = [
@@ -202,6 +219,8 @@ export function parseStrengthJourneysData(
   }
 
   const objectsArray = [];
+  // Weigh-in rows, kept beside the lifts rather than among them.
+  const weighIns = [];
   // Cache column indices outside the loop since they never change
   const dateCol = dateColumnIndex;
   const liftTypeCol = liftTypeColumnIndex;
@@ -214,9 +233,16 @@ export function parseStrengthJourneysData(
   for (let i = firstDataRow; i < data.length; i++) {
     const row = data[i];
 
+    // A weigh-in row ("Bodyweight | | 84.2kg") has no reps, but it can carry
+    // the date the sets after it inherit, so it is read before the check
+    // below would pass over it. See src/lib/bodyweight.js.
+    const isWeighInRow = row[liftTypeCol]
+      ? isWeighInLiftType(row[liftTypeCol])
+      : previousLiftType === WEIGH_IN_LIFT_TYPE;
+
     // Quick validation check for required fields before processing
     // Google Sheets API always returns strings (or numbers) for cells, never null/undefined
-    if (row[repsCol] === "" || row[weightCol] === "") {
+    if (!isWeighInRow && (row[repsCol] === "" || row[weightCol] === "")) {
       continue;
     }
 
@@ -257,6 +283,31 @@ export function parseStrengthJourneysData(
     // way rawLiftType and rawWeight already do for their cells.
     if (previousRawDate !== obj.date) obj.rawDate = String(previousRawDate);
     // --- END DATE HANDLING LOGIC ---
+
+    if (isWeighInRow) {
+      if (row[liftTypeCol]) {
+        obj.rawLiftType = row[liftTypeCol];
+        previousRawLiftType = obj.rawLiftType;
+      } else {
+        obj.rawLiftType = previousRawLiftType;
+      }
+      obj.liftType = WEIGH_IN_LIFT_TYPE;
+      previousLiftType = WEIGH_IN_LIFT_TYPE;
+      const { value, unitType, _explicitUnit } = convertWeightAndUnitType(
+        row[weightCol],
+      );
+      if (!(value > 0)) continue;
+      obj.reps = null;
+      obj.rawReps = String(row[repsCol] ?? "");
+      obj.rawWeight = row[weightCol];
+      obj.weight = value;
+      obj.unitType = unitType;
+      if (_explicitUnit !== null) obj._explicitUnit = _explicitUnit;
+      if (row[notesCol]) obj.notes = row[notesCol];
+      obj.rowIndex = i + 1;
+      weighIns.push(obj);
+      continue;
+    }
 
     // Process lift type next since it's used for previousLiftType
     if (row[liftTypeCol]) {
@@ -364,6 +415,15 @@ export function parseStrengthJourneysData(
     }
   }
 
+  // A weigh-in written without a unit is read in the sheet's own unit, the
+  // same one its bare-number sets were given. Weigh-ins do not vote on it.
+  const sheetUnit = headerUnit ?? (explicitKg > explicitLb ? "kg" : "lb");
+  for (const weighIn of weighIns) {
+    if (!weighIn._explicitUnit) weighIn.unitType = sheetUnit;
+    delete weighIn._explicitUnit;
+  }
+  weighIns.sort((a, b) => a.date.localeCompare(b.date));
+
   repairLog.flush();
 
   // FIXME: if there are no entries we could throw an error to prompt them to sheet docs article?
@@ -389,6 +449,7 @@ export function parseStrengthJourneysData(
     ...layout,
     repair: planHeaderRepair(layout, data),
   });
+  sheetBodyweights.set(objectsArray, weighIns);
 
   return objectsArray;
 }

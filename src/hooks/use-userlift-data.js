@@ -17,9 +17,11 @@ import {
 } from "@/lib/sheet/sheet-local-cache";
 import { parseData, parseImportedFile } from "@/lib/import/import-dispatcher";
 import {
+  getSheetBodyweightEntries,
   getSheetLayout,
   getSheetWriteColumns,
 } from "@/lib/import/parsers/strength-journeys-parser";
+import { getBodyweightSeries } from "@/lib/bodyweight";
 import {
   getDemoAnchorDate,
   getDemoParsedData,
@@ -301,6 +303,11 @@ export const useUserLiftingData = () => useContext(UserLiftingDataContext);
  *   See getSheetLayout and getSheetWriteColumns in the Strength Journeys parser.
  * @context parsedDataReadAt {number|null} - performance.now() when the sheet read behind
  *   `sheetParsedData` began; the log's sync uses it to tell which of its writes a snapshot includes.
+ * @context sheetBodyweightEntries {Array|null} - The linked sheet's weigh-in rows as the parser
+ *   read them (liftType "Bodyweight", no reps, with rowIndex and raw cell text), for the log's
+ *   sync. See getSheetBodyweightEntries.
+ * @context bodyweightSeries {Array} - One weigh-in per date, oldest first, for the data on screen.
+ *   Ask bodyweightAt() in @/lib/bodyweight for any date in between. Empty without weigh-ins.
  * @context rawRows {number|null} - Row count from the last successful sheet fetch.
  * @context hasCachedSheetData {boolean} - True if SWR holds valid sheet values (even if stale).
  * @context dataSyncedAt {number|null} - Timestamp (Date.now()) of the last successful data load.
@@ -313,6 +320,8 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   const [latestReadStartedAt, setLatestReadStartedAt] = useState(null);
   // Where the linked sheet keeps its columns, set with the rows it describes.
   const [sheetLayout, setSheetLayout] = useState(null);
+  // The linked sheet's weigh-in rows, set with the lifts they were read beside.
+  const [sheetBodyweightEntries, setSheetBodyweightEntries] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
   // The sheet data last parsed, so a failed refresh does not parse the same
@@ -825,6 +834,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     }
     setParsedData(result.parsedData);
     setSheetLayout(result.sheetLayout);
+    setSheetBodyweightEntries(result.bodyweightEntries);
     setParseError(result.parseError);
   }, [
     data,
@@ -885,6 +895,15 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     importedParsedData ||
     parsedData ||
     (dataSource === "demo" ? demoParsedData : null);
+
+  // Weigh-ins follow the lifts on screen: an import preview shows none of the
+  // sheet's, and demo mode has none.
+  const activeBodyweightEntries =
+    importedParsedData || dataSource === "demo" ? null : sheetBodyweightEntries;
+  const bodyweightSeries = useMemo(
+    () => getBodyweightSeries(activeBodyweightEntries),
+    [activeBodyweightEntries],
+  );
 
   const dataQualityWarnings = useMemo(
     () => getDateOutlierWarnings(activeParsedData, { dataSource }),
@@ -1046,6 +1065,8 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         sheetParsedData: parsedData,
         parsedDataReadAt,
         sheetLayout,
+        sheetBodyweightEntries,
+        bodyweightSeries,
       }}
     >
       {children}
@@ -1070,11 +1091,13 @@ function getParsedDataWithFallback({
   let parsedData = null; // A local version for this scope only
   let parseError = null;
   let sheetLayout = null;
+  let bodyweightEntries = null;
 
   if (authStatus === "authenticated" && data?.values) {
     try {
       parsedData = parseData(data.values); // Will be sorted date ascending
       sheetLayout = getSheetLayout(parsedData);
+      bodyweightEntries = getSheetBodyweightEntries(parsedData);
       gaEvent(GA_EVENT_TAGS.GSHEET_DATA_UPDATED); // Google Analytics: sheet data loaded successfully
     } catch (error) {
       // Parsing error
@@ -1098,7 +1121,12 @@ function getParsedDataWithFallback({
   // The demo arrives with its PRs already marked, and the same array every
   // time, so switching into demo mode recomputes nothing downstream.
   if (dataSource === "demo")
-    return { parsedData: demoParsedData, parseError, sheetLayout: null };
+    return {
+      parsedData: demoParsedData,
+      parseError,
+      sheetLayout: null,
+      bodyweightEntries: null,
+    };
 
   // Authenticated users without a selected/valid sheet should not see demo data.
   if (!parsedData) parsedData = [];
@@ -1110,7 +1138,7 @@ function getParsedDataWithFallback({
   // state variables everything needs.
   parsedData = markHigherWeightAsHistoricalPRs(parsedData);
 
-  return { parsedData, parseError, sheetLayout };
+  return { parsedData, parseError, sheetLayout, bodyweightEntries };
 }
 
 // The lifter's unit, for a file that does not say its own: only once they

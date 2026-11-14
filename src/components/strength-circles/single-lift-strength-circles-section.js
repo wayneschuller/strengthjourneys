@@ -22,6 +22,7 @@ import { useReadLocalStorage } from "usehooks-ts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StrengthCirclesChart } from "@/components/strength-circles/strength-circles-chart";
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
+import { bodyweightAt } from "@/lib/bodyweight";
 import { useUserLiftingData, isOwnData } from "@/hooks/use-userlift-data";
 import { findBestE1RMInWindow, sampleRollingBestE1RMs } from "@/lib/lift-bests";
 import { convertWeight, toKg, unitTypeFor } from "@/lib/weight-units";
@@ -81,7 +82,8 @@ export function SingleLiftStrengthCirclesSection({
   compactClassName = "",
 }) {
   const { age, sex, bodyWeight, isMetric } = useAthleteBio();
-  const { parsedData, dataSource } = useUserLiftingData();
+  const { parsedData, dataSource, bodyweightSeries } = useUserLiftingData();
+  const hasWeighIns = bodyweightSeries?.length > 0;
   const e1rmFormula =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.FORMULA, {
       initializeWithValue: false,
@@ -162,9 +164,16 @@ export function SingleLiftStrengthCirclesSection({
         age - differenceInCalendarYears(today, sampleDate),
       );
 
+      // Likewise the bodyweight: with weigh-ins in the sheet, each point uses
+      // what they weighed that day (interpolated between weigh-ins), the same
+      // rule as every other past rating. Without, today's bodyweight stands.
+      const bodyWeightKgAtSample = hasWeighIns
+        ? bodyweightAt(bodyweightSeries, String(date).slice(0, 10), "kg")
+        : bodyWeightKg;
+
       const pointPercentiles = getLiftPercentiles(
         ageAtSample,
-        bodyWeightKg,
+        bodyWeightKgAtSample,
         gender,
         percentileKey,
         bestSampleE1rmKg,
@@ -175,6 +184,7 @@ export function SingleLiftStrengthCirclesSection({
       points.push({
         date,
         e1rmKg: bestSampleE1rmKg,
+        bodyWeightKg: hasWeighIns ? bodyWeightKgAtSample : null,
         ...pointPercentiles,
       });
     }
@@ -183,7 +193,9 @@ export function SingleLiftStrengthCirclesSection({
   }, [
     age,
     bodyWeight,
+    bodyweightSeries,
     e1rmFormula,
+    hasWeighIns,
     dataSource,
     isMetric,
     liftType,
@@ -275,6 +287,7 @@ export function SingleLiftStrengthCirclesSection({
                 activeUniverse={activeUniverse}
                 liftLabel={liftType}
                 isMetric={isMetric}
+                usesWeighIns={hasWeighIns}
               />
             ) : (
               <div className="text-muted-foreground rounded-lg border border-dashed p-4 text-sm">
@@ -317,6 +330,17 @@ function TimelineTooltip({
         </span>{" "}
         (best in the prior {WINDOW_DAYS} days)
       </p>
+      {point.bodyWeightKg != null && (
+        <p className="text-muted-foreground text-[11px]">
+          Bodyweight:{" "}
+          <span className="text-foreground font-medium tabular-nums">
+            {Math.round(
+              convertWeight(point.bodyWeightKg, "kg", unitTypeFor(isMetric)),
+            )}
+            {isMetric ? "kg" : "lb"}
+          </span>
+        </p>
+      )}
       <div className="mt-2 flex flex-col gap-1">
         {TIMELINE_UNIVERSES.map((universe) => {
           const isActive = universe === activeUniverse;
@@ -362,6 +386,7 @@ function SingleLiftPercentileTimelineChart({
   activeUniverse = "General Population",
   liftLabel,
   isMetric,
+  usesWeighIns = false,
 }) {
   const liftSlug = liftLabel.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -560,8 +585,11 @@ function SingleLiftPercentileTimelineChart({
 
       <p className="text-muted-foreground text-[11px] leading-snug">
         Each point is your best e1RM in the {WINDOW_DAYS} days before it, scored
-        at your age at the time and your current bodyweight. Hover a group to
-        bring its line forward.
+        at your age at the time and{" "}
+        {usesWeighIns
+          ? "your bodyweight at the time, from your weigh-ins"
+          : "your current bodyweight"}
+        . Hover a group to bring its line forward.
       </p>
     </div>
   );

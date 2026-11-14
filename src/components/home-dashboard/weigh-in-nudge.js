@@ -7,12 +7,16 @@
  * The weigh-in goes through the log's sync queue (useWeighInWriter), and the
  * prompt turns into a short "saved" line at once. A lifter can put it away
  * for the rest of the week.
+ *
+ * When the weigh-ins are current and there are enough of them to draw a line,
+ * the same slot shows a small sparkline of the last year instead, linking to
+ * the bodyweight page.
  */
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useLocalStorage } from "usehooks-ts";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, Scale, X } from "lucide-react";
+import { Check, ChevronRight, Scale, X } from "lucide-react";
 
 import { useAthleteBio } from "@/hooks/use-athlete-biodata";
 import { LOCAL_STORAGE_KEYS } from "@/lib/localStorage-keys";
@@ -23,6 +27,9 @@ import { Input } from "@/components/ui/input";
 
 // A weigh-in older than this is worth refreshing.
 const STALE_DAYS = 28;
+// The sparkline covers this many days and needs this many weigh-ins in them.
+const SPARKLINE_DAYS = 365;
+const SPARKLINE_MIN_POINTS = 4;
 
 /**
  * @param {Object} props
@@ -61,6 +68,16 @@ export function WeighInNudge({ mondayStr }) {
     saveWeighIn({ date: todayIso, weight: round(value), unitType: unit });
     setSaved(round(value));
   };
+
+  if (!isShown && canWrite && !isDue) {
+    return (
+      <BodyweightSparklineLink
+        series={weighInSeries}
+        todayIso={todayIso}
+        unit={unit}
+      />
+    );
+  }
 
   return (
     <AnimatePresence initial={false}>
@@ -134,6 +151,100 @@ export function WeighInNudge({ mondayStr }) {
       )}
     </AnimatePresence>
   );
+}
+
+/**
+ * The last year of weigh-ins as a small line, with the latest weight beside
+ * it. The whole row links to the bodyweight page. Nothing shows until there
+ * are enough weigh-ins for the line to mean something.
+ */
+function BodyweightSparklineLink({ series, todayIso, unit }) {
+  const recent = useMemo(() => {
+    if (!series?.length || !todayIso) return [];
+    return series.filter(
+      (weighIn) => daysBetween(weighIn.date, todayIso) <= SPARKLINE_DAYS,
+    );
+  }, [series, todayIso]);
+
+  const path = useMemo(() => getSparklinePath(recent), [recent]);
+  if (recent.length < SPARKLINE_MIN_POINTS || !path) return null;
+
+  const latest = recent.at(-1);
+  const latestValue = round(convertWeight(latest.kg, "kg", unit));
+  const spanDays = daysBetween(recent[0].date, latest.date);
+
+  return (
+    <Link
+      href="/bodyweight"
+      className="group hover:bg-muted/40 flex items-center gap-3 rounded-lg border px-3 py-2 transition-colors"
+    >
+      <Scale className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden />
+      <div className="min-w-0 shrink-0">
+        <p className="text-sm font-medium">
+          {latestValue} {unit}
+        </p>
+        <p className="text-muted-foreground text-xs">
+          Bodyweight, {recent.length} weigh-ins over {describeSpan(spanDays)}
+        </p>
+      </div>
+      <svg
+        viewBox={`0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`}
+        preserveAspectRatio="none"
+        className="text-primary h-8 min-w-0 flex-1"
+        aria-hidden
+      >
+        <path
+          d={path.line}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      <ChevronRight
+        className="text-muted-foreground h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+const SPARK_WIDTH = 100;
+const SPARK_HEIGHT = 32;
+
+// Spaced by date, not by index, so a gap between weigh-ins reads as a gap.
+// A flat series sits in the middle rather than on an edge.
+function getSparklinePath(points) {
+  if (points.length < 2) return null;
+  const first = Date.parse(`${points[0].date}T00:00:00Z`);
+  const last = Date.parse(`${points.at(-1).date}T00:00:00Z`);
+  const span = last - first;
+  if (!(span > 0)) return null;
+  const values = points.map((point) => point.kg);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = max - min;
+  const pad = 3;
+  const line = points
+    .map((point, index) => {
+      const x =
+        ((Date.parse(`${point.date}T00:00:00Z`) - first) / span) * SPARK_WIDTH;
+      const y =
+        range > 0
+          ? pad + (1 - (point.kg - min) / range) * (SPARK_HEIGHT - pad * 2)
+          : SPARK_HEIGHT / 2;
+      return `${index ? "L" : "M"}${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(" ");
+  return { line };
+}
+
+function describeSpan(days) {
+  if (days < 60) return `${Math.max(1, Math.round(days / 7))} weeks`;
+  const months = Math.round(days / 30);
+  return months >= 12 ? "the last year" : `${months} months`;
 }
 
 function daysBetween(from, to) {

@@ -782,8 +782,9 @@ export function TheWeekInIronCard({
                       trainedLiftTypes={stats.liftTypes}
                     />
                   </WeekSection>
-                  {/* Shows only when the last weigh-in is over four weeks
-                      old, or there has never been one. */}
+                  {/* Asks for a weigh-in when the last is over four weeks
+                      old, or there has never been one; otherwise a
+                      bodyweight sparkline once there are enough. */}
                   <WeighInNudge mondayStr={boundaries.mondayStr} />
                 </>
               )}

@@ -46,6 +46,9 @@ const REPEAT_SUBLABELS = ["repeat", "run it back"];
 const BACK_OFF_SUBLABELS = ["back-off", "volume set", "back-off work"];
 const COMEBACK_SUBLABELS = ["welcome back", "ease back in", "comeback set"];
 
+// How many recent sessions of a lift say what the lifter usually opens with.
+const OPENING_HABIT_SESSIONS = 10;
+
 // A gap this long between sessions of a lift starts a staged comeback.
 const COMEBACK_GAP_DAYS = 14;
 const SMALL_JUMP_SUBLABELS = ["small jump", "polite increase", "nudge upward"];
@@ -273,10 +276,27 @@ export function getLiftBlockCoachingState({
   const lastDate = lastTopSetSummary?.date ?? prior[prior.length - 1].date;
   const lastSets = prior.filter((e) => e.date === lastDate);
   const orderedLastSets = orderSessionSets(lastSets);
-  const previousOpeningSet = orderedLastSets.find((set) => {
-    const { value } = getDisplayWeight(set, isMetric);
-    return value > 0 && (set.reps ?? 0) > 0;
-  });
+  const getOpeningSet = (orderedSets) => {
+    const set = orderedSets.find(
+      (entry) =>
+        getDisplayWeight(entry, isMetric).value > 0 && (entry.reps ?? 0) > 0,
+    );
+    return set
+      ? { reps: set.reps, weight: getDisplayWeight(set, isMetric).value }
+      : null;
+  };
+  const previousOpeningSet = getOpeningSet(orderedLastSets);
+  // The lifter's habit, not one odd day: the most common first set across
+  // recent sessions, newest breaking ties. One light day while unwell should
+  // not make the next session open at 5@50 when the habit is the empty bar.
+  const habitualOpeningSet =
+    getHabitualOpeningSet(
+      priorLiftDates
+        .slice(-OPENING_HABIT_SESSIONS)
+        .map((date) =>
+          getOpeningSet(orderSessionSets(prior.filter((e) => e.date === date))),
+        ),
+    ) ?? previousOpeningSet;
 
   // Anchor top-set planning to the recent trend. A single deload session should
   // not erase several prior sessions of steady top-set progression.
@@ -396,12 +416,8 @@ export function getLiftBlockCoachingState({
     ? replayProgression[nextReplayIdx]
     : null;
   const nextActualWarmupSet =
-    realSets.length === 0 && previousOpeningSet
-      ? {
-          reps: previousOpeningSet.reps,
-          weight: getDisplayWeight(previousOpeningSet, isMetric).value,
-          isTopSet: false,
-        }
+    realSets.length === 0 && habitualOpeningSet
+      ? { ...habitualOpeningSet, isTopSet: false }
       : nextReplaySet;
   const nearMissTopGapRatio =
     nextSet?.isTopSet && nextSet.weight > 0 && lastLoggedWeight > 0
@@ -603,6 +619,16 @@ export function getLiftBlockCoachingState({
           ),
       "primary",
     );
+
+    // Last session's opener, when it broke from the habit, stays a tap away.
+    if (realSets.length === 0 && previousOpeningSet) {
+      pushSuggestionButton({
+        kind: "recent-opening",
+        ...previousOpeningSet,
+        sublabel: "like last time",
+        variant: "outline",
+      });
+    }
 
     if (lastLoggedWeight > 0) {
       pushSuggestionButton({
@@ -963,6 +989,31 @@ export function getComebackTarget({
 
   if (weight >= normalTopWeight) return null;
   return { weight, gapDays, sessionsBack: since.length, preBreakTop };
+}
+
+// The most common opening set, oldest to newest in `openingSets`; on a tie
+// the one used most recently wins.
+function getHabitualOpeningSet(openingSets) {
+  const tally = new Map();
+  openingSets.forEach((set, index) => {
+    if (!set) return;
+    const key = `${set.reps}@${set.weight}`;
+    const entry = tally.get(key) ?? { set, count: 0, lastIndex: -1 };
+    entry.count += 1;
+    entry.lastIndex = index;
+    tally.set(key, entry);
+  });
+  let best = null;
+  for (const entry of tally.values()) {
+    if (
+      !best ||
+      entry.count > best.count ||
+      (entry.count === best.count && entry.lastIndex > best.lastIndex)
+    ) {
+      best = entry;
+    }
+  }
+  return best?.set ?? null;
 }
 
 function orderSessionSets(sets) {

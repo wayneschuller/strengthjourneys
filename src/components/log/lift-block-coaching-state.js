@@ -42,6 +42,7 @@ const HEAVIER_SET_SUBLABELS = [
 ];
 const BRIDGE_WARMUP_SUBLABELS = ["bridge warmup", "launch ramp"];
 const REPEAT_SUBLABELS = ["repeat", "run it back"];
+const BACK_OFF_SUBLABELS = ["back-off", "volume set", "back-off work"];
 const SMALL_JUMP_SUBLABELS = ["small jump", "polite increase", "nudge upward"];
 const STRETCH_SET_SUBLABELS = ["if feeling good", "reckless optimism"];
 const TOP_SET_SUBLABELS = [
@@ -266,13 +267,7 @@ export function getLiftBlockCoachingState({
   });
   const lastDate = lastTopSetSummary?.date ?? prior[prior.length - 1].date;
   const lastSets = prior.filter((e) => e.date === lastDate);
-  const orderedLastSets = [...lastSets].sort((a, b) => {
-    if (Number.isFinite(a.rowIndex) && Number.isFinite(b.rowIndex)) {
-      return a.rowIndex - b.rowIndex;
-    }
-
-    return lastSets.indexOf(a) - lastSets.indexOf(b);
-  });
+  const orderedLastSets = orderSessionSets(lastSets);
   const previousOpeningSet = orderedLastSets.find((set) => {
     const { value } = getDisplayWeight(set, isMetric);
     return value > 0 && (set.reps ?? 0) > 0;
@@ -304,24 +299,36 @@ export function getLiftBlockCoachingState({
     storedPlatePreference,
   );
 
-  // Build a "replay" progression from the user's actual last session sets.
-  // Lower warmups (below 80% of last top) stay at the same weight.
-  // Upper warmups (at or above 80%) shift by the increment delta.
-  const incrementDelta = topWeight - lastTopWeight; // usually minIncrement
-  const upperThreshold = lastTopWeight * 0.8;
+  // The session to replay: the one that set the target top set, so a light
+  // day since then does not cut the ramp short. Its sets split at the
+  // heaviest one into the ramp up and the back-off sets after it.
+  const {
+    rampSets: ladderRampSets,
+    backOffSets: ladderBackOffSets,
+    peakWeight: ladderPeakWeight,
+  } = splitSessionAtPeak(
+    orderSessionSets(
+      prior.filter((e) => e.date === (targetTopSetSummary?.date ?? lastDate)),
+    ),
+    isMetric,
+  );
+
+  // Build a "replay" progression from the ramp of that session. Back-off
+  // sets are left out, or last week's 7@112 would come back as a warmup.
+  // Warmups replay at the weights the lifter used: replaying the real log
+  // showed lifters repeat their ramp and move only the top set, and shifting
+  // the upper warmups by an increment missed more often than it helped.
   const seenReplayWeights = new Set();
   const replayProgression = [];
-  for (const s of lastSets) {
+  for (const s of ladderRampSets) {
     const { value: w } = getDisplayWeight(s, isMetric);
     if (w <= 0) continue;
-    const isUpper = w >= upperThreshold;
-    const replayWeight = isUpper
-      ? Math.round((w + incrementDelta) / minIncrement) * minIncrement
-      : w;
+    const replayWeight = w;
     // Deduplicate: only keep the first occurrence at each weight
     if (seenReplayWeights.has(replayWeight)) continue;
     seenReplayWeights.add(replayWeight);
-    const isTop = replayWeight >= topWeight;
+    // The session's own top set becomes today's progressed top.
+    const isTop = replayWeight >= lastTopWeight;
     replayProgression.push({
       weight: isTop ? topWeight : replayWeight,
       reps: isTop ? topReps : s.reps,
@@ -396,8 +403,34 @@ export function getLiftBlockCoachingState({
   const effectiveAtOrPastTop =
     treatNearMissAsTopSet || (atOrPastTop && replayAtOrPastTop);
 
-  // Detect drop set mode: last logged weight is below the session's peak
-  const inDropSetMode = effectiveAtOrPastTop && lastLoggedWeight < maxLogged;
+  // Back-off mode: the weight has come down from today's heaviest set once
+  // the heavy work is under way. Lifters often stop short of the forecast
+  // top, so this cannot wait for the forecast to be reached.
+  const reachedHeavyWork = maxLogged >= lastTopWeight * 0.75;
+  const inDropSetMode =
+    lastLoggedWeight > 0 &&
+    lastLoggedWeight < maxLogged &&
+    (effectiveAtOrPastTop || reachedHeavyWork);
+
+  // The replayed session's back-offs, in order, as the next one to offer.
+  // Each is scaled to today's heaviest set, since back-offs follow the top
+  // single, not the calendar.
+  const todayBackOffCount = splitSessionAtPeak(realSets, isMetric).backOffSets
+    .length;
+  const roundToIncrement = (weight) =>
+    Math.round(weight / minIncrement) * minIncrement;
+  const getTemplateBackOff = (offset = 0) => {
+    const template =
+      ladderBackOffSets[todayBackOffCount + offset] ??
+      (offset === 0 ? ladderBackOffSets.at(-1) : null);
+    if (!template || !(ladderPeakWeight > 0) || !(maxLogged > 0)) return null;
+    const weight = roundToIncrement(
+      (template.weight / ladderPeakWeight) * maxLogged,
+    );
+    return weight >= barWeight && weight < maxLogged
+      ? { reps: template.reps, weight, templateWeight: template.weight }
+      : null;
+  };
 
   // Keep both ranking lanes so button badges can use the preferred result while
   // milestone quips can still react specifically to an all-time best.
@@ -455,7 +488,19 @@ export function getLiftBlockCoachingState({
     return getSuggestionSublabel(fallback, "top-set", set);
   };
 
-  if (!effectiveAtOrPastTop) {
+  const pushTemplateBackOff = (offset, variant = "outline") => {
+    const backOff = getTemplateBackOff(offset);
+    if (!backOff) return;
+    pushSuggestionButton({
+      kind: offset === 0 ? "back-off" : "back-off-next",
+      reps: backOff.reps,
+      weight: backOff.weight,
+      sublabel: getSuggestionSublabel(BACK_OFF_SUBLABELS, "back-off", backOff),
+      variant,
+    });
+  };
+
+  if (!effectiveAtOrPastTop && !inDropSetMode) {
     // Warmup phase: replay the user's actual previous warmup first, then fill
     // the remaining slots with repeat/heavier/top-set choices.
     const addWarmupButton = (kind, set, sublabel, variant) => {
@@ -537,6 +582,32 @@ export function getLiftBlockCoachingState({
       });
     }
 
+    // Near the top, the session may end here: offer the first back-off so
+    // stopping short of the forecast is one tap.
+    if (lastLoggedWeight >= lastTopWeight * 0.9) pushTemplateBackOff(0);
+
+    // The step after next on the lifter's own ramp, ahead of the generic
+    // warmup generator, which replaying real logs showed is rarely taken.
+    const followingReplaySet =
+      realSets.length > 0 && nextActualWarmupSet === nextReplaySet
+        ? replayProgression[nextReplayIdx + 1]
+        : null;
+    if (followingReplaySet && !followingReplaySet.isTopSet) {
+      addWarmupButton(
+        "following-warmup",
+        followingReplaySet,
+        getHeavierSetSublabel({
+          liftType,
+          sessionDate,
+          reps: followingReplaySet.reps,
+          weight: followingReplaySet.weight,
+          lastLoggedWeight,
+          loggedSetCount: lastLoggedSets.length,
+        }),
+        "outline",
+      );
+    }
+
     if (bridgeWarmupSet) {
       addWarmupButton(
         "bridge-warmup",
@@ -598,7 +669,9 @@ export function getLiftBlockCoachingState({
       "outline",
     );
   } else if (inDropSetMode) {
-    // Drop set mode: weight is descending — only offer repeat at current drop weight
+    // Back-off mode: the next back-off from the replayed session leads, then
+    // repeating the one just done, then the one after.
+    pushTemplateBackOff(0, "primary");
     pushSuggestionButton({
       kind: "drop-repeat",
       reps: lastLoggedReps,
@@ -606,6 +679,7 @@ export function getLiftBlockCoachingState({
       sublabel: "drop set",
       variant: "secondary",
     });
+    pushTemplateBackOff(1);
     pushSuggestionButton({
       kind: "drop-back-up",
       reps: lastLoggedReps,
@@ -647,6 +721,7 @@ export function getLiftBlockCoachingState({
       ),
       variant: "secondary",
     });
+    pushTemplateBackOff(0);
 
     if (lastLoggedWeight < topWeight && lastTopWeight > lastLoggedWeight) {
       pushSuggestionButton({
@@ -718,10 +793,10 @@ export function getLiftBlockCoachingState({
     inSessionCoaching: inSessionFallbackCoaching,
     journeyTechniqueAssist,
     telemetryContext: {
-      phase: !effectiveAtOrPastTop
-        ? "warmup"
-        : inDropSetMode
-          ? "drop"
+      phase: inDropSetMode
+        ? "drop"
+        : !effectiveAtOrPastTop
+          ? "warmup"
           : "working",
       anchorWeight: lastTopWeight,
       minIncrement,
@@ -794,6 +869,35 @@ export function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
   }
 
   return latest;
+}
+
+function orderSessionSets(sets) {
+  return [...sets].sort((a, b) => {
+    if (Number.isFinite(a.rowIndex) && Number.isFinite(b.rowIndex)) {
+      return a.rowIndex - b.rowIndex;
+    }
+    return sets.indexOf(a) - sets.indexOf(b);
+  });
+}
+
+// Splits one session's ordered sets at its heaviest set: everything up to
+// and including it is the ramp, lighter sets after it are back-offs.
+function splitSessionAtPeak(orderedSets, isMetric) {
+  const weighed = orderedSets
+    .map((set) => ({ set, weight: getDisplayWeight(set, isMetric).value }))
+    .filter(({ set, weight }) => weight > 0 && (set.reps ?? 0) > 0);
+  if (!weighed.length) return { rampSets: [], backOffSets: [], peakWeight: 0 };
+
+  const peakWeight = Math.max(...weighed.map(({ weight }) => weight));
+  const peakIdx = weighed.findIndex(({ weight }) => weight === peakWeight);
+  return {
+    rampSets: weighed.slice(0, peakIdx + 1).map(({ set }) => set),
+    backOffSets: weighed
+      .slice(peakIdx + 1)
+      .filter(({ weight }) => weight < peakWeight)
+      .map(({ set, weight }) => ({ reps: set.reps, weight })),
+    peakWeight,
+  };
 }
 
 function getBridgeWarmupSet({

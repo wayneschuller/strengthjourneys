@@ -370,7 +370,7 @@ function SmartAddButtonGrid({
                   leadSpansRow && i === 0 ? "col-span-2 sm:col-span-1" : ""
                 } ${
                   s.variant === "primary"
-                    ? "border-primary/40 bg-primary/10"
+                    ? "border-primary/50 bg-background/40"
                     : "border-border bg-background/40"
                 }`}
                 onClick={() =>
@@ -420,7 +420,7 @@ function SmartAddButtonGrid({
             // A full-width row on a phone, where it is the one control that
             // always applies; one more column beside the suggestions from sm.
             // The dashed edge marks it as the open-ended choice.
-            className={`${tileClass} ${tileStateClass} border-border col-span-2 min-h-16 items-center justify-center gap-3 border-dashed px-4 py-3 sm:col-span-1 sm:min-h-[7.5rem] sm:flex-col sm:justify-start sm:gap-1.5 sm:px-2`}
+            className={`${tileClass} ${tileStateClass} border-muted-foreground/50 col-span-2 min-h-16 items-center justify-center gap-3 border-dashed px-4 py-3 sm:col-span-1 sm:min-h-[7.5rem] sm:flex-col sm:justify-start sm:gap-1.5 sm:px-2`}
             onClick={onStartCustomSet}
           >
             <span aria-hidden="true" className={actionCircleClass}>

@@ -7,6 +7,7 @@ import { getDisplayWeight } from "@/lib/processing-utils";
 import { generateSessionSets } from "@/lib/warmups";
 import { getRankingMeta } from "@/lib/pr-ranking";
 import { getDefaultBarbellWeight } from "@/lib/barbell-defaults";
+import { getDaysBetweenYmd } from "@/lib/date-utils";
 import {
   getFirstTimeEmptyButtons,
   getFirstTimeProgressionButtons,
@@ -43,6 +44,10 @@ const HEAVIER_SET_SUBLABELS = [
 const BRIDGE_WARMUP_SUBLABELS = ["bridge warmup", "launch ramp"];
 const REPEAT_SUBLABELS = ["repeat", "run it back"];
 const BACK_OFF_SUBLABELS = ["back-off", "volume set", "back-off work"];
+const COMEBACK_SUBLABELS = ["welcome back", "ease back in", "comeback set"];
+
+// A gap this long between sessions of a lift starts a staged comeback.
+const COMEBACK_GAP_DAYS = 14;
 const SMALL_JUMP_SUBLABELS = ["small jump", "polite increase", "nudge upward"];
 const STRETCH_SET_SUBLABELS = ["if feeling good", "reckless optimism"];
 const TOP_SET_SUBLABELS = [
@@ -281,8 +286,18 @@ export function getLiftBlockCoachingState({
   const topReps = topSet.reps;
   if (!lastTopWeight || lastTopWeight <= 0) return null;
 
-  // Assume progressive overload: target is last session's top + one increment
-  const topWeight = lastTopWeight + minIncrement;
+  // Assume progressive overload: target is last session's top + one increment,
+  // unless the lifter is coming back from a break, when it builds back in
+  // stages instead.
+  const comeback = getComebackTarget({
+    priorLiftDates,
+    sessionDate,
+    topSetHistory: recentTopSetHistory,
+    normalTopWeight: lastTopWeight + minIncrement,
+    minIncrement,
+  });
+  const isComingBack = Boolean(comeback);
+  const topWeight = comeback?.weight ?? lastTopWeight + minIncrement;
   const lastSessionTopWeight = lastTopSetSummary?.weight ?? lastTopWeight;
   const lastSessionTopReps = lastTopSetSummary?.reps ?? topReps;
   const isRecoveringFromDeload =
@@ -328,7 +343,10 @@ export function getLiftBlockCoachingState({
     if (seenReplayWeights.has(replayWeight)) continue;
     seenReplayWeights.add(replayWeight);
     // The session's own top set becomes today's progressed top.
-    const isTop = replayWeight >= lastTopWeight;
+    const isTop = replayWeight >= Math.min(lastTopWeight, topWeight);
+    // In a comeback several old ramp sets can sit above today's top; the
+    // ladder ends at the first.
+    if (isTop && replayProgression.some((set) => set.isTopSet)) continue;
     replayProgression.push({
       weight: isTop ? topWeight : replayWeight,
       reps: isTop ? topReps : s.reps,
@@ -451,6 +469,8 @@ export function getLiftBlockCoachingState({
   // playful pools, so suggestion telemetry keys on this instead.
   const pushSuggestionButton = ({ kind, reps, weight, sublabel, variant }) => {
     if (!reps || !weight || buttons.length >= 4) return;
+    // A comeback target already lifted past today is no target at all.
+    if (kind === "comeback-top" && weight <= maxLogged) return;
     const key = `${reps}-${weight}`;
     if (seenButtonKeys.has(key)) return;
     seenButtonKeys.add(key);
@@ -488,6 +508,18 @@ export function getLiftBlockCoachingState({
     return getSuggestionSublabel(fallback, "top-set", set);
   };
 
+  const topSetKind = isComingBack
+    ? "comeback-top"
+    : isRecoveringFromDeload
+      ? "trend-target"
+      : "top-set";
+  const getTargetSublabel = (set) =>
+    isComingBack
+      ? getSuggestionSublabel(COMEBACK_SUBLABELS, "comeback-top", set)
+      : isRecoveringFromDeload
+        ? "trend target"
+        : getTopSetSublabel(set);
+
   const pushTemplateBackOff = (offset, variant = "outline") => {
     const backOff = getTemplateBackOff(offset);
     if (!backOff) return;
@@ -524,19 +556,23 @@ export function getLiftBlockCoachingState({
             weight: lastSessionTopWeight,
           }
         : null;
+    // In a comeback the pre-break top stays one tap away: plenty of lifters
+    // walk straight back to it, and replaying old logs showed as much.
     const previousTopOption =
-      lastTopWeight > maxLogged && lastTopWeight < topProgSet.weight
+      lastTopWeight > maxLogged &&
+      (isComingBack || lastTopWeight < topProgSet.weight)
         ? {
             reps: topReps,
             weight: lastTopWeight,
           }
         : null;
-    const stretchTopOption = isRecoveringFromDeload
-      ? {
-          reps: topReps,
-          weight: topWeight + minIncrement,
-        }
-      : null;
+    const stretchTopOption =
+      isRecoveringFromDeload && !isComingBack
+        ? {
+            reps: topReps,
+            weight: topWeight + minIncrement,
+          }
+        : null;
     const bridgeWarmupSet =
       nextSet?.isTopSet && lastLoggedWeight > 0
         ? getBridgeWarmupSet({
@@ -653,9 +689,9 @@ export function getLiftBlockCoachingState({
       "outline",
     );
     addWarmupButton(
-      isRecoveringFromDeload ? "trend-target" : "top-set",
+      topSetKind,
       topProgSet,
-      isRecoveringFromDeload ? "trend target" : getTopSetSublabel(topProgSet),
+      getTargetSublabel(topProgSet),
       "outline",
     );
     addWarmupButton(
@@ -699,12 +735,10 @@ export function getLiftBlockCoachingState({
       variant: "outline",
     });
     pushSuggestionButton({
-      kind: isRecoveringFromDeload ? "trend-target" : "top-set",
+      kind: topSetKind,
       reps: topReps,
       weight: topWeight,
-      sublabel: isRecoveringFromDeload
-        ? "trend target"
-        : getTopSetSublabel({ reps: topReps, weight: topWeight }),
+      sublabel: getTargetSublabel({ reps: topReps, weight: topWeight }),
       variant: "outline",
     });
   } else {
@@ -723,7 +757,10 @@ export function getLiftBlockCoachingState({
     });
     pushTemplateBackOff(0);
 
-    if (lastLoggedWeight < topWeight && lastTopWeight > lastLoggedWeight) {
+    if (
+      (isComingBack || lastLoggedWeight < topWeight) &&
+      lastTopWeight > lastLoggedWeight
+    ) {
       pushSuggestionButton({
         kind: "previous-top",
         reps: topReps,
@@ -742,7 +779,7 @@ export function getLiftBlockCoachingState({
       : null;
     if (targetTopSet && targetTopSet.weight > lastLoggedWeight) {
       pushSuggestionButton({
-        kind: "top-set",
+        kind: topSetKind,
         reps: targetTopSet.reps,
         weight: targetTopSet.weight,
         sublabel: getTopSetSublabel(targetTopSet),
@@ -777,12 +814,10 @@ export function getLiftBlockCoachingState({
     }
 
     pushSuggestionButton({
-      kind: isRecoveringFromDeload ? "trend-target" : "top-set",
+      kind: topSetKind,
       reps: topReps,
       weight: topWeight,
-      sublabel: isRecoveringFromDeload
-        ? "trend target"
-        : getTopSetSublabel({ reps: topReps, weight: topWeight }),
+      sublabel: getTargetSublabel({ reps: topReps, weight: topWeight }),
       variant: "outline",
     });
   }
@@ -869,6 +904,65 @@ export function getTargetTopSetSummary({ topSetHistory, minIncrement }) {
   }
 
   return latest;
+}
+
+/**
+ * A staged comeback after a break from this lift (illness, holidays, life).
+ * The first session back aims below the pre-break top, further below the
+ * longer the break; each session after aims a step above the best since the
+ * break, until the normal target is back. Returns null when there was no
+ * recent break, or the lifter has already built back.
+ */
+export function getComebackTarget({
+  priorLiftDates,
+  sessionDate,
+  topSetHistory,
+  normalTopWeight,
+  minIncrement,
+}) {
+  const dates = [...priorLiftDates, sessionDate];
+  // A break is long for this lift: a lift trained every three weeks is not
+  // coming back from anything after three weeks.
+  const priorTail = priorLiftDates.slice(-8);
+  const recentGaps = priorTail
+    .slice(1)
+    .map((date, i) => getDaysBetweenYmd(priorTail[i], date));
+  const usualGap = recentGaps.length
+    ? [...recentGaps].sort((a, b) => a - b)[Math.floor(recentGaps.length / 2)]
+    : 0;
+  const breakGap = Math.max(COMEBACK_GAP_DAYS, usualGap * 2);
+  let breakIdx = -1;
+  for (let i = dates.length - 1; i > 0; i -= 1) {
+    if (getDaysBetweenYmd(dates[i - 1], dates[i]) >= breakGap) {
+      breakIdx = i;
+      break;
+    }
+  }
+  if (breakIdx === -1) return null;
+
+  const breakStart = dates[breakIdx - 1];
+  const comebackStart = dates[breakIdx];
+  const before = topSetHistory.filter((entry) => entry.date <= breakStart);
+  const since = topSetHistory.filter((entry) => entry.date >= comebackStart);
+  // Comebacks are judged against recent history only; a break older than
+  // the history window is long since over.
+  if (!before.length) return null;
+
+  const preBreakTop = Math.max(...before.map((entry) => entry.weight));
+  const gapDays = getDaysBetweenYmd(breakStart, comebackStart);
+  const firstBackShare = gapDays >= 56 ? 0.8 : gapDays >= 28 ? 0.85 : 0.9;
+  const round = (weight) => Math.round(weight / minIncrement) * minIncrement;
+  const stageJump = Math.max(minIncrement, round(preBreakTop * 0.05));
+  const bestSince = since.length
+    ? Math.max(...since.map((entry) => entry.weight))
+    : 0;
+  const weight = Math.max(
+    round(preBreakTop * firstBackShare),
+    bestSince > 0 ? bestSince + stageJump : 0,
+  );
+
+  if (weight >= normalTopWeight) return null;
+  return { weight, gapDays, sessionsBack: since.length, preBreakTop };
 }
 
 function orderSessionSets(sets) {

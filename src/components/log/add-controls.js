@@ -327,137 +327,115 @@ function SmartAddButtonGrid({
   disabled = false,
 }) {
   const visibleButtons = buttons.slice(0, 4);
-  const suggestionButtonClass =
-    "grid min-h-[6.25rem] min-w-0 grid-rows-[minmax(1.75rem,auto)_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors";
+  // Every option is a tile with an edge and a fill, so the row reads as
+  // buttons to press rather than a table of figures like the readouts above.
+  const tileClass =
+    "group flex min-w-0 rounded-lg border text-sm transition-colors";
+  const tileStateClass = disabled
+    ? "cursor-not-allowed opacity-50"
+    : "hover:border-primary/60 hover:bg-primary/15 focus-visible:border-primary/60 focus-visible:bg-primary/15 active:bg-primary/20";
+  // The same primary circle carries the plus on each suggestion and the pen
+  // on the custom set, so all five read as one family of actions.
+  const actionCircleClass =
+    "bg-primary/10 text-primary group-hover:bg-primary/20 flex size-8 shrink-0 items-center justify-center rounded-full transition-colors";
   const desktopGridClass =
     visibleButtons.length >= 4 ? "sm:grid-cols-5" : "sm:grid-cols-4";
   // On a phone the custom set always closes the grid as a full-width row, so
   // the suggestions above it have to pair up. An odd count gives the first
   // suggestion a row of its own rather than leaving a hole beside the last.
   const leadSpansRow = visibleButtons.length % 2 === 1;
-  const suggestionCellClass = (index) => {
-    const spansRow = leadSpansRow && index === 0;
-    const isLeftOfPair =
-      !spansRow && (leadSpansRow ? index % 2 === 1 : index % 2 === 0);
-
-    return [
-      "border-border/40 border-b sm:border-r sm:border-b-0",
-      spansRow ? "col-span-2 sm:col-span-1" : "",
-      isLeftOfPair ? "border-r" : "",
-      index === 0 ? "sm:rounded-bl-xl" : "",
-    ]
-      .filter(Boolean)
-      .join(" ");
-  };
 
   return (
     <>
-      <div
-        className={`grid grid-cols-2 overflow-hidden rounded-b-xl ${desktopGridClass}`}
-      >
-        {visibleButtons.map((s, i) => {
-          const { Icon, className: iconClassName } = getSuggestionIcon(
-            s,
-            lastRealSet,
-          );
+      <div className="px-3 pt-3 pb-3">
+        <p className="text-muted-foreground mb-2 px-1 text-sm">
+          Add your next set
+        </p>
+        <div className={`grid grid-cols-2 gap-2 ${desktopGridClass}`}>
+          {visibleButtons.map((s, i) => {
+            const { Icon, className: iconClassName } = getSuggestionIcon(
+              s,
+              lastRealSet,
+            );
 
-          return (
-            <button
-              key={i}
-              type="button"
-              disabled={disabled}
-              aria-label={`Add a set of ${s.reps} at ${s.weight}${s.unitType}${
-                s.sublabel ? `, ${s.sublabel}` : ""
-              }`}
-              className={`${suggestionButtonClass} ${suggestionCellClass(i)} ${
-                disabled
-                  ? "cursor-not-allowed opacity-50"
-                  : "group hover:bg-primary/10 focus-visible:bg-primary/10 active:bg-primary/15"
-              } ${
-                s.variant === "primary"
-                  ? "bg-accent/20 text-foreground"
-                  : s.variant === "secondary"
-                    ? "text-foreground"
-                    : "text-muted-foreground"
-              }`}
-              onClick={() =>
-                onAddSet({
-                  reps: s.reps,
-                  weight: s.weight,
-                  unitType: s.unitType,
-                })
-              }
-            >
-              <span
-                className={`flex min-w-0 items-center justify-center gap-1.5 self-end ${
+            return (
+              <button
+                key={i}
+                type="button"
+                disabled={disabled}
+                aria-label={`Add a set of ${s.reps} at ${s.weight}${s.unitType}${
+                  s.sublabel ? `, ${s.sublabel}` : ""
+                }`}
+                className={`${tileClass} ${tileStateClass} min-h-[7.5rem] flex-col items-center justify-start gap-1.5 px-2 py-3 text-center ${
+                  leadSpansRow && i === 0 ? "col-span-2 sm:col-span-1" : ""
+                } ${
                   s.variant === "primary"
-                    ? "font-semibold"
-                    : s.variant === "secondary"
-                      ? "font-medium"
-                      : ""
+                    ? "border-primary/40 bg-primary/10"
+                    : "border-border bg-background/40"
                 }`}
+                onClick={() =>
+                  onAddSet({
+                    reps: s.reps,
+                    weight: s.weight,
+                    unitType: s.unitType,
+                  })
+                }
               >
-                {/* The icon says how this set compares with the last one;
-                    on hover or focus it turns into a plus, so the lifter can
-                    see that a tap adds the set rather than selecting it. */}
+                <span aria-hidden="true" className={actionCircleClass}>
+                  <Plus className="size-4" />
+                </span>
                 <span
-                  aria-hidden="true"
-                  className="grid size-3.5 shrink-0 place-items-center"
+                  className={`text-foreground min-w-0 break-words ${
+                    s.variant === "primary" ? "font-semibold" : "font-medium"
+                  }`}
                 >
+                  Add <span className="whitespace-nowrap">{s.label}</span>
+                </span>
+                {/* The arrow says how this set compares with the last one,
+                    so it sits beside the words that say the same thing. */}
+                <span className="text-muted-foreground/80 flex items-center gap-1 text-[10px] font-normal tracking-wider uppercase">
                   <Icon
-                    className={`col-start-1 row-start-1 h-3.5 w-3.5 transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0 ${iconClassName}`}
+                    aria-hidden="true"
+                    className={`size-3 shrink-0 ${iconClassName}`}
                   />
-                  <Plus className="text-primary col-start-1 row-start-1 h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+                  {s.sublabel}
                 </span>
-                <span className="min-w-0 break-words">
-                  <span className="text-muted-foreground group-hover:text-primary group-focus-visible:text-primary font-normal transition-colors">
-                    Add{" "}
+                {s.rankingMessage && (
+                  <span
+                    className={`text-[10px] font-normal tracking-wide uppercase ${
+                      s.rankingScope === "lifetime"
+                        ? "text-amber-500"
+                        : "text-blue-500"
+                    }`}
+                  >
+                    {s.rankingMessage}
                   </span>
-                  <span className="whitespace-nowrap">{s.label}</span>
-                </span>
-              </span>
-              <span className="text-muted-foreground/70 self-start text-[10px] font-normal tracking-wider uppercase">
-                {s.sublabel}
-              </span>
-              <span
-                className={`self-start text-[10px] font-normal tracking-wide uppercase ${
-                  s.rankingMessage
-                    ? s.rankingScope === "lifetime"
-                      ? "text-amber-500"
-                      : "text-blue-500"
-                    : "invisible"
-                }`}
-              >
-                {s.rankingMessage ?? "No ranking"}
-              </span>
-            </button>
-          );
-        })}
-        <button
-          type="button"
-          disabled={disabled}
-          // A full-width row on a phone, where it is the one control that
-          // always applies; one more column beside the suggestions from sm.
-          className={`col-span-2 flex min-h-16 min-w-0 items-center justify-center gap-3 rounded-b-xl px-4 py-3 text-sm transition-colors sm:col-span-1 sm:min-h-[6.25rem] sm:flex-col sm:gap-1.5 sm:rounded-bl-none sm:px-2 ${
-            disabled ? "cursor-not-allowed opacity-50" : "hover:bg-accent/50"
-          }`}
-          onClick={onStartCustomSet}
-        >
-          <span
-            aria-hidden="true"
-            className="bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-full sm:size-8"
+                )}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            disabled={disabled}
+            // A full-width row on a phone, where it is the one control that
+            // always applies; one more column beside the suggestions from sm.
+            // The dashed edge marks it as the open-ended choice.
+            className={`${tileClass} ${tileStateClass} border-border col-span-2 min-h-16 items-center justify-center gap-3 border-dashed px-4 py-3 sm:col-span-1 sm:min-h-[7.5rem] sm:flex-col sm:justify-start sm:gap-1.5 sm:px-2`}
+            onClick={onStartCustomSet}
           >
-            <PenLine className="size-4" />
-          </span>
-          <span className="flex min-w-0 flex-col items-start gap-0.5 sm:items-center">
-            <span className="text-foreground text-base font-semibold sm:text-sm sm:font-medium">
-              Add custom set
+            <span aria-hidden="true" className={actionCircleClass}>
+              <PenLine className="size-4" />
             </span>
-            <span className="text-muted-foreground/70 text-[10px] tracking-wider uppercase">
-              any reps or weight
+            <span className="flex min-w-0 flex-col items-start gap-1.5 sm:items-center">
+              <span className="text-foreground font-medium">
+                Add custom set
+              </span>
+              <span className="text-muted-foreground/80 text-[10px] tracking-wider uppercase">
+                any reps or weight
+              </span>
             </span>
-          </span>
-        </button>
+          </button>
+        </div>
       </div>
       {showHint && disabled && (
         <p className="text-muted-foreground/60 pt-1 pb-2 text-center text-[11px] italic">

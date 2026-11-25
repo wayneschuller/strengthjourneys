@@ -451,7 +451,7 @@ function SmartAddButtonGrid({
           </span>
           <span className="flex min-w-0 flex-col items-start gap-0.5 sm:items-center">
             <span className="text-foreground text-base font-semibold sm:text-sm sm:font-medium">
-              Custom set
+              Add custom set
             </span>
             <span className="text-muted-foreground/70 text-[10px] tracking-wider uppercase">
               any reps or weight

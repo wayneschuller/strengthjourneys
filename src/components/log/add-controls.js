@@ -368,11 +368,7 @@ function SmartAddButtonGrid({
                 }`}
                 className={`${tileClass} ${tileStateClass} min-h-[7.5rem] flex-col items-center justify-start gap-1.5 px-2 py-3 text-center ${
                   leadSpansRow && i === 0 ? "col-span-2 sm:col-span-1" : ""
-                } ${
-                  s.variant === "primary"
-                    ? "border-primary/50 bg-background/40"
-                    : "border-border bg-background/40"
-                }`}
+                } border-border bg-background/40`}
                 onClick={() =>
                   onAddSet({
                     reps: s.reps,
@@ -384,11 +380,9 @@ function SmartAddButtonGrid({
                 <span aria-hidden="true" className={actionCircleClass}>
                   <Plus className="size-4" />
                 </span>
-                <span
-                  className={`text-foreground min-w-0 break-words ${
-                    s.variant === "primary" ? "font-semibold" : "font-medium"
-                  }`}
-                >
+                {/* Every suggestion looks the same: ranking one as the
+                    pick is easy to get wrong and pulls the eye. */}
+                <span className="text-foreground min-w-0 font-medium break-words">
                   Add <span className="whitespace-nowrap">{s.label}</span>
                 </span>
                 {/* The arrow says how this set compares with the last one,

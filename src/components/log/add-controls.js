@@ -328,7 +328,7 @@ function SmartAddButtonGrid({
 }) {
   const visibleButtons = buttons.slice(0, 4);
   const suggestionButtonClass =
-    "grid min-h-[6.25rem] min-w-0 grid-rows-[1.75rem_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors";
+    "grid min-h-[6.25rem] min-w-0 grid-rows-[minmax(1.75rem,auto)_1.1rem_1.4rem] place-items-center gap-1 px-2 py-3 text-center text-sm transition-colors";
   const desktopGridClass =
     visibleButtons.length >= 4 ? "sm:grid-cols-5" : "sm:grid-cols-4";
   // On a phone the custom set always closes the grid as a full-width row, so
@@ -366,10 +366,13 @@ function SmartAddButtonGrid({
               key={i}
               type="button"
               disabled={disabled}
+              aria-label={`Add a set of ${s.reps} at ${s.weight}${s.unitType}${
+                s.sublabel ? `, ${s.sublabel}` : ""
+              }`}
               className={`${suggestionButtonClass} ${suggestionCellClass(i)} ${
                 disabled
                   ? "cursor-not-allowed opacity-50"
-                  : "hover:bg-accent/50"
+                  : "group hover:bg-primary/10 focus-visible:bg-primary/10 active:bg-primary/15"
               } ${
                 s.variant === "primary"
                   ? "bg-accent/20 text-foreground"
@@ -394,8 +397,24 @@ function SmartAddButtonGrid({
                       : ""
                 }`}
               >
-                <Icon className={`h-3.5 w-3.5 ${iconClassName}`} />
-                <span className="min-w-0 break-words">{s.label}</span>
+                {/* The icon says how this set compares with the last one;
+                    on hover or focus it turns into a plus, so the lifter can
+                    see that a tap adds the set rather than selecting it. */}
+                <span
+                  aria-hidden="true"
+                  className="grid size-3.5 shrink-0 place-items-center"
+                >
+                  <Icon
+                    className={`col-start-1 row-start-1 h-3.5 w-3.5 transition-opacity group-hover:opacity-0 group-focus-visible:opacity-0 ${iconClassName}`}
+                  />
+                  <Plus className="text-primary col-start-1 row-start-1 h-3.5 w-3.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+                </span>
+                <span className="min-w-0 break-words">
+                  <span className="text-muted-foreground group-hover:text-primary group-focus-visible:text-primary font-normal transition-colors">
+                    Add{" "}
+                  </span>
+                  <span className="whitespace-nowrap">{s.label}</span>
+                </span>
               </span>
               <span className="text-muted-foreground/70 self-start text-[10px] font-normal tracking-wider uppercase">
                 {s.sublabel}

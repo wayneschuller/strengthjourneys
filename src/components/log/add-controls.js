@@ -370,11 +370,16 @@ function SmartAddButtonGrid({
                   leadSpansRow && i === 0 ? "col-span-2 sm:col-span-1" : ""
                 } border-border bg-background/40`}
                 onClick={() =>
-                  onAddSet({
-                    reps: s.reps,
-                    weight: s.weight,
-                    unitType: s.unitType,
-                  })
+                  // The slot travels with the set so suggestion telemetry
+                  // knows which of our offers was taken.
+                  onAddSet(
+                    {
+                      reps: s.reps,
+                      weight: s.weight,
+                      unitType: s.unitType,
+                    },
+                    { index: i },
+                  )
                 }
               >
                 <span aria-hidden="true" className={actionCircleClass}>

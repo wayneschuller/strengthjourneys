@@ -111,6 +111,16 @@ export function getLiftBlockCoachingState({
     barWeight,
     minIncrement,
   });
+  // What suggestion telemetry needs to describe the moment, beyond the
+  // buttons themselves. See lib/log-suggestion-telemetry.js.
+  const firstTimeTelemetryContext = {
+    phase: "first-time",
+    anchorWeight: firstTimeTargetWeight ?? barWeight,
+    minIncrement,
+    priorSessionCount: 0,
+    previousDate: null,
+    previousSets: [],
+  };
   const firstTimeProgression = firstTimeTargetWeight
     ? generateSessionSets(
         firstTimeTargetWeight,
@@ -165,6 +175,7 @@ export function getLiftBlockCoachingState({
                 : null,
             }
           : null,
+        telemetryContext: firstTimeTelemetryContext,
       };
     }
 
@@ -194,6 +205,7 @@ export function getLiftBlockCoachingState({
         ? firstTimeButtons
         : [
             {
+              kind: isBarOnlyIntro ? "first-loaded-set" : "first-small-jump",
               label: `${isBarOnlyIntro ? 5 : lastLoggedReps}@${nextWeight}${unitType}`,
               sublabel: isBarOnlyIntro
                 ? "first loaded set"
@@ -204,6 +216,7 @@ export function getLiftBlockCoachingState({
               variant: "primary",
             },
             {
+              kind: "first-repeat",
               label: `${lastLoggedReps}@${lastLoggedWeight}${unitType}`,
               sublabel: getStableSublabel({
                 labels: REPEAT_SUBLABELS,
@@ -215,6 +228,7 @@ export function getLiftBlockCoachingState({
               variant: "secondary",
             },
             {
+              kind: "first-double-jump",
               label: `${lastLoggedReps}@${secondJumpWeight}${unitType}`,
               sublabel: `+${minIncrement * 2}${unitType}`,
               reps: lastLoggedReps,
@@ -235,6 +249,7 @@ export function getLiftBlockCoachingState({
           workSetCount: firstTimeWorkSetCount,
         }),
       journeyTechniqueAssist,
+      telemetryContext: firstTimeTelemetryContext,
     };
   }
 
@@ -399,13 +414,16 @@ export function getLiftBlockCoachingState({
   const buttons = [];
   const seenButtonKeys = new Set();
 
-  const pushSuggestionButton = ({ reps, weight, sublabel, variant }) => {
+  // `kind` names the rule that proposed the set. Sublabels rotate through
+  // playful pools, so suggestion telemetry keys on this instead.
+  const pushSuggestionButton = ({ kind, reps, weight, sublabel, variant }) => {
     if (!reps || !weight || buttons.length >= 4) return;
     const key = `${reps}-${weight}`;
     if (seenButtonKeys.has(key)) return;
     seenButtonKeys.add(key);
     const rankingMeta = getSuggestionRankingMeta(reps, weight)?.best;
     buttons.push({
+      kind,
       label: `${reps}@${weight}${unitType}`,
       sublabel,
       rankingMessage: rankingMeta?.message ?? null,
@@ -440,9 +458,10 @@ export function getLiftBlockCoachingState({
   if (!effectiveAtOrPastTop) {
     // Warmup phase: replay the user's actual previous warmup first, then fill
     // the remaining slots with repeat/heavier/top-set choices.
-    const addWarmupButton = (set, sublabel, variant) => {
+    const addWarmupButton = (kind, set, sublabel, variant) => {
       if (!set) return;
       pushSuggestionButton({
+        kind,
         reps: set.reps,
         weight: set.weight,
         sublabel,
@@ -484,6 +503,7 @@ export function getLiftBlockCoachingState({
         : null;
 
     addWarmupButton(
+      realSets.length === 0 ? "opening-set" : "next-warmup",
       nextActualWarmupSet,
       realSets.length === 0
         ? "opening set"
@@ -505,6 +525,7 @@ export function getLiftBlockCoachingState({
 
     if (lastLoggedWeight > 0) {
       pushSuggestionButton({
+        kind: "warmup-repeat",
         reps: lastLoggedReps,
         weight: lastLoggedWeight,
         sublabel: getSuggestionSublabel(
@@ -518,6 +539,7 @@ export function getLiftBlockCoachingState({
 
     if (bridgeWarmupSet) {
       addWarmupButton(
+        "bridge-warmup",
         bridgeWarmupSet,
         getSuggestionSublabel(
           BRIDGE_WARMUP_SUBLABELS,
@@ -528,6 +550,7 @@ export function getLiftBlockCoachingState({
       );
     } else {
       addWarmupButton(
+        nextSet?.isTopSet ? "top-set" : "next-heavier",
         nextSet,
         nextSet?.isTopSet
           ? getTopSetSublabel(nextSet)
@@ -543,6 +566,7 @@ export function getLiftBlockCoachingState({
       );
     }
     addWarmupButton(
+      "previous-top",
       previousTopOption,
       getSuggestionSublabel(
         ["repeat top", "run it back"],
@@ -551,13 +575,20 @@ export function getLiftBlockCoachingState({
       ),
       "outline",
     );
-    addWarmupButton(lastSessionTopOption, "deload top", "outline");
     addWarmupButton(
+      "deload-top",
+      lastSessionTopOption,
+      "deload top",
+      "outline",
+    );
+    addWarmupButton(
+      isRecoveringFromDeload ? "trend-target" : "top-set",
       topProgSet,
       isRecoveringFromDeload ? "trend target" : getTopSetSublabel(topProgSet),
       "outline",
     );
     addWarmupButton(
+      "stretch-top",
       stretchTopOption,
       getSuggestionSublabel(
         STRETCH_SET_SUBLABELS,
@@ -569,18 +600,21 @@ export function getLiftBlockCoachingState({
   } else if (inDropSetMode) {
     // Drop set mode: weight is descending — only offer repeat at current drop weight
     pushSuggestionButton({
+      kind: "drop-repeat",
       reps: lastLoggedReps,
       weight: lastLoggedWeight,
       sublabel: "drop set",
       variant: "secondary",
     });
     pushSuggestionButton({
+      kind: "drop-back-up",
       reps: lastLoggedReps,
       weight: maxLogged,
       sublabel: "back up",
       variant: "outline",
     });
     pushSuggestionButton({
+      kind: "previous-top",
       reps: topReps,
       weight: lastTopWeight,
       sublabel: getSuggestionSublabel(
@@ -591,6 +625,7 @@ export function getLiftBlockCoachingState({
       variant: "outline",
     });
     pushSuggestionButton({
+      kind: isRecoveringFromDeload ? "trend-target" : "top-set",
       reps: topReps,
       weight: topWeight,
       sublabel: isRecoveringFromDeload
@@ -602,6 +637,7 @@ export function getLiftBlockCoachingState({
     // Working phase: suggest repeat, a lighter top repeat when useful,
     // push-higher, and drop set.
     pushSuggestionButton({
+      kind: "working-repeat",
       reps: lastLoggedReps,
       weight: lastLoggedWeight,
       sublabel: getSuggestionSublabel(
@@ -614,6 +650,7 @@ export function getLiftBlockCoachingState({
 
     if (lastLoggedWeight < topWeight && lastTopWeight > lastLoggedWeight) {
       pushSuggestionButton({
+        kind: "previous-top",
         reps: topReps,
         weight: lastTopWeight,
         sublabel: getSuggestionSublabel(
@@ -630,6 +667,7 @@ export function getLiftBlockCoachingState({
       : null;
     if (targetTopSet && targetTopSet.weight > lastLoggedWeight) {
       pushSuggestionButton({
+        kind: "top-set",
         reps: targetTopSet.reps,
         weight: targetTopSet.weight,
         sublabel: getTopSetSublabel(targetTopSet),
@@ -638,6 +676,7 @@ export function getLiftBlockCoachingState({
     } else {
       const incrWeight = lastLoggedWeight + minIncrement;
       pushSuggestionButton({
+        kind: "small-jump",
         reps: lastLoggedReps,
         weight: incrWeight,
         sublabel: getSuggestionSublabel(
@@ -654,6 +693,7 @@ export function getLiftBlockCoachingState({
       Math.round((lastLoggedWeight * 0.8) / minIncrement) * minIncrement;
     if (dropWeight >= barWeight && dropWeight < lastLoggedWeight) {
       pushSuggestionButton({
+        kind: "drop-set",
         reps: lastLoggedReps,
         weight: dropWeight,
         sublabel: "drop set",
@@ -662,6 +702,7 @@ export function getLiftBlockCoachingState({
     }
 
     pushSuggestionButton({
+      kind: isRecoveringFromDeload ? "trend-target" : "top-set",
       reps: topReps,
       weight: topWeight,
       sublabel: isRecoveringFromDeload
@@ -676,6 +717,21 @@ export function getLiftBlockCoachingState({
     buttons,
     inSessionCoaching: inSessionFallbackCoaching,
     journeyTechniqueAssist,
+    telemetryContext: {
+      phase: !effectiveAtOrPastTop
+        ? "warmup"
+        : inDropSetMode
+          ? "drop"
+          : "working",
+      anchorWeight: lastTopWeight,
+      minIncrement,
+      priorSessionCount: priorLiftDates.length,
+      previousDate: lastDate,
+      previousSets: orderedLastSets.map((set) => ({
+        reps: set.reps,
+        weight: getDisplayWeight(set, isMetric).value,
+      })),
+    },
   };
 }
 

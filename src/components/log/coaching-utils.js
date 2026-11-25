@@ -117,6 +117,7 @@ export function getFirstTimeEmptyButtons({
     return [
       {
         label: `5@${barWeight}${unitType}`,
+        kind: "first-empty-bar",
         sublabel: "bar only",
         reps: 5,
         weight: barWeight,
@@ -125,6 +126,7 @@ export function getFirstTimeEmptyButtons({
       },
       {
         label: `5@${barWeight + minIncrement}${unitType}`,
+        kind: "first-small-jump",
         sublabel: "small jump",
         reps: 5,
         weight: barWeight + minIncrement,
@@ -133,6 +135,7 @@ export function getFirstTimeEmptyButtons({
       },
       {
         label: `5@${lightJumpWeight}${unitType}`,
+        kind: "first-light-starter",
         sublabel: "light starter",
         reps: 5,
         weight: lightJumpWeight,
@@ -145,6 +148,7 @@ export function getFirstTimeEmptyButtons({
   return [
     {
       label: `5@${barWeight}${unitType}`,
+      kind: "first-empty-bar",
       sublabel: "empty bar",
       reps: 5,
       weight: barWeight,
@@ -153,6 +157,7 @@ export function getFirstTimeEmptyButtons({
     },
     {
       label: `5@${lightJumpWeight}${unitType}`,
+      kind: "first-light-starter",
       sublabel: "light starter",
       reps: 5,
       weight: lightJumpWeight,
@@ -161,6 +166,7 @@ export function getFirstTimeEmptyButtons({
     },
     {
       label: `10@${barWeight}${unitType}`,
+      kind: "first-more-reps",
       sublabel: "more reps",
       reps: 10,
       weight: barWeight,
@@ -217,11 +223,12 @@ export function getFirstTimeProgressionButtons({
 
   const buttons = [];
   const seen = new Set();
-  const pushButton = ({ reps, weight, sublabel, variant }) => {
+  const pushButton = ({ kind, reps, weight, sublabel, variant }) => {
     const key = `${reps}-${weight}`;
     if (seen.has(key)) return;
     seen.add(key);
     buttons.push({
+      kind,
       label: `${reps}@${weight}${unitType}`,
       sublabel,
       reps,
@@ -237,6 +244,7 @@ export function getFirstTimeProgressionButtons({
     const topSet = progression[progression.length - 1];
 
     pushButton({
+      kind: nextSet.isTopSet ? "first-target" : "first-next-warmup",
       reps: nextSet.reps,
       weight: nextSet.weight,
       sublabel: nextSet.isTopSet
@@ -247,6 +255,7 @@ export function getFirstTimeProgressionButtons({
 
     if (followingSet && !followingSet.isTopSet) {
       pushButton({
+        kind: "first-then-this",
         reps: followingSet.reps,
         weight: followingSet.weight,
         sublabel: "then this",
@@ -256,6 +265,7 @@ export function getFirstTimeProgressionButtons({
 
     if (!nextSet.isTopSet) {
       pushButton({
+        kind: "first-target",
         reps: topSet.reps,
         weight: topSet.weight,
         sublabel: getIndexedSublabel(
@@ -276,6 +286,7 @@ export function getFirstTimeProgressionButtons({
   const lastLoggedReps = lastLoggedSet.reps ?? 5;
 
   pushButton({
+    kind: "first-repeat",
     reps: lastLoggedReps,
     weight: lastLoggedWeight,
     sublabel: getIndexedSublabel(
@@ -285,6 +296,7 @@ export function getFirstTimeProgressionButtons({
     variant: "secondary",
   });
   pushButton({
+    kind: "first-small-jump",
     reps: lastLoggedReps,
     weight: lastLoggedWeight + minIncrement,
     sublabel: getIndexedSublabel(
@@ -294,6 +306,7 @@ export function getFirstTimeProgressionButtons({
     variant: "primary",
   });
   pushButton({
+    kind: "first-double-jump",
     reps: lastLoggedReps,
     weight: lastLoggedWeight + minIncrement * 2,
     sublabel: getIndexedSublabel(

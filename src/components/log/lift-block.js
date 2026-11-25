@@ -49,6 +49,10 @@ import {
   SmartAddButtons,
 } from "@/components/log/add-controls";
 import { CustomSetDraftRow } from "@/components/log/custom-set-draft-row";
+import {
+  buildLogSuggestionRecord,
+  sendLogSuggestionRecord,
+} from "@/lib/log-suggestion-telemetry";
 import { SetRow } from "@/components/log/set-row";
 import { getLiftBlockCoachingState } from "@/components/log/lift-block-coaching-state";
 import { getAutoTimestampNotes } from "@/components/log/sheet-snapshot-utils";
@@ -223,24 +227,6 @@ export function LiftBlock({
     });
   }, [canAddSets, customSetUnitType]);
 
-  const handleSuggestedAddSet = useCallback(
-    async (setFields) => {
-      if (!canAddSets) return;
-      setCustomDraftConfig(null);
-      await onAddSet(setFields);
-    },
-    [canAddSets, onAddSet],
-  );
-
-  const handleCustomDraftCommit = useCallback(
-    async (setFields) => {
-      if (!canAddSets) return;
-      setCustomDraftConfig(null);
-      await onAddSet(setFields);
-    },
-    [canAddSets, onAddSet],
-  );
-
   // Read warmup settings from localStorage (shared with warmup calculator page)
   const storedBarType =
     useReadLocalStorage(LOCAL_STORAGE_KEYS.WARMUPS_BAR_TYPE, {
@@ -288,6 +274,60 @@ export function LiftBlock({
       topLiftsByTypeAndReps,
       topLiftsByTypeAndRepsLast12Months,
     ],
+  );
+
+  // Anonymous suggestion telemetry: what we offered, and what the athlete
+  // chose or typed instead. Built before the set lands, so "today" is the
+  // session as the suggestions saw it.
+  const recordSuggestionTelemetry = useCallback(
+    (event, details) => {
+      sendLogSuggestionRecord(
+        buildLogSuggestionRecord({
+          event,
+          coachState: inSessionCoachState,
+          liftType,
+          sessionDate,
+          isMetric,
+          isPastSession,
+          realSets,
+          ...details,
+        }),
+      );
+    },
+    [
+      inSessionCoachState,
+      liftType,
+      sessionDate,
+      isMetric,
+      isPastSession,
+      realSets,
+    ],
+  );
+
+  // `suggestion` arrives only from a suggested set button, never from the
+  // plain "Add set" shown when there is nothing to suggest.
+  const handleSuggestedAddSet = useCallback(
+    async (setFields, suggestion) => {
+      if (!canAddSets) return;
+      setCustomDraftConfig(null);
+      if (Number.isInteger(suggestion?.index)) {
+        recordSuggestionTelemetry("suggestion", {
+          pickedIndex: suggestion.index,
+        });
+      }
+      await onAddSet(setFields);
+    },
+    [canAddSets, onAddSet, recordSuggestionTelemetry],
+  );
+
+  const handleCustomDraftCommit = useCallback(
+    async (setFields) => {
+      if (!canAddSets) return;
+      setCustomDraftConfig(null);
+      recordSuggestionTelemetry("custom", { entered: setFields });
+      await onAddSet(setFields);
+    },
+    [canAddSets, onAddSet, recordSuggestionTelemetry],
   );
 
   // Find the set index with the heaviest e1RM for the strength badge

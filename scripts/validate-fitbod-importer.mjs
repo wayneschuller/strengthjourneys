@@ -83,6 +83,36 @@ const deadlifts = parsed.filter((entry) => entry.liftType === "Deadlift");
 assert.equal(deadlifts.length, 1);
 assert.equal(deadlifts[0].date, "2025-08-26");
 
+// A pound lifter's export: Fitbod still writes kilograms, converted from the
+// pounds the lifter loaded. 20.41168092460379 is a real export's 45 lb bar.
+// The file's numbers give it away, so it comes back in pounds.
+const toFitbodKg = (pounds) => pounds / 2.20462;
+const POUND_FITBOD_CSV = `Date,Exercise,Reps,Weight(kg),Duration(s),Distance(m),Incline,Resistance,isWarmup,Note,multiplier
+2025-08-25 08:15:00,Back Squat,10,20.41168092460379,,,,,true,,1
+2025-08-25 08:20:00,Back Squat,5,${toFitbodKg(135)},,,,,false,,1
+2025-08-25 08:25:00,Back Squat,5,${toFitbodKg(185)},,,,,false,,1
+2025-08-25 08:40:00,Dumbbell Bicep Curl,12,${toFitbodKg(32.5)},,,,,false,,1
+2025-08-25 08:45:00,Pull-up,8,0,,,,,false,,1
+`;
+const { data: poundParsed, diagnostics: poundDiagnostics } = parseImportedRows(
+  decodeCSV(POUND_FITBOD_CSV),
+  { importedAt },
+);
+assert.equal(poundDiagnostics.unitType, "lb");
+assert.ok(poundParsed.every((entry) => entry.unitType === "lb"));
+assert.deepEqual(
+  poundParsed.map((entry) => entry.weight),
+  [45, 135, 185, 32.5, 0],
+);
+
+// Round kilo loads stay kilos, even ones that happen to sit near a pound
+// value: the first file above is a kilo lifter's.
+assert.ok(parsed.every((entry) => entry.unitType === "kg"));
+assert.deepEqual(
+  parsed.map((entry) => entry.weight),
+  [45, 100, 100, 0, 140],
+);
+
 // The KV import profile keys a lifter's per-source history on this id, so it
 // has to resolve the same way whether or not Fitbod is offered anywhere in
 // the app.

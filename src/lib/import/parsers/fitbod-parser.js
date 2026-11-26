@@ -2,9 +2,11 @@
 //
 // Fitbod (Log tab → gear icon → Export Workout Data) produces one row per set
 // with columns: Date, Exercise, Reps, Weight(kg), Duration(s), Distance(m),
-// Incline, Resistance, isWarmup, Note, multiplier. Weight is always metric
-// regardless of the user's display unit, and cardio/timed rows (duration or
-// distance based, no reps/weight) are not strength sets and are skipped.
+// Incline, Resistance, isWarmup, Note, multiplier. Weight is always written
+// in kilograms, even for a lifter working in pounds, so the file's own
+// numbers decide which unit the lifter used (see detectFitbodUnit).
+// Cardio/timed rows (duration or distance based, no reps/weight) are not
+// strength sets and are skipped.
 //
 // A quiet format: it has no app guide and no mention in the unrecognized-format
 // message, so nothing in the app offers it. It activates when someone drops a
@@ -92,12 +94,48 @@ function isFitbodExport(headers) {
   );
 }
 
-// Fitbod stores kilograms even for a lifter working in pounds, so a 45 lb bar
-// arrives as 20.41168092460379. Keep two decimals: enough for a half-kilo
-// plate, and short of repeating a conversion artefact back at the lifter. A
+const LB_PER_KG = 2.20462262;
+
+const isNearMultiple = (value, step, tolerance) =>
+  Math.abs(value / step - Math.round(value / step)) * step <= tolerance;
+
+/**
+ * Fitbod stores kilograms even for a lifter working in pounds, so a 45 lb bar
+ * arrives as 20.41168092460379. A pound lifter's loads convert back to whole
+ * quarter pounds; a kilo lifter's are whole quarter kilos already. In the
+ * real exports every pound-lifter weight converts back cleanly and almost
+ * none sits on a quarter kilo, while a kilo log is the reverse, so the file
+ * is read in pounds only when that pattern is plain.
+ * @param {number[]} weights Every loaded weight in the file, in kg.
+ * @returns {"lb"|"kg"}
+ */
+export function detectFitbodUnit(weights) {
+  const loaded = weights.filter((weight) => weight > 0);
+  if (loaded.length === 0) return "kg";
+  const lbClean = loaded.filter((weight) =>
+    isNearMultiple(weight * LB_PER_KG, 0.25, 0.02),
+  ).length;
+  const kgClean = loaded.filter((weight) =>
+    isNearMultiple(weight, 0.25, 0.005),
+  ).length;
+  return lbClean / loaded.length >= 0.9 && kgClean / loaded.length < 0.5
+    ? "lb"
+    : "kg";
+}
+
+// Restores the lifter's own number. Pounds snap to the quarter pound they
+// came from; anything else keeps two decimals, enough for a half-kilo plate
+// and short of repeating a conversion artefact back at the lifter. A
 // genuinely metric export rounds to itself.
-function roundImportedWeight(weight) {
-  return typeof weight === "number" ? Math.round(weight * 100) / 100 : weight;
+function toImportedWeight(weight, unitType) {
+  if (typeof weight !== "number") return weight;
+  if (unitType === "lb") {
+    const pounds = weight * LB_PER_KG;
+    return isNearMultiple(pounds, 0.25, 0.02)
+      ? Math.round(pounds * 4) / 4
+      : Math.round(pounds * 100) / 100;
+  }
+  return Math.round(weight * 100) / 100;
 }
 
 function parseFitbodData(data, { importedAt = new Date() } = {}) {
@@ -112,6 +150,12 @@ function parseFitbodData(data, { importedAt = new Date() } = {}) {
   const distanceColumnIndex = findColumn(headers, "distance(m)");
   const isWarmupColumnIndex = findColumn(headers, "iswarmup");
   const noteColumnIndex = findColumn(headers, "note");
+  const unitType = detectFitbodUnit(
+    data
+      .slice(1)
+      .map((row) => parseStrictNumber(row?.[weightColumnIndex]))
+      .filter((weight) => typeof weight === "number"),
+  );
 
   const parsedData = [];
   const skippedByReason = {};
@@ -168,8 +212,8 @@ function parseFitbodData(data, { importedAt = new Date() } = {}) {
       liftType,
       rawLiftType: String(row[exerciseColumnIndex] || "").trim() || undefined,
       reps,
-      weight: roundImportedWeight(weight),
-      unitType: "kg",
+      weight: toImportedWeight(weight, unitType),
+      unitType,
       notes: buildNotes(
         time,
         isWarmup ? "Warmup" : null,
@@ -184,6 +228,6 @@ function parseFitbodData(data, { importedAt = new Date() } = {}) {
     skippedByReason,
     skippedLifts,
     workoutCount: acceptedWorkouts.size,
-    unitType: "kg",
+    unitType,
   };
 }

@@ -15,6 +15,10 @@
  * Usage:
  *   node scripts/replay-log-suggestions.mjs <file.csv> [from] [to]
  *     [--lifts "Back Squat,Bench Press"] [--rows] [--metric|--imperial]
+ *     [--app]
+ *     --app     read an app export (Hevy, Strong, Fitbod...) through the
+ *               importer instead of as a sheet. Those apps chose many of the
+ *               weights, so their logs are weaker ground truth.
  *     from, to  YYYY-MM-DD, default the last 90 days of the file
  */
 
@@ -23,7 +27,8 @@ import { readFileSync } from "node:fs";
 import "./source-loader.mjs";
 
 const { decodeCSV } = await import("@/lib/import/decode-csv");
-const { parseData } = await import("@/lib/import/import-dispatcher");
+const { parseData, parseImportedRows } =
+  await import("@/lib/import/import-dispatcher");
 const { getLiftBlockCoachingState } =
   await import("@/components/log/lift-block-coaching-state");
 
@@ -43,9 +48,10 @@ if (!file) {
 const lifts = flag("--lifts")?.split(",");
 const showRows = args.includes("--rows");
 
-const parsedData = parseData(decodeCSV(readFileSync(file, "utf8"))).filter(
-  (entry) => entry.liftType !== "Bodyweight",
-);
+const rows = decodeCSV(readFileSync(file, "utf8"));
+const parsedData = (
+  args.includes("--app") ? parseImportedRows(rows).data : parseData(rows)
+).filter((entry) => entry.liftType !== "Bodyweight");
 const lastDate = parsedData.reduce(
   (latest, entry) => (entry.date > latest ? entry.date : latest),
   "",

@@ -368,14 +368,15 @@ export function processTopLiftsByTypeAndReps(parsedData, liftTypes) {
  * - Tonnage = sum of (weight × reps) for that lift type on that date
  * - Records are per (date, liftType, unitType); mixed-unit sessions appear as separate entries
  */
-export function processTopTonnageByType(parsedData, liftTypes) {
+// Top tonnage sessions per lift type, all-time and last 12 months, read from
+// the session tonnage lookup below so the sums are made in one place.
+export function processTopTonnageByType(sessionTonnageLookup, liftTypes) {
   const startTime = performance.now();
   const topTonnageByType = {};
   const topTonnageByTypeLast12Months = {};
 
-  if (!parsedData || parsedData.length === 0) {
-    return { topTonnageByType, topTonnageByTypeLast12Months };
-  }
+  const byDate = sessionTonnageLookup?.sessionTonnageByDateAndLift;
+  if (!byDate) return { topTonnageByType, topTonnageByTypeLast12Months };
 
   const now = new Date();
   const last12Months = new Date(now);
@@ -387,39 +388,32 @@ export function processTopTonnageByType(parsedData, liftTypes) {
     topTonnageByTypeLast12Months[t.liftType] = [];
   });
 
-  // Aggregate tonnage per (date, liftType, unitType) in one pass
-  const byDateLiftUnit = {};
-  parsedData.forEach((entry) => {
-    const { date, liftType, weight, reps, unitType } = entry;
-    if (!date || !liftType) return;
-    const tonnage = (weight ?? 0) * (reps ?? 0);
-    const u = unitType || "lb";
-    const key = `${date}|${liftType}|${u}`;
-    byDateLiftUnit[key] = (byDateLiftUnit[key] ?? 0) + tonnage;
-  });
-
-  // Build top records per lift type
-  const byLiftAll = {};
-  const byLift12 = {};
-  Object.entries(byDateLiftUnit).forEach(([key, tonnage]) => {
-    const [date, liftType, unitType] = key.split("|");
-    if (!topTonnageByType[liftType]) return;
-    byLiftAll[liftType] = byLiftAll[liftType] || [];
-    byLiftAll[liftType].push({ date, tonnage, unitType });
-    if (date >= last12MonthsStr) {
-      byLift12[liftType] = byLift12[liftType] || [];
-      byLift12[liftType].push({ date, tonnage, unitType });
+  // Dates arrive oldest first, so equal tonnages keep the earlier session first.
+  for (const date in byDate) {
+    const recent = date >= last12MonthsStr;
+    for (const liftType in byDate[date]) {
+      const all = topTonnageByType[liftType];
+      if (!all) continue;
+      for (const unitType in byDate[date][liftType]) {
+        const session = {
+          date,
+          tonnage: byDate[date][liftType][unitType],
+          unitType,
+        };
+        all.push(session);
+        if (recent) topTonnageByTypeLast12Months[liftType].push(session);
+      }
     }
-  });
+  }
 
-  Object.keys(topTonnageByType).forEach((liftType) => {
-    const all = byLiftAll[liftType] || [];
-    all.sort((a, b) => b.tonnage - a.tonnage);
-    topTonnageByType[liftType] = all.slice(0, 20);
-    const last12 = byLift12[liftType] || [];
-    last12.sort((a, b) => b.tonnage - a.tonnage);
-    topTonnageByTypeLast12Months[liftType] = last12.slice(0, 20);
-  });
+  const keepTop = (sessions) =>
+    sessions.sort((a, b) => b.tonnage - a.tonnage).slice(0, 20);
+  for (const liftType in topTonnageByType) {
+    topTonnageByType[liftType] = keepTop(topTonnageByType[liftType]);
+    topTonnageByTypeLast12Months[liftType] = keepTop(
+      topTonnageByTypeLast12Months[liftType],
+    );
+  }
 
   recordTiming("Top Tonnage", performance.now() - startTime);
 

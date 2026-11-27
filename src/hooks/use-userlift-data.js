@@ -243,11 +243,6 @@ export function getLatestSheetReadAt() {
   return latestAcceptedReadAt;
 }
 
-// parsedData array -> the SWR object it was parsed from. Kept beside the
-// array rather than in state, so the pair can never drift apart across
-// renders.
-const parsedDataSource = new WeakMap();
-
 const UserLiftingDataContext = createContext();
 const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
@@ -318,6 +313,9 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   // These are our key global state variables.
   // Keep this as minimal as possible. Don't put things here that components could derive quickly from 'parsedData'
   const [parsedData, setParsedData] = useState(null); // see @/lib/import/sample-parsed-data.js for data structure design
+  // The SWR object (or saved copy) behind parsedData, set beside it in the
+  // same update so the pair never drifts apart. Null for demo or no sheet.
+  const [parsedFrom, setParsedFrom] = useState(null);
   const [lastDataReceivedAt, setLastDataReceivedAt] = useState(null);
   const [latestReadStartedAt, setLatestReadStartedAt] = useState(null);
   // Where the linked sheet keeps its columns, set with the rows it describes.
@@ -326,9 +324,10 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   const [sheetBodyweightEntries, setSheetBodyweightEntries] = useState(null);
   const [parseError, setParseError] = useState(null);
   const [fetchFailed, setFetchFailed] = useState(false);
-  // The sheet data last parsed, so a failed refresh does not parse the same
-  // saved copy again on every retry.
-  const lastParsedSourceRef = useRef(null);
+  // The sheet data last parsed, and whether it parsed into the lifter's log,
+  // so a failed refresh does not parse the same saved copy again on every
+  // retry, and a read with the same rows is not parsed again at all.
+  const lastParseRef = useRef({ source: null, ok: false });
 
   // -- Imported file data (view-only, persisted in sessionStorage) ------------
   // Initialize as null (matches server) and hydrate after mount via layout effect
@@ -707,9 +706,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
   // identical leaves SWR holding the same object, so rows parsed from that
   // object are current as of the newest read; rows parsed from an older
   // object keep that object's own stamp until the new one is parsed.
-  const parsedDataSourceData = parsedData
-    ? (parsedDataSource.get(parsedData) ?? null)
-    : null;
+  const parsedDataSourceData = parsedData ? parsedFrom : null;
   const parsedDataReadAt = !parsedDataSourceData
     ? null
     : parsedDataSourceData === data && latestReadStartedAt !== null
@@ -818,7 +815,7 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
         "color:inherit",
       );
       setParseError(null);
-      if (!localData || lastParsedSourceRef.current === localData) return;
+      if (!localData || lastParseRef.current.source === localData) return;
     }
 
     // Signed in with a sheet linked but nothing read yet, such as opening
@@ -833,8 +830,26 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       return;
     }
 
+    // A read whose rows match the rows already parsed, most often the live
+    // read that follows opening on the copy saved on this phone: the log on
+    // screen is already this log. Keep it, and every view built from it, and
+    // only note the read it now stands for, so the log can write against it.
+    const previous = lastParseRef.current;
+    if (
+      previous.ok &&
+      sheetData &&
+      previous.source !== sheetData &&
+      authStatus === "authenticated" &&
+      dataSource !== "demo" &&
+      haveSameCells(previous.source.values, sheetData.values)
+    ) {
+      lastParseRef.current = { source: sheetData, ok: true };
+      setParsedFrom(sheetData);
+      if (data?.values) setUnreadableSsid(null);
+      return;
+    }
+
     const storedSsid = storedSheetInfo?.ssid ?? null;
-    lastParsedSourceRef.current = sheetData ?? null;
     const result = getParsedDataWithFallback({
       authStatus,
       data: sheetData,
@@ -851,13 +866,15 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       setUnreadableSsid(null);
     }
 
-    if (
-      result.parsedData &&
+    const isSheetParse =
+      !!result.parsedData &&
       result.parsedData !== demoParsedData &&
-      sheetData
-    ) {
-      parsedDataSource.set(result.parsedData, sheetData);
-    }
+      !!sheetData;
+    lastParseRef.current = {
+      source: sheetData ?? null,
+      ok: isSheetParse && !result.parseError,
+    };
+    setParsedFrom(isSheetParse ? sheetData : null);
     setParsedData(result.parsedData);
     setSheetLayout(result.sheetLayout);
     setSheetBodyweightEntries(result.bodyweightEntries);
@@ -1007,19 +1024,19 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
       return processTopLiftsByTypeAndReps(activeParsedData, liftTypes);
     }, [activeParsedData, liftTypes]);
 
-  // Top tonnage sessions per lift type (all-time and last 12 months)
-  const { topTonnageByType, topTonnageByTypeLast12Months } = useMemo(() => {
-    if (!activeParsedData || !liftTypes.length) {
-      return { topTonnageByType: null, topTonnageByTypeLast12Months: null };
-    }
-    return processTopTonnageByType(activeParsedData, liftTypes);
-  }, [activeParsedData, liftTypes]);
-
   // Precomputed session tonnage lookup for fast getAverageLiftSessionTonnage / getAverageSessionTonnage
   const sessionTonnageLookup = useMemo(() => {
     if (!activeParsedData) return null;
     return processSessionTonnageLookup(activeParsedData);
   }, [activeParsedData]);
+
+  // Top tonnage sessions per lift type (all-time and last 12 months)
+  const { topTonnageByType, topTonnageByTypeLast12Months } = useMemo(() => {
+    if (!sessionTonnageLookup || !liftTypes.length) {
+      return { topTonnageByType: null, topTonnageByTypeLast12Months: null };
+    }
+    return processTopTonnageByType(sessionTonnageLookup, liftTypes);
+  }, [sessionTonnageLookup, liftTypes]);
 
   // Meet days: date -> { name, topSets }, from notes that name a competition
   // or carry attempt numbers. See lib/meet-detection.js.
@@ -1100,6 +1117,23 @@ export const UserLiftingDataProvider = ({ children, demoAnchorDate }) => {
     </UserLiftingDataContext.Provider>
   );
 };
+
+/** True when two sheet reads hold the same cells, row by row. */
+function haveSameCells(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    const rowA = a[i];
+    const rowB = b[i];
+    if (rowA === rowB) continue;
+    if (!rowA || !rowB || rowA.length !== rowB.length) return false;
+    for (let j = 0; j < rowA.length; j++) {
+      if (rowA[j] !== rowB[j]) return false;
+    }
+  }
+  return true;
+}
 
 /**
  * Parses raw gsheet values into parsedData. Fires analytics on success/failure.

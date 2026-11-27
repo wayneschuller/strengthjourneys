@@ -247,6 +247,13 @@ export function parseStrengthJourneysData(
   const objectsArray = [];
   // Weigh-in rows, kept beside the lifts rather than among them.
   const weighIns = [];
+  // Units the sheet wrote out ("100kg", "225lb"), counted as rows are kept,
+  // and the rows that wrote none ("100"), to be given the sheet's own unit
+  // once the count is in (see below the loop).
+  let explicitKg = 0;
+  let explicitLb = 0;
+  const unitless = [];
+  const unitlessWeighIns = [];
   // Cache column indices outside the loop since they never change
   const dateCol = dateColumnIndex;
   const liftTypeCol = liftTypeColumnIndex;
@@ -328,10 +335,10 @@ export function parseStrengthJourneysData(
       obj.rawWeight = row[weightCol];
       obj.weight = value;
       obj.unitType = unitType;
-      if (_explicitUnit !== null) obj._explicitUnit = _explicitUnit;
       if (row[notesCol]) obj.notes = row[notesCol];
       obj.rowIndex = i + 1;
       weighIns.push(obj);
+      if (!_explicitUnit) unitlessWeighIns.push(obj);
       continue;
     }
 
@@ -380,7 +387,6 @@ export function parseStrengthJourneysData(
     }
     obj.weight = value;
     obj.unitType = unitType;
-    if (_explicitUnit !== null) obj._explicitUnit = _explicitUnit; // true=explicit, null=ambiguous
 
     // Validate that we have valid numbers for required fields
     if (obj.reps === undefined || obj.weight === undefined) {
@@ -396,6 +402,9 @@ export function parseStrengthJourneysData(
     obj.rowIndex = i + 1;
 
     objectsArray.push(obj);
+    if (!_explicitUnit) unitless.push(obj);
+    else if (unitType === "kg") explicitKg++;
+    else explicitLb++;
   }
 
   // Two-pass smart default for unitType
@@ -403,23 +412,11 @@ export function parseStrengthJourneysData(
   // Why: users often write weights without a unit suffix (e.g. "100" instead of
   // "100kg"). A blind default of "lb" would mislabel kg-only users' data.
   //
-  // How: convertWeightAndUnitType() tags each row with _explicitUnit: true when
-  // a suffix was present (e.g. "100kg", "225lb"), or null when ambiguous ("100").
-  // After the first pass we count explicit kg vs lb declarations. If kg wins,
-  // every ambiguous entry inherits "kg" as its unitType — matching what the user
-  // almost certainly intended. On a tie (or all-lb majority), we default to "lb".
-  let explicitKg = 0;
-  let explicitLb = 0;
-  const unitless = [];
-  objectsArray.forEach((obj) => {
-    if (obj._explicitUnit) {
-      if (obj.unitType === "kg") explicitKg++;
-      else explicitLb++;
-    } else {
-      unitless.push(obj);
-    }
-    delete obj._explicitUnit; // Clean up temp field
-  });
+  // How: convertWeightAndUnitType() says _explicitUnit: true when a suffix was
+  // present (e.g. "100kg", "225lb"), or null when ambiguous ("100"). The loop
+  // above counted explicit kg vs lb declarations. If kg wins, every ambiguous
+  // entry inherits "kg" as its unitType — matching what the user almost
+  // certainly intended. On a tie (or all-lb majority), we default to "lb".
   // A unit written in the Weight header ("Weight (kg)") settles it for every
   // bare number beneath, with nothing to report: the lifter said so.
   // Otherwise, if majority of explicit entries are kg, treat ambiguous
@@ -444,10 +441,7 @@ export function parseStrengthJourneysData(
   // A weigh-in written without a unit is read in the sheet's own unit, the
   // same one its bare-number sets were given. Weigh-ins do not vote on it.
   const sheetUnit = headerUnit ?? (explicitKg > explicitLb ? "kg" : "lb");
-  for (const weighIn of weighIns) {
-    if (!weighIn._explicitUnit) weighIn.unitType = sheetUnit;
-    delete weighIn._explicitUnit;
-  }
+  for (const weighIn of unitlessWeighIns) weighIn.unitType = sheetUnit;
   weighIns.sort((a, b) => a.date.localeCompare(b.date));
 
   repairLog.flush();

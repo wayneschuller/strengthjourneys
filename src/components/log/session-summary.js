@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function LogSessionSkeleton() {
   return (
-    <div className="mt-6">
+    <div className="mt-2">
       <div className="border-border/50 bg-card/70 overflow-hidden rounded-xl border shadow-sm">
         <div className="border-border/40 space-y-3 border-b px-5 py-5">
           <Skeleton className="h-7 w-48" />

@@ -317,7 +317,7 @@ export function Layout({ children }) {
   ]);
 
   return (
-    <div className="bg-background relative min-h-screen w-full overflow-x-hidden">
+    <div className="bg-background relative min-h-screen w-full overflow-x-clip">
       <AppBackground />
 
       <div className="relative z-10">

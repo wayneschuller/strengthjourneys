@@ -415,6 +415,15 @@ export function SetRow({
           submitLabel="Save set"
           onCommit={savePhoneEdit}
           onCancel={() => setPhoneEditField(null)}
+          onDelete={
+            onDelete && !set._pending
+              ? () => {
+                  setPhoneEditField(null);
+                  onDelete();
+                }
+              : undefined
+          }
+          isDeleteDisabled={isDeleteDisabled}
         />
       )}
       {/* Main row: reps@weight + notes + desktop meta rail. On a phone the
@@ -434,11 +443,16 @@ export function SetRow({
           <div className={cn("w-20 md:w-9", warmupClass)}>
             {editingReps && !isReadOnly ? (
               <input
-                type="number"
+                // Text, not number, as in CustomSetDraftRow: spinner arrows
+                // clip a two digit rep count. md:w-9 matches the fixed slot so
+                // editing never pushes into the "@".
+                type="text"
                 inputMode="numeric"
-                className="border-primary h-14 w-20 rounded-sm border px-2 py-0.5 text-right text-3xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-12 md:px-1 md:text-2xl"
+                className="border-primary h-14 w-20 rounded-sm border px-2 py-0.5 text-right text-3xl font-semibold tabular-nums focus:outline-none md:h-auto md:w-9 md:px-0.5 md:text-2xl"
                 value={draftReps}
-                onChange={(e) => setDraftReps(e.target.value)}
+                onChange={(e) =>
+                  setDraftReps(e.target.value.replace(/\D/g, "").slice(0, 3))
+                }
                 onBlur={commitReps}
                 onFocus={(e) => {
                   cancelledEditRef.current = false;
@@ -701,74 +715,52 @@ export function SetRow({
         </div>
       </div>
 
-      {/* Mobile: badges + ranking + trash on second row */}
-      {!phoneEditField &&
-        (hasBadges || hasRankingBadges || onDelete || set._pending) && (
-          <div className="mt-1 flex items-center gap-2 md:hidden">
-            {strengthBadge && (
-              <TooltipProvider delayDuration={0}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="inline-flex">{strengthBadge}</span>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom">
-                    {strengthTooltip}
-                    <p
-                      className={
-                        strengthTooltip ? "mt-1 opacity-70" : undefined
-                      }
-                    >
-                      Click for {set.liftType} strength levels
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-            {hasRankingBadges && (
-              <span className="inline-flex flex-col items-start gap-1">
-                {rankingBadges.map((badge) => (
-                  <PrRankBadge
-                    key={`${badge.scope}-${badge.message}`}
-                    badge={badge}
-                    liftType={set.liftType}
-                    animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
-                    className={cn(metaBadgeClassName, "max-w-[11rem]")}
-                  />
-                ))}
-              </span>
-            )}
-            {progressionBadge && (
-              <ProgressionBadge
-                badge={progressionBadge}
-                liftType={set.liftType}
-                isMetric={isMetric}
-                className={cn(metaBadgeClassName, "max-w-[11rem]")}
-              />
-            )}
-            <div className="flex-1" />
-            {set._pending
-              ? pendingMark
-              : onDelete && (
-                  <TooltipProvider delayDuration={0}>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button
-                          className="text-muted-foreground/60 hover:text-destructive disabled:text-muted-foreground/40 disabled:hover:text-muted-foreground/40 rounded-sm p-1 transition-colors disabled:cursor-not-allowed"
-                          onClick={onDelete}
-                          disabled={isDeleteDisabled}
-                          aria-label="Delete set"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom">
-                        <p>Delete set</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-          </div>
-        )}
+      {/* Mobile: badges + ranking on a second row. Delete lives in the
+          phone edit panel, a tap on the set away. */}
+      {!phoneEditField && (hasBadges || hasRankingBadges || set._pending) && (
+        <div className="mt-1 flex items-center gap-2 md:hidden">
+          {strengthBadge && (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex">{strengthBadge}</span>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  {strengthTooltip}
+                  <p
+                    className={strengthTooltip ? "mt-1 opacity-70" : undefined}
+                  >
+                    Click for {set.liftType} strength levels
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {hasRankingBadges && (
+            <span className="inline-flex flex-col items-start gap-1">
+              {rankingBadges.map((badge) => (
+                <PrRankBadge
+                  key={`${badge.scope}-${badge.message}`}
+                  badge={badge}
+                  liftType={set.liftType}
+                  animationKey={`mobile-rank-${getSetIdentityKey(set)}-${badge.message}`}
+                  className={cn(metaBadgeClassName, "max-w-[11rem]")}
+                />
+              ))}
+            </span>
+          )}
+          {progressionBadge && (
+            <ProgressionBadge
+              badge={progressionBadge}
+              liftType={set.liftType}
+              isMetric={isMetric}
+              className={cn(metaBadgeClassName, "max-w-[11rem]")}
+            />
+          )}
+          <div className="flex-1" />
+          {set._pending && pendingMark}
+        </div>
+      )}
     </motion.div>
   );
 }

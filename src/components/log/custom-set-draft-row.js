@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 
-import { Check, X } from "lucide-react";
+import { Check, Trash2, X } from "lucide-react";
 
 import {
   isBodyweightLoadLiftName,
@@ -29,6 +29,10 @@ export function CustomSetDraftRow({
   initialWeight = "",
   focusField = "reps",
   submitLabel = "Add set",
+  // Editing a logged set on a phone: delete lives here, a full-size target
+  // kept at the far end from Save.
+  onDelete,
+  isDeleteDisabled = false,
 }) {
   const weightHintId = useId();
   const repsInputRef = useRef(null);
@@ -266,6 +270,17 @@ export function CustomSetDraftRow({
       )}
 
       <div className="mt-3 flex items-center gap-3 md:hidden">
+        {onDelete && (
+          <button
+            type="button"
+            disabled={disabled || isDeleteDisabled}
+            className="border-input text-muted-foreground active:bg-destructive/10 active:text-destructive flex h-12 w-12 shrink-0 items-center justify-center rounded-md border transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={onDelete}
+            aria-label="Delete set"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
+        )}
         <button
           type="button"
           disabled={disabled}

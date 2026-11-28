@@ -22,7 +22,7 @@ export function EmptySessionState({
   const showNextUp = isToday && nextLiftPlan?.lifts.length > 0;
 
   return (
-    <div className="mt-6 flex flex-col items-center gap-6">
+    <div className="mt-2 flex flex-col items-center gap-6">
       {previewMode ? (
         <>
           <div className="space-y-1 text-center">

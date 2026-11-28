@@ -762,7 +762,7 @@ export default function LogSessionPage({
 
           {/* touch-pan-y: the browser keeps vertical scrolling and pinch
               zoom, and a sideways drag comes to the swipe instead. */}
-          <main
+          <div
             className="min-w-0 touch-pan-y touch-pinch-zoom"
             {...sessionSwipe.handlers}
           >
@@ -806,7 +806,7 @@ export default function LogSessionPage({
                   new session arrives whole instead of its lift cards
                   collapsing and growing one by one. */}
               <motion.div style={sessionSwipe.style}>
-                <div key={sessionDate}>
+                <div key={sessionDate} className="pt-4">
                   {showSessionBootstrap && <LogSessionSkeleton />}
                   {isPresumedDemo && (
                     <div data-returning-visit="">
@@ -915,9 +915,7 @@ export default function LogSessionPage({
                                     ? undefined
                                     : (prevSet) => addSet(liftType, prevSet)
                                 }
-                                onNavigateToDate={
-                                  previewMode ? undefined : navigateToDate
-                                }
+                                onNavigateToDate={navigateToDate}
                                 usedSessionUrls={usedSessionUrls}
                                 onSessionUrlAccepted={handleSessionUrlAccepted}
                                 onSessionUrlReleased={handleSessionUrlReleased}
@@ -953,7 +951,7 @@ export default function LogSessionPage({
                 <div className="max-w-[11rem]">{secondaryQuoteCard}</div>
               </div>
             </div>
-          </main>
+          </div>
 
           <aside className="hidden 2xl:block" aria-hidden="true" />
         </div>

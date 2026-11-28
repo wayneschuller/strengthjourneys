@@ -586,7 +586,10 @@ export function LiftBlock({
       ref={liftBlockRef}
       // `lift-card` owns the colour wash and border tint so the alphas can differ
       // per theme — see the .lift-card block in globals.css.
-      className="lift-card bg-card relative overflow-hidden rounded-xl border"
+      // Without the add-set footer (a preview) the card needs its own floor.
+      className={`lift-card bg-card relative overflow-hidden rounded-xl border ${
+        canAddSets ? "" : "pb-4 md:pb-5"
+      }`}
       style={{
         "--lift-color": liftColor,
         animation: isCelebrationShaking
@@ -772,7 +775,7 @@ export function LiftBlock({
         )}
       </div>
       {canShowStrength && bestE1rmValue > 0 && (
-        <div className={`mx-4 mt-3`}>
+        <div className="mx-4 mt-3 md:mx-5">
           <StrengthBar
             liftType={liftType}
             e1rmValue={bestE1rmValue}
@@ -786,7 +789,7 @@ export function LiftBlock({
         </div>
       )}
       {canShowStrength && bestE1rmValue > 0 && (
-        <div className={`mx-4 mt-2`}>
+        <div className="mx-4 mt-2 md:mx-5">
           <LiftPercentileLine
             liftType={liftType}
             e1rmValue={bestE1rmValue}
@@ -798,7 +801,7 @@ export function LiftBlock({
         </div>
       )}
       {shouldShowTonnage && (
-        <div className={`mx-4 mt-3`}>
+        <div className="mx-4 mt-3 md:mx-5">
           <LiftTonnageRow
             liftType={liftType}
             stats={optimisticTonnageStats}
